@@ -14,6 +14,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import HomeScreen from "./src/pages/HomeScreen";
 import { Ionicons } from "@expo/vector-icons";
 import ScheduleNavigation from "./src/navigation/ScheduleNavigation";
+import ProfileScreen from "./src/pages/ProfileScreen";
 
 const BottomTab = createBottomTabNavigator();
 
@@ -39,6 +40,10 @@ export default function App() {
                 : "calendar-outline";
             }
 
+            else if (route.name === "Profile"){
+              iconName = focused ? "person-circle-outline" : "person-outline";
+            }
+
             return (
               <Ionicons
                 name={iconName}
@@ -55,8 +60,9 @@ export default function App() {
             height: 70,
           },
         })}>
-        <BottomTab.Screen name="Home" component={HomeScreen} />
+        <BottomTab.Screen name="Home" component={HomeScreen} options={{headerShown: false}}/>
         <BottomTab.Screen name="Schedule" component={ScheduleNavigation} options={{ headerShown: false }}/>
+        <BottomTab.Screen name="Profile" component={ProfileScreen}/>
       </BottomTab.Navigator>
     </NavigationContainer>
   );
