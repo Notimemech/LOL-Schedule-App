@@ -50,7 +50,7 @@ create table Users(
 	phone varchar(20),
 	email varchar(100) not null,
 	is_active boolean not null default 'TRUE',
-	created_at timestamptz,
+	created_at timestamptz not null default now(),
 
 	CONSTRAINT fk_role_user
         FOREIGN KEY (role_id)
@@ -237,4 +237,9 @@ create table Bets(
         FOREIGN KEY (market_id)
         REFERENCES betmarkets(id)
         ON DELETE CASCADE
-)
+);
+
+insert into roles (name) values ('users')
+
+select * from users
+
