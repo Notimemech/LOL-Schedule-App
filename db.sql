@@ -35,14 +35,27 @@ CREATE TYPE transaction_type_enum AS ENUM (
 
 create type bet_status_enum as enum ('pending', 'won', 'lost', 'cancelled', 'cashout');
 
+-- 0. Bảng Role
+create table Roles(
+	id bigint generated always as identity primary key,
+	name varchar(50) not null
+);
+
 -- 1. Bảng Users
 create table Users(
 	id bigint generated always as identity primary key,
 	username varchar(50) not null,
-	password varchar(50) not null,
+	password varchar(255) not null,
+	role_id bigint not null,
 	phone varchar(20),
 	email varchar(100) not null,
-	is_active boolean not null default 'TRUE'
+	is_active boolean not null default 'TRUE',
+	created_at timestamptz,
+
+	CONSTRAINT fk_role_user
+        FOREIGN KEY (role_id)
+        REFERENCES roles(id)
+        ON DELETE CASCADE
 );
 
 -- 2. Bảng MatchType
@@ -76,6 +89,7 @@ create table Teams(
 -- 6. Bảng Matches
 create table Matches(
 	id bigint generated always as identity primary key,
+	match_type_id bigint not null,
 	tournament_id bigint not null,
 	league_id bigint not null,
 	block_name varchar(50) not null,
@@ -85,6 +99,11 @@ create table Matches(
 	team2_score int not null default 0,
 	winner_slug varchar(20),
 	state states_enum not null,
+
+	CONSTRAINT fk_match_type_match
+        FOREIGN KEY (match_type_id)
+        REFERENCES matchtype(id)
+        ON DELETE CASCADE,
 
 	CONSTRAINT fk_tournament_match
         FOREIGN KEY (tournament_id)
@@ -172,7 +191,7 @@ create table BetMarkets(
 	total_pool decimal(15,2) not null default 0,
 	status market_status_enum not null,
 	result_option text,
-	closed_at timestamptz not null default now(),
+	closed_at timestamptz not null,
 	
 	CONSTRAINT fk_market_match
         FOREIGN KEY (match_id)
@@ -206,6 +225,8 @@ create table Bets(
 	status bet_status_enum not null,
 	payout_amount decimal(15,2),
 	ip_address text,
+	placed_at timestamptz not null,
+	settled_at timestamptz not null,
 
 	CONSTRAINT fk_bet_user
         FOREIGN KEY (user_id)
