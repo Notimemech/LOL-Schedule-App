@@ -18,24 +18,33 @@ export const getOneLeague = async (slug) => {
 };
 
 export const createLeague = async (req) => {
-  const {name, slug} = req.body;
+  const {name, slug, logo_url} = req.body;
 
-  const query = `INSERT INTO leagues (name, slug)
-        values ($1, $2) 
-        returning id, name, slug`;
+  const params = [name, slug, logo_url];
 
-  const rs = await pool.query(query, [name, slug]);
+  const query = `INSERT INTO leagues (name, slug, logo_url)
+        values ($1, $2, $3) 
+        returning id, name, slug, logo_url`;
+
+  const rs = await pool.query(query, params);
 
   return rs.rows[0];
 };
 
 export const updateLeague = async (id, body) => {
 
-    const {name, slug} = body;
+  const allowedFields = ["name", "slug", "logo_url"];
 
-  const query = `UPDATE leagues SET name = $1, slug = $2 WHERE id = $3 RETURNING id, name, slug`;
+  const fields = Object.keys(body).filter(
+    (key) => allowedFields.includes(key) && body[key] !== undefined,
+  );
 
-  const rs = await pool.query(query, [name,slug, id]);
+  const setClause = fields.map((key, i) => `${key} = $${i + 1}`).join(", ");
+  const value = fields.map((key) => body[key]);
+
+  const query = `UPDATE leagues SET ${setClause} WHERE id = $${fields.length + 1} RETURNING name, slug, logo_url`;
+
+  const rs = await pool.query(query, [...value, id]);
 
   if (rs.rowCount === 0) {
     throw new Error("LEAGUE_NOT_FOUND");
