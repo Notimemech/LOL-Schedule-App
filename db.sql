@@ -1,19 +1,3 @@
--- USE master;
--- GO
-
--- IF EXISTS (SELECT name FROM sys.databases WHERE name = N'BettingApp')
--- BEGIN
---     ALTER DATABASE BettingApp SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
---     DROP DATABASE BettingApp;
--- END
--- GO
-
--- CREATE DATABASE BettingApp;
--- GO
-
--- USE BettingApp;
--- GO
-
 create type states_enum as enum ('upcoming', 'finished', 'cancelled', 'happening');
 create type status_enum as enum ('pending', 'successed', 'failed', 'cancelled');
 create type market_type_enum as enum ('winner_team', 'first_blood', 'total_kill', 'average_kill', 'most_kill');
@@ -75,7 +59,7 @@ create table Leagues(
 	id bigint generated always as identity primary key,
 	name varchar(255) not null,
 	slug varchar(50) unique not null,
-	logo_url text not null,
+	logo_url text not null
 );
 
 -- 5. Bảng Teams
