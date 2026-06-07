@@ -74,7 +74,8 @@ create table Tournaments(
 create table Leagues(
 	id bigint generated always as identity primary key,
 	name varchar(255) not null,
-	slug varchar(50) unique not null
+	slug varchar(50) unique not null,
+	logo_url text not null,
 );
 
 -- 5. Bảng Teams
@@ -239,8 +240,8 @@ create table Bets(
         ON DELETE CASCADE
 );
 
-insert into roles (name) values ('users')
-insert into matchtype (match_type) values ('LOL')
+insert into roles (name) values ('users');
+insert into matchtype (match_type) values ('LOL');
 
 select * from users
 
