@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, View, Image, Pressable } from "react-native";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  Pressable,
+} from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { data } from "../data";
 
 export default function ScheduleScreen() {
@@ -7,7 +15,7 @@ export default function ScheduleScreen() {
 
   useEffect(() => {
     setGames(data);
-    // fetchSchedule();
+    // fetchSchedule();  -- Wait util I need real api
   }, []);
 
   const fetchSchedule = async () => {
@@ -27,6 +35,8 @@ export default function ScheduleScreen() {
       console.log(error);
     }
   };
+
+  const navigation = useNavigation();
 
   const formatDate = (startDate) => {
     const date = new Date(startDate);
@@ -48,7 +58,7 @@ export default function ScheduleScreen() {
         contentContainerStyle={styles.bodyContent}
       >
         {games.map((game) => (
-          <View key={game.matchId} style={{paddingVertical: 10}}>
+          <View key={game.matchId} style={{ paddingVertical: 10 }}>
             <Text>League Name: {game.leagueName}</Text>
             <Text>Tournament Name: {game.tournamentName}</Text>
             <Text>Time: {formatDate(game.startTime)}</Text>
@@ -72,12 +82,14 @@ export default function ScheduleScreen() {
                 </View>
               </View>
               <Pressable
-                style={{borderColor:"#4BF0FC", borderWidth: 1, alignItems: 'center'}}
-                onPress={()=>alert("pressed!")}
+                style={{
+                  borderColor: "#4BF0FC",
+                  borderWidth: 1,
+                  alignItems: "center",
+                }}
+                onPress={() => navigation.navigate('Detail')}
               >
-                <Text>
-                  Detail
-                </Text>
+                <Text>Detail</Text>
               </Pressable>
             </View>
           </View>
@@ -93,7 +105,7 @@ export default function ScheduleScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#999"
+    backgroundColor: "#999",
   },
   header: {
     backgroundColor: "#fff",
@@ -122,9 +134,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     paddingVertical: 10,
   },
-  teamCard:{
+  teamCard: {
     flexDirection: "column",
-    alignItems:'center',
-    gap: 10
-  }
+    alignItems: "center",
+    gap: 10,
+  },
 });

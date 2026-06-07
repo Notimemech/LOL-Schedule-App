@@ -13,6 +13,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import HomeScreen from "./src/pages/HomeScreen";
 import { Ionicons } from "@expo/vector-icons";
+import ScheduleNavigation from "./src/navigation/ScheduleNavigation";
 
 const BottomTab = createBottomTabNavigator();
 
@@ -55,7 +56,7 @@ export default function App() {
           },
         })}>
         <BottomTab.Screen name="Home" component={HomeScreen} />
-        <BottomTab.Screen name="Schedule" component={ScheduleScreen} />
+        <BottomTab.Screen name="Schedule" component={ScheduleNavigation} options={{ headerShown: false }}/>
       </BottomTab.Navigator>
     </NavigationContainer>
   );
