@@ -39,6 +39,7 @@ export default function HomeScreen() {
                     onPress={() => {
                       navigation.navigate("Schedule");
                     }}
+                    activeOpacity={0.6}
                   >
                     <Text style={style.buttonInfo}>SET A BET</Text>
                   </TouchableOpacity>
@@ -67,6 +68,9 @@ export default function HomeScreen() {
               </ImageBackground>
             </View>
           </View>
+          <View>
+
+          </View>
 
         </ScrollView>
       </View>
@@ -78,7 +82,7 @@ const style = StyleSheet.create({
   container: {
     backgroundColor: COLORS.background,
     flex: 1,
-    padding: 10,
+    // padding: 10,
   },
   body: {
     flex: 1,
@@ -91,10 +95,15 @@ const style = StyleSheet.create({
     borderRadius: 10,
     position: "relative",
     top: 120,
+    shadowColor: COLORS.primary,
+    // shadowOffset: {width: 2, height: 2},
+    shadowOpacity: 0.8,
+    shadowRadius: 7
   },
   bannerList: {
     flexDirection: "column",
     gap: 20,
+    paddingHorizontal: 10,
   },
   bannerImage: {
     width: "100%",

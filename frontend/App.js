@@ -15,6 +15,7 @@ import HomeScreen from "./src/pages/HomeScreen";
 import { Ionicons } from "@expo/vector-icons";
 import ScheduleNavigation from "./src/navigation/ScheduleNavigation";
 import ProfileScreen from "./src/pages/ProfileScreen";
+import COLORS from "./src/style/color";
 
 const BottomTab = createBottomTabNavigator();
 
@@ -53,10 +54,11 @@ export default function App() {
             );
           },
 
-          tabBarActiveTintColor: "#000",
-          tabBarInactiveTintColor: "gray",
+          tabBarActiveTintColor: COLORS.tabActive,
+          tabBarInactiveTintColor: COLORS.tabInactive,
 
           tabBarStyle: {
+            backgroundColor: COLORS.card,
             height: 70,
           },
         })}>

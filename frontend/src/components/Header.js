@@ -8,6 +8,7 @@ import {
   Keyboard,
 } from "react-native";
 import React from "react";
+import COLORS from "../style/color";
 
 const Header = () => {
   return (
@@ -27,23 +28,26 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     zIndex:100,
-    backgroundColor: "white",
+    backgroundColor: COLORS.card,
     height: 150,
     flexDirection: "row",
     paddingHorizontal: 10,
     paddingTop: 50,
     alignItems: "center",
     gap: 10,
+    borderBottomColor: COLORS.border,
+    borderStyle: "solid",
+    borderWidth: 1
   },
   searchBox: {
-    backgroundColor: "black",
+    backgroundColor: COLORS.backgroundTertiary,
     color: "white",
     paddingHorizontal: 5,
     borderWidth: 1,
     borderStyle: "solid",
-    borderColor: "black",
+    borderColor: COLORS.border,
     width: 230,
-    height: 35,
+    height: 40,
     borderRadius: 10,
   },
 });
