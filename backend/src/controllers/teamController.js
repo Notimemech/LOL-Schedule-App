@@ -1,55 +1,50 @@
-import * as leagueService from '../services/leagueService.js';
+import * as teamService from '../services/teamService.js';
 
-export const getAllLeagues = async(req,res)=>{
+export const getAllTeams = async(req,res)=>{
     try {
-        const rs = await leagueService.getAllLeagues();
+        const rs = await teamService.getAllTeams();
         res.status(200).json(rs);
     } catch (error) {
         res.status(500).json({error: error.message});
     }
 }
 
-export const getLeagueBySlug = async (req, res) =>{
+export const getTeamBySlug = async (req, res) =>{
     const {slug} = req.params;
     try {
-        const rs = await leagueService.getOneLeague(slug);
+        const rs = await teamService.getOneTeamBySlug(slug);
         res.status(200).json(rs);
     } catch (error) {
         res.status(500).json({error:error.message});
     }
 }
 
-export const createLeague = async(req,res)=>{
+export const createTeam = async(req,res)=>{
     try {
-        const rs = await leagueService.createLeague(req);
+        const rs = await teamService.createTeam(req);
         res.status(200).json(rs);
     } catch (error) {
         res.status(500).json({error: error.message});
     }
 }
 
-export const updateLeague = async(req, res) =>{
+export const updateTeam = async(req, res) =>{
     const {id} = req.params
     try {
-        const rs = await leagueService.updateLeague(id, req.body);
+        const rs = await teamService.updateTeam(id, req.body);
         res.status(200).json(rs);
     } catch (error) {
         res.status(500).json({error:error.message});
     }
 }
 
-export const deleteLeagueBySlug = async(req, res) =>{
+export const deleteTeamBySlug = async(req, res) =>{
     const {slug} = req.params;
     try {
-        await leagueService.deleteLeague(slug);
+        await teamService.deleteTeamBySlug(slug);
         
         res.status(200).send({message: "Delete successfully!"})
     } catch (error) {
-        if (error.message === "LEAGUE_NOT_FOUND") {
-        return res.status(404).json({
-            error: error.message
-        });
-    }
         res.status(500).send({error: error.message})
     }
 }
