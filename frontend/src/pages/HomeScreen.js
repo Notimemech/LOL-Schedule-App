@@ -1,4 +1,5 @@
 import {
+  Alert,
   Image,
   ImageBackground,
   Keyboard,
@@ -13,65 +14,80 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import Header from "../components/Header";
 import COLORS from "../style/color";
+import { Ionicons } from "@expo/vector-icons";
+import Icon from "react-native-vector-icons/FontAwesome";
+import HomeBanner from "../components/HomeBanner";
 
 export default function HomeScreen() {
   const navigation = useNavigation();
 
+  const topUpNavigate = () => {
+    Alert.alert("top up now");
+  };
+
+  const navigateTab = (name) => {
+    navigation.navigate(name);
+  };
+
   return (
-    <SafeAreaView style={style.container}>
+    <SafeAreaView
+      style={style.container}
+      edges={["top"]}
+    >
       <Header />
       <View style={style.body}>
-        <ScrollView>
-
+        <ScrollView showsVerticalScrollIndicator={false} style={{}}>
           <View style={style.bannerList}>
-
-            <View style={style.banner}>
-              <ImageBackground
-                source={require("../../assets/lol_background.jpg")}
-                resizeMode="cover"
-                style={style.bannerImage}
-                imageStyle={{ borderRadius: 10, zIndex: -10 }}
-              >
-                <View style={style.bannerInfo}>
-                  <Text style={style.text}>LOL Betting</Text>
-                  <TouchableOpacity
-                    style={style.button}
-                    onPress={() => {
-                      navigation.navigate("Schedule");
-                    }}
-                    activeOpacity={0.6}
-                  >
-                    <Text style={style.buttonInfo}>SET A BET</Text>
-                  </TouchableOpacity>
-                </View>
-              </ImageBackground>
+            <View style={style.bannerTitle}>
+              <Icon name="tags" style={[style.title, { fontSize: 35 }]} />
+              <Text style={style.title}>PROMOTIONS</Text>
             </View>
-
-            <View style={style.banner}>
-              <ImageBackground
-                source={require("../../assets/dota_2_background.jpg")}
-                resizeMode="cover"
-                style={style.bannerImage}
-                imageStyle={{ borderRadius: 8, zIndex: -10 }}
-              >
-                <View style={style.bannerInfo}>
-                  <Text style={style.text}>DOTA 2 Betting</Text>
-                  <TouchableOpacity
-                    style={style.button}
-                    onPress={() => {
-                      navigation.navigate("Schedule");
-                    }}
-                  >
-                    <Text style={style.buttonInfo}>SET A BET</Text>
-                  </TouchableOpacity>
-                </View>
-              </ImageBackground>
+            <HomeBanner
+              bannerInfo={"Free 100% for the first time top up"}
+              buttonInfo={"CLAIM OFFER"}
+              image={require("../../assets/100_first_time.jpg")}
+              onPress={topUpNavigate}
+            />
+            <HomeBanner
+              bannerInfo={"Free 10$ for the newbie"}
+              buttonInfo={"CLAIM OFFER"}
+              image={require("../../assets/100_first_time.webp")}
+              onPress={topUpNavigate}
+            />
+          </View>
+          <View style={style.bannerList}>
+            <View style={style.bannerTitle}>
+              <Ionicons
+                name={"game-controller-outline"}
+                color={COLORS.text}
+                style={style.title}
+              />
+              <Text style={style.title}>ESPORTS</Text>
+            </View>
+            <HomeBanner
+              bannerInfo={"LOL BETTING"}
+              buttonInfo={"SET A BET"}
+              image={require("../../assets/lol_background.jpg")}
+              onPress={() => navigateTab("Schedule")}
+            />
+            <HomeBanner
+              bannerInfo={"DOTA 2 BETTING"}
+              buttonInfo={"SET A BET"}
+              image={require("../../assets/dota_2_background.jpg")}
+              onPress={() => navigateTab("Schedule")}
+            />
+          </View>
+          <View style={style.bannerList}>
+            <View style={style.bannerTitle}>
+              <Ionicons
+                name={"star-outline"}
+                color={COLORS.text}
+                style={style.title}
+              />
+              <Text style={style.title}>FEATURES</Text>
             </View>
           </View>
-          <View>
-
-          </View>
-
+          <View style={{ height: 50 }} />
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -82,10 +98,10 @@ const style = StyleSheet.create({
   container: {
     backgroundColor: COLORS.background,
     flex: 1,
-    // padding: 10,
   },
   body: {
     flex: 1,
+    paddingTop: 100,
   },
   banner: {
     width: "100%",
@@ -93,23 +109,22 @@ const style = StyleSheet.create({
     borderStyle: "solid",
     borderWidth: 2,
     borderRadius: 10,
-    position: "relative",
-    top: 120,
     shadowColor: COLORS.primary,
-    // shadowOffset: {width: 2, height: 2},
-    shadowOpacity: 0.8,
-    shadowRadius: 7
+    // shadowOffset: {width: , height: 1},
+    shadowOpacity: 0.5,
+    shadowRadius: 7,
   },
   bannerList: {
     flexDirection: "column",
-    gap: 20,
-    paddingHorizontal: 10,
+    gap: 10,
+    paddingHorizontal: 20,
+    marginTop: 30,
   },
   bannerImage: {
     width: "100%",
     height: 200,
   },
-  bannerInfo:{
+  bannerInfo: {
     backgroundColor: "rgba(5,7,8,0.75)",
     borderRadius: 10,
     flex: 1,
@@ -125,9 +140,20 @@ const style = StyleSheet.create({
     height: 50,
     borderRadius: 8,
   },
-  buttonInfo:{
+  buttonInfo: {
     fontSize: 23,
-    fontWeight: "bold"    
+    fontWeight: "bold",
+  },
+  bannerTitle: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  title: {
+    color: COLORS.text,
+    fontSize: 40,
+    fontWeight: 900,
   },
   text: {
     color: COLORS.text,

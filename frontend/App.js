@@ -58,7 +58,7 @@ export default function App() {
           tabBarInactiveTintColor: COLORS.tabInactive,
 
           tabBarStyle: {
-            backgroundColor: COLORS.card,
+            backgroundColor: COLORS.tabBackground,
             height: 70,
           },
         })}>
