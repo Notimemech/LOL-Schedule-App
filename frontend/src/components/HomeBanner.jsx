@@ -30,13 +30,13 @@ const style = StyleSheet.create({
   banner: {
     width: "100%",
     borderColor: COLORS.glow,
-    borderStyle: "solid",
-    borderWidth: 2,
+    borderWidth: 1.3,
     borderRadius: 10,
     shadowColor: COLORS.primary,
-    // shadowOffset: {width: , height: 1},
+    shadowOffset: {width: 0, height: 0},
     shadowOpacity: 0.5,
-    shadowRadius: 7,
+    shadowRadius: 15,
+    marginVertical: 10,  
   },
   bannerImage: {
     width: "100%",
@@ -49,6 +49,7 @@ const style = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 20,
     gap: 10,
+    fontFamily:"Manrope"
   },
   button: {
     backgroundColor: COLORS.primary,
@@ -57,14 +58,17 @@ const style = StyleSheet.create({
     width: 150,
     height: 50,
     borderRadius: 8,
+    fontFamily:"Manrope"
   },
   buttonInfo: {
     fontSize: 23,
     fontWeight: "bold",
+    fontFamily:"ManropeExtraBold"
   },
   text: {
     color: COLORS.text,
     fontSize: 18,
+    fontFamily:"Manrope"
   },
 });
 

@@ -146,6 +146,22 @@ const COLORS = {
   // =========================
   skeletonBase: "#121A20",
   skeletonHighlight: "#1C2B33",
+
+  // =========================
+  // VIP / RANK
+  // =========================
+
+  // Gold VIP
+  vipGold: "#D4AF37",
+  vipGoldLight: "#F6D878",
+  vipGoldDark: "#A67C00",
+  vipGoldBg: "rgba(212,175,55,0.15)",
+
+  // Silver VIP
+  vipSilver: "#C0C0C0",
+  vipSilverLight: "#E5E7EB",
+  vipSilverDark: "#8A8F98",
+  vipSilverBg: "rgba(192,192,192,0.12)",
 };
 
 export default COLORS;

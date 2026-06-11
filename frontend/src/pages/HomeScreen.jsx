@@ -153,10 +153,11 @@ const style = StyleSheet.create({
   title: {
     color: COLORS.text,
     fontSize: 40,
-    fontWeight: 900,
+    fontFamily:"ManropeExtraBold"
   },
   text: {
     color: COLORS.text,
     fontSize: 18,
+    fontFamily:"Manrope"
   },
 });

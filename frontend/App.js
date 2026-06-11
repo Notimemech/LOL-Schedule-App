@@ -7,6 +7,7 @@ import {
   Image,
   Button,
   Pressable,
+  StatusBar,
 } from "react-native";
 import ScheduleScreen from "./src/pages/ScheduleScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -16,11 +17,28 @@ import { Ionicons } from "@expo/vector-icons";
 import ScheduleNavigation from "./src/navigation/ScheduleNavigation";
 import ProfileScreen from "./src/pages/ProfileScreen";
 import COLORS from "./src/style/color";
+import { useFonts } from "expo-font";
 
 const BottomTab = createBottomTabNavigator();
 
 export default function App() {
+
+  const [loaded] = useFonts({
+    Manrope: require("./assets/fonts/Manrope-Regular.ttf"),
+    ManropeBold: require("./assets/fonts/Manrope-Bold.ttf"),
+    ManropeExtraBold: require("./assets/fonts/Manrope-ExtraBold.ttf"),
+    Inter: require("./assets/fonts/Inter_18pt-Regular.ttf"),
+    SpaceGrotesk: require("./assets/fonts/SpaceGrotesk-Regular.ttf"),
+    SpaceGroteskBold: require("./assets/fonts/SpaceGrotesk-Bold.ttf"),
+  });
+
+  if (!loaded) return null;
+
   return (
+    <>
+    <StatusBar
+        barStyle="light-content"
+      />
     <NavigationContainer>
       <BottomTab.Navigator
       screenOptions={({ route }) => ({
@@ -67,6 +85,7 @@ export default function App() {
         <BottomTab.Screen name="Profile" component={ProfileScreen}/>
       </BottomTab.Navigator>
     </NavigationContainer>
+    </>
   );
 }
 
