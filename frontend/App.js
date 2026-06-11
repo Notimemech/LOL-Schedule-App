@@ -24,7 +24,7 @@ export default function App() {
     <NavigationContainer>
       <BottomTab.Navigator
       screenOptions={({ route }) => ({
-          headerShown: true,
+          headerShown: false,
 
           tabBarIcon: ({ focused, color, size }) => {
             let iconName;
@@ -62,8 +62,8 @@ export default function App() {
             height: 70,
           },
         })}>
-        <BottomTab.Screen name="Home" component={HomeScreen} options={{headerShown: false}}/>
-        <BottomTab.Screen name="Schedule" component={ScheduleNavigation} options={{ headerShown: false }}/>
+        <BottomTab.Screen name="Home" component={HomeScreen} />
+        <BottomTab.Screen name="Schedule" component={ScheduleNavigation} />
         <BottomTab.Screen name="Profile" component={ProfileScreen}/>
       </BottomTab.Navigator>
     </NavigationContainer>
