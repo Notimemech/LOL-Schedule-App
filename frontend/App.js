@@ -22,7 +22,6 @@ import { useFonts } from "expo-font";
 const BottomTab = createBottomTabNavigator();
 
 export default function App() {
-
   const [loaded] = useFonts({
     Manrope: require("./assets/fonts/Manrope-Regular.ttf"),
     ManropeBold: require("./assets/fonts/Manrope-Bold.ttf"),
@@ -36,55 +35,46 @@ export default function App() {
 
   return (
     <>
-    <StatusBar
-        barStyle="light-content"
-      />
-    <NavigationContainer>
-      <BottomTab.Navigator
-      screenOptions={({ route }) => ({
-          headerShown: false,
+      <StatusBar barStyle="light-content" />
+      <NavigationContainer>
+        <BottomTab.Navigator
+          screenOptions={({ route }) => ({
+            headerShown: false,
 
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName;
+            tabBarIcon: ({ focused, color, size }) => {
+              let iconName;
 
-            if (route.name === "Home") {
-              iconName = focused
-                ? "home"
-                : "home-outline";
-            }
+              if (route.name === "Home") {
+                iconName = focused ? "home" : "home-outline";
+              } else if (route.name === "ScheduleStack") {
+                iconName = focused ? "calendar" : "calendar-outline";
+              } else if (route.name === "Profile") {
+                iconName = focused ? "person-circle-outline" : "person-outline";
+              }
 
-            else if (route.name === "Schedule") {
-              iconName = focused
-                ? "calendar"
-                : "calendar-outline";
-            }
+              return <Ionicons name={iconName} size={size} color={color} />;
+            },
 
-            else if (route.name === "Profile"){
-              iconName = focused ? "person-circle-outline" : "person-outline";
-            }
+            tabBarActiveTintColor: COLORS.tabActive,
+            tabBarInactiveTintColor: COLORS.tabInactive,
 
-            return (
-              <Ionicons
-                name={iconName}
-                size={size}
-                color={color}
-              />
-            );
-          },
-
-          tabBarActiveTintColor: COLORS.tabActive,
-          tabBarInactiveTintColor: COLORS.tabInactive,
-
-          tabBarStyle: {
-            backgroundColor: COLORS.tabBackground,
-            height: 70,
-          },
-        })}>
-        <BottomTab.Screen name="Home" component={HomeScreen} />
-        <BottomTab.Screen name="Schedule" component={ScheduleNavigation} />
-        <BottomTab.Screen name="Profile" component={ProfileScreen}/>
-      </BottomTab.Navigator>
-    </NavigationContainer>
+            tabBarStyle: {
+              backgroundColor: COLORS.tabBackground,
+              height: 70,
+            },
+          })}
+        >
+          <BottomTab.Screen name="Home" component={HomeScreen} />
+          <BottomTab.Screen
+            name="ScheduleStack"
+            component={ScheduleNavigation}
+            options={{
+              tabBarLabel: "Schedule",
+            }}
+          />
+          <BottomTab.Screen name="Profile" component={ProfileScreen} />
+        </BottomTab.Navigator>
+      </NavigationContainer>
     </>
   );
 }

@@ -33,9 +33,9 @@ const style = StyleSheet.create({
     borderWidth: 1.3,
     borderRadius: 10,
     shadowColor: COLORS.primary,
-    shadowOffset: {width: 0, height: 0},
+    shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.5,
-    shadowRadius: 15,
+    shadowRadius: 10,
     marginVertical: 10,  
   },
   bannerImage: {
@@ -43,7 +43,7 @@ const style = StyleSheet.create({
     height: 200,
   },
   bannerInfo: {
-    backgroundColor: "rgba(5,7,8,0.75)",
+    backgroundColor: COLORS.overlay,
     borderRadius: 10,
     flex: 1,
     justifyContent: "center",
