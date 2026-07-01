@@ -9,14 +9,14 @@ import {
   Pressable,
   StatusBar,
 } from "react-native";
-import ScheduleScreen from "./src/pages/ScheduleScreen";
+import ScheduleScreen from "./src/screens/matches/ScheduleScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer } from "@react-navigation/native";
-import HomeScreen from "./src/pages/HomeScreen";
+import HomeScreen from "./src/screens/home/HomeScreen";
 import { Ionicons } from "@expo/vector-icons";
 import ScheduleNavigation from "./src/navigation/ScheduleNavigation";
-import ProfileScreen from "./src/pages/ProfileScreen";
-import COLORS from "./src/style/color";
+import ProfileScreen from "./src/screens/profile/ProfileScreen";
+import COLORS from "./src/styles/colors";
 import { useFonts } from "expo-font";
 
 const BottomTab = createBottomTabNavigator();

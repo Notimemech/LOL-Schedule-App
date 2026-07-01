@@ -12,11 +12,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import Header from "../components/Header";
-import COLORS from "../style/color";
+import Header from "../../components/common/Header";
+import COLORS from "../../styles/colors";
 import { Ionicons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome";
-import HomeBanner from "../components/HomeBanner";
+import HomeBanner from "./HomeBanner";
 
 export default function HomeScreen() {
   const navigation = useNavigation();

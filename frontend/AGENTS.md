@@ -56,7 +56,7 @@ src/
 
     app/
 
-    features/
+    screens/
 
         auth/
 
@@ -82,6 +82,8 @@ src/
 
     services/
 
+        api/
+
     hooks/
 
     navigation/
@@ -103,25 +105,21 @@ Business logic belongs inside:
 
 ---
 
-# Feature Structure
+# Screen Structure
 
-Each feature should follow:
+Create new folder in screens/ for each screen if not exist. 
 
-feature/
+For each sub screens of one main screens, create new .jsx files in screens/ of that feature. E.g.
 
-    api/
+screens/
 
-    components/
+    home/
 
-    hooks/
+        HomeScreen.jsx
 
-    screens/
+        BannerList.jsx
 
-    types/
-
-    utils/
-
-    constants/
+        HomeBanner.jsx
 
 Never import internal files from another feature.
 

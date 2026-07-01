@@ -1,7 +1,7 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import React from 'react'
-import ScheduleScreen from '../pages/ScheduleScreen'
-import DetailScreen from '../pages/DetailScreen'
+import ScheduleScreen from '../screens/matches/ScheduleScreen'
+import DetailScreen from '../screens/matches/DetailScreen'
 
 const Stack = createNativeStackNavigator()
 

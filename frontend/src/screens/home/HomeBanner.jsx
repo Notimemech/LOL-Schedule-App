@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, ImageBackground, TouchableOpacity } from "react-native";
 import React from "react";
-import COLORS from "../style/color";
+import COLORS from "../../styles/colors";
 
 const HomeBanner = ({ bannerInfo, buttonInfo, image, onPress }) => {
   return (

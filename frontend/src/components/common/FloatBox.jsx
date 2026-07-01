@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from "react-native";
 import React from "react";
-import COLORS from "../style/color";
+import COLORS from "../../styles/colors";
 
 const FloatBox = ({ children, style }) => {
   return <View style={[styles.box, style]}>{children}</View>;

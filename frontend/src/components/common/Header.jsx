@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import React from "react";
-import COLORS from "../style/color";
+import COLORS from "../../styles/colors";
 import Icon from "react-native-vector-icons/FontAwesome";
 
 const Header = () => {

@@ -18,6 +18,7 @@ The interface should be:
 - Mobile-first
 - Consistent
 - Accessible
+- Cyperpunk style
 
 Avoid visual clutter.
 

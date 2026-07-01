@@ -7,8 +7,8 @@ import {
 } from "react-native";
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import FloatBox from "../components/FloatBox";
-import COLORS from "../style/color";
+import FloatBox from "../../components/common/FloatBox";
+import COLORS from "../../styles/colors";
 import { Ionicons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome6";
 

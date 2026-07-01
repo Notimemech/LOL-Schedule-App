@@ -8,7 +8,7 @@ import {
   Pressable,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { data } from "../data";
+import { data } from "../../constants/data";
 
 export default function ScheduleScreen() {
   const [games, setGames] = useState([]);
