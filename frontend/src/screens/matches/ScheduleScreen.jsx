@@ -7,8 +7,12 @@ import {
   Image,
   Pressable,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import ContentHeader from "../../components/common/ContentHeader";
+import { scheduleStyles as styles } from "../../styles/matches.styles";
 import { useNavigation } from "@react-navigation/native";
 import { data } from "../../constants/data";
+import COLORS from "../../styles/colors";
 
 export default function ScheduleScreen() {
   const [games, setGames] = useState([]);
@@ -49,94 +53,59 @@ export default function ScheduleScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* <View style={styles.header}>
-        <Text>LOL Schedule</Text>
-      </View> */}
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <ContentHeader title="SCHEDULE" />
       <ScrollView
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
+        showsVerticalScrollIndicator={false}
       >
         {games.map((game) => (
-          <View key={game.matchId} style={{ paddingVertical: 10 }}>
-            <Text>League Name: {game.leagueName}</Text>
-            <Text>Tournament Name: {game.tournamentName}</Text>
-            <Text>Time: {formatDate(game.startTime)}</Text>
-            <View>
-              <View style={styles.gameCard}>
-                <View style={styles.teamCard}>
-                  <Image
-                    source={{ uri: game.team1.logoUrl }}
-                    style={{ width: 100, height: 100 }}
-                  />
-                  <Text>{game.team1.code}</Text>
-                </View>
-                <Text> VS </Text>
-
-                <View style={styles.teamCard}>
-                  <Image
-                    source={{ uri: game.team2.logoUrl }}
-                    style={{ width: 100, height: 100 }}
-                  />
-                  <Text>{game.team2.code}</Text>
-                </View>
-              </View>
-              <Pressable
-                style={{
-                  borderColor: "#4BF0FC",
-                  borderWidth: 1,
-                  alignItems: "center",
-                }}
-                onPress={() => navigation.navigate('Detail')}
-              >
-                <Text>Detail</Text>
-              </Pressable>
+          <View key={game.matchId} style={styles.matchContainer}>
+            <View style={styles.matchHeader}>
+              <Text style={styles.leagueText}>{game.leagueName?.toUpperCase()}</Text>
+              <Text style={styles.tournamentText}>{game.tournamentName?.toUpperCase()}</Text>
             </View>
+            <View style={styles.timeBadge}>
+              <Text style={styles.timeText}>{formatDate(game.startTime)}</Text>
+            </View>
+
+            <View style={styles.gameCard}>
+              <View style={styles.teamCard}>
+                <Image
+                  source={{ uri: game.team1.logoUrl }}
+                  style={styles.teamLogo}
+                  resizeMode="contain"
+                />
+                <Text style={styles.teamCode}>{game.team1.code}</Text>
+              </View>
+
+              <View style={styles.vsContainer}>
+                <Text style={styles.vsText}>VS</Text>
+              </View>
+
+              <View style={styles.teamCard}>
+                <Image
+                  source={{ uri: game.team2.logoUrl }}
+                  style={styles.teamLogo}
+                  resizeMode="contain"
+                />
+                <Text style={styles.teamCode}>{game.team2.code}</Text>
+              </View>
+            </View>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.detailButton,
+                pressed && styles.detailButtonPressed
+              ]}
+              onPress={() => navigation.navigate('Detail', { match: game })}
+            >
+              <Text style={styles.detailButtonText}>VIEW MATCH TERMINAL</Text>
+            </Pressable>
           </View>
         ))}
       </ScrollView>
-      {/* <View style={styles.footer}>
-        <Text>LOL Schedule</Text>
-      </View> */}
-    </View>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#999",
-  },
-  header: {
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingTop: 50,
-    paddingBottom: 20,
-  },
-  body: {
-    flex: 1,
-  },
-  footer: {
-    backgroundColor: "#fff",
-    alignItems: "center",
-    justifyContent: "center",
-    height: 100,
-  },
-  bodyContent: {
-    backgroundColor: "#999",
-    padding: 16,
-  },
-  gameCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    justifyContent: "space-around",
-    paddingVertical: 10,
-  },
-  teamCard: {
-    flexDirection: "column",
-    alignItems: "center",
-    gap: 10,
-  },
-});

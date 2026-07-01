@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import ScheduleScreen from "./src/screens/matches/ScheduleScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, getFocusedRouteNameFromRoute } from "@react-navigation/native";
 import HomeScreen from "./src/screens/home/HomeScreen";
 import { Ionicons } from "@expo/vector-icons";
 import ScheduleNavigation from "./src/navigation/ScheduleNavigation";
@@ -68,8 +68,12 @@ export default function App() {
           <BottomTab.Screen
             name="ScheduleStack"
             component={ScheduleNavigation}
-            options={{
-              tabBarLabel: "Schedule",
+            options={({ route }) => {
+              const routeName = getFocusedRouteNameFromRoute(route) ?? 'Schedule';
+              return {
+                tabBarLabel: "Schedule",
+                tabBarStyle: routeName === 'Detail' ? { display: 'none' } : { backgroundColor: COLORS.tabBackground, height: 70 },
+              };
             }}
           />
           <BottomTab.Screen name="Profile" component={ProfileScreen} />
@@ -79,4 +83,3 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({});

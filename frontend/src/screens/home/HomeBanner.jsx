@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, ImageBackground, TouchableOpacity } from "react-native";
 import React from "react";
 import COLORS from "../../styles/colors";
+import { homeBannerStyles as style } from "../../styles/home.styles";
 
 const HomeBanner = ({ bannerInfo, buttonInfo, image, onPress }) => {
   return (
@@ -9,16 +10,16 @@ const HomeBanner = ({ bannerInfo, buttonInfo, image, onPress }) => {
         source={image}
         resizeMode="cover"
         style={style.bannerImage}
-        imageStyle={{ borderRadius: 10, zIndex: -10 }}
+        imageStyle={{ borderRadius: 6, zIndex: -10 }}
       >
         <View style={style.bannerInfo}>
-          <Text style={style.text}>{bannerInfo}</Text>
+          <Text style={style.text}>{bannerInfo.toUpperCase()}</Text>
           <TouchableOpacity
             style={style.button}
             onPress={onPress}
             activeOpacity={0.6}
           >
-            <Text style={style.buttonInfo}>{buttonInfo}</Text>
+            <Text style={style.buttonInfo}>{buttonInfo.toUpperCase()}</Text>
           </TouchableOpacity>
         </View>
       </ImageBackground>
@@ -26,50 +27,6 @@ const HomeBanner = ({ bannerInfo, buttonInfo, image, onPress }) => {
   );
 };
 
-const style = StyleSheet.create({
-  banner: {
-    width: "100%",
-    borderColor: COLORS.glow,
-    borderWidth: 1.3,
-    borderRadius: 10,
-    shadowColor: COLORS.primary,
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-    marginVertical: 10,  
-  },
-  bannerImage: {
-    width: "100%",
-    height: 200,
-  },
-  bannerInfo: {
-    backgroundColor: COLORS.overlay,
-    borderRadius: 10,
-    flex: 1,
-    justifyContent: "center",
-    paddingHorizontal: 20,
-    gap: 10,
-    fontFamily:"Manrope"
-  },
-  button: {
-    backgroundColor: COLORS.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    width: 150,
-    height: 50,
-    borderRadius: 8,
-    fontFamily:"Manrope"
-  },
-  buttonInfo: {
-    fontSize: 23,
-    fontWeight: "bold",
-    fontFamily:"ManropeExtraBold"
-  },
-  text: {
-    color: COLORS.text,
-    fontSize: 18,
-    fontFamily:"Manrope"
-  },
-});
+
 
 export default HomeBanner;
