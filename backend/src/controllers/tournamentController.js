@@ -1,55 +1,50 @@
 import * as tournamentServices from '../services/tournamentService.js';
+import { sendSuccess } from '../utils/responseHandler.js';
 
-export const getAllTournament = async(req,res)=>{
+export const getAllTournament = async(req, res, next)=>{
     try {
         const rs = await tournamentServices.getAllTournament();
-        res.status(200).json(rs);
+        sendSuccess(res, 200, 'Tournaments retrieved successfully', rs);
     } catch (error) {
-        res.status(500).json({error: error.message});
+        next(error);
     }
 }
 
-export const getTournamentById = async (req, res) =>{
+export const getTournamentById = async (req, res, next) =>{
     const {id} = req.params;
     try {
         const rs = await tournamentServices.getOneTournament(id);
-        res.status(200).json(rs);
+        sendSuccess(res, 200, 'Tournament retrieved successfully', rs);
     } catch (error) {
-        res.status(500).json({error:error.message});
+        next(error);
     }
 }
 
-export const createTournament = async(req,res)=>{
+export const createTournament = async(req, res, next)=>{
     try {
         const rs = await tournamentServices.createTournament(req);
-        res.status(200).json(rs);
+        sendSuccess(res, 201, 'Tournament created successfully', rs);
     } catch (error) {
-        res.status(500).json({error: error.message});
+        next(error);
     }
 }
 
-export const updateTournaments = async(req, res) =>{
+export const updateTournaments = async(req, res, next) =>{
     const {id} = req.params
     try {
         const rs = await tournamentServices.updateTournaments(id, req.body);
-        res.status(200).json(rs);
+        sendSuccess(res, 200, 'Tournament updated successfully', rs);
     } catch (error) {
-        res.status(500).json({error:error.message});
+        next(error);
     }
 }
 
-export const deleteTournaments = async(req, res) =>{
+export const deleteTournaments = async(req, res, next) =>{
     const {id} = req.params;
     try {
         await tournamentServices.deleteTournaments(id);
-        
-        res.status(200).send({message: "Delete successfully!"})
+        sendSuccess(res, 200, 'Delete successfully!');
     } catch (error) {
-        if (error.message === "TOURNAMENT_NOT_FOUND") {
-        return res.status(404).json({
-            error: error.message
-        });
-    }
-        res.status(500).send({error: error.message})
+        next(error);
     }
 }

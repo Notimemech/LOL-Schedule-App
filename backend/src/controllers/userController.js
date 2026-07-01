@@ -1,55 +1,53 @@
 import * as userService from '../services/userService.js';
+import { sendSuccess } from '../utils/responseHandler.js';
 
-export const getAllUser = async(req,res)=>{
+export const getAllUser = async(req, res, next)=>{
     try {
         const rs = await userService.getAllUser();
-        res.status(200).json(rs);
+        sendSuccess(res, 200, 'Users retrieved successfully', rs);
     } catch (error) {
-        res.status(500).json({error: error.message});
+        next(error);
     }
 }
 
-export const getUserById = async (req, res) =>{
+export const getUserById = async (req, res, next) =>{
     const {id} = req.params;
     try {
         const rs = await userService.getOneUser(id);
-        res.status(200).json(rs);
+        sendSuccess(res, 200, 'User retrieved successfully', rs);
     } catch (error) {
-        res.status(500).json({error:error.message});
+        next(error);
     }
 }
 
-export const createUser = async(req,res)=>{
+export const createUser = async(req, res, next)=>{
     try {
         const rs = await userService.createUser(req);
-        res.status(200).json(rs);
+        sendSuccess(res, 201, 'User created successfully', rs);
     } catch (error) {
-        res.status(500).json({error: error.message});
+        next(error);
     }
 }
 
-export const updateUser = async(req, res) =>{
+export const updateUser = async(req, res, next) =>{
     const {id} = req.params
     try {
         const rs = await userService.updateUser(id, req.body);
-        res.status(200).json(rs);
+        sendSuccess(res, 200, 'User updated successfully', rs);
     } catch (error) {
-        res.status(500).json({error:error.message});
+        next(error);
     }
 }
 
-export const deleteUser = async(req, res) =>{
+export const deleteUser = async(req, res, next) =>{
     const {id} = req.params;
     try {
         await userService.deleteUser(id);
-        
-        res.status(200).send({message: "Delete successfully!"})
+        sendSuccess(res, 200, 'Delete successfully!');
     } catch (error) {
-        if (error.message === "USER_NOT_FOUND") {
-        return res.status(404).json({
-            error: error.message
-        });
-    }
-        res.status(500).send({error: error.message})
+        // We let the global error handler handle everything
+        // Note: the original code returned 404 for 'USER_NOT_FOUND', which we could convert to an AppError in the service,
+        // but for now, passing to next(error) is consistent.
+        next(error);
     }
 }

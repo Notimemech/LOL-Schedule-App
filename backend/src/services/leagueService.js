@@ -1,4 +1,4 @@
-import { pool } from "../db/db.js";
+import { pool } from "../config/db.config.js";
 
 export const getAllLeagues = async () => {
   const query = "SELECT * FROM leagues";

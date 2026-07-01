@@ -1,55 +1,50 @@
 import * as leagueService from '../services/leagueService.js';
+import { sendSuccess } from '../utils/responseHandler.js';
 
-export const getAllLeagues = async(req,res)=>{
+export const getAllLeagues = async(req, res, next)=>{
     try {
         const rs = await leagueService.getAllLeagues();
-        res.status(200).json(rs);
+        sendSuccess(res, 200, 'Leagues retrieved successfully', rs);
     } catch (error) {
-        res.status(500).json({error: error.message});
+        next(error);
     }
 }
 
-export const getLeagueBySlug = async (req, res) =>{
+export const getLeagueBySlug = async (req, res, next) =>{
     const {slug} = req.params;
     try {
         const rs = await leagueService.getOneLeague(slug);
-        res.status(200).json(rs);
+        sendSuccess(res, 200, 'League retrieved successfully', rs);
     } catch (error) {
-        res.status(500).json({error:error.message});
+        next(error);
     }
 }
 
-export const createLeague = async(req,res)=>{
+export const createLeague = async(req, res, next)=>{
     try {
         const rs = await leagueService.createLeague(req);
-        res.status(200).json(rs);
+        sendSuccess(res, 201, 'League created successfully', rs);
     } catch (error) {
-        res.status(500).json({error: error.message});
+        next(error);
     }
 }
 
-export const updateLeague = async(req, res) =>{
+export const updateLeague = async(req, res, next) =>{
     const {id} = req.params
     try {
         const rs = await leagueService.updateLeague(id, req.body);
-        res.status(200).json(rs);
+        sendSuccess(res, 200, 'League updated successfully', rs);
     } catch (error) {
-        res.status(500).json({error:error.message});
+        next(error);
     }
 }
 
-export const deleteLeagueBySlug = async(req, res) =>{
+export const deleteLeagueBySlug = async(req, res, next) =>{
     const {slug} = req.params;
     try {
         await leagueService.deleteLeague(slug);
-        
-        res.status(200).send({message: "Delete successfully!"})
+        sendSuccess(res, 200, 'Delete successfully!');
     } catch (error) {
-        if (error.message === "LEAGUE_NOT_FOUND") {
-        return res.status(404).json({
-            error: error.message
-        });
-    }
-        res.status(500).send({error: error.message})
+        next(error);
     }
 }

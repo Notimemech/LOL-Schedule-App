@@ -1,50 +1,50 @@
 import * as teamService from '../services/teamService.js';
+import { sendSuccess } from '../utils/responseHandler.js';
 
-export const getAllTeams = async(req,res)=>{
+export const getAllTeams = async(req, res, next)=>{
     try {
         const rs = await teamService.getAllTeams();
-        res.status(200).json(rs);
+        sendSuccess(res, 200, 'Teams retrieved successfully', rs);
     } catch (error) {
-        res.status(500).json({error: error.message});
+        next(error);
     }
 }
 
-export const getTeamBySlug = async (req, res) =>{
+export const getTeamBySlug = async (req, res, next) =>{
     const {slug} = req.params;
     try {
         const rs = await teamService.getOneTeamBySlug(slug);
-        res.status(200).json(rs);
+        sendSuccess(res, 200, 'Team retrieved successfully', rs);
     } catch (error) {
-        res.status(500).json({error:error.message});
+        next(error);
     }
 }
 
-export const createTeam = async(req,res)=>{
+export const createTeam = async(req, res, next)=>{
     try {
         const rs = await teamService.createTeam(req);
-        res.status(200).json(rs);
+        sendSuccess(res, 201, 'Team created successfully', rs);
     } catch (error) {
-        res.status(500).json({error: error.message});
+        next(error);
     }
 }
 
-export const updateTeam = async(req, res) =>{
+export const updateTeam = async(req, res, next) =>{
     const {id} = req.params
     try {
         const rs = await teamService.updateTeam(id, req.body);
-        res.status(200).json(rs);
+        sendSuccess(res, 200, 'Team updated successfully', rs);
     } catch (error) {
-        res.status(500).json({error:error.message});
+        next(error);
     }
 }
 
-export const deleteTeamBySlug = async(req, res) =>{
+export const deleteTeamBySlug = async(req, res, next) =>{
     const {slug} = req.params;
     try {
         await teamService.deleteTeamBySlug(slug);
-        
-        res.status(200).send({message: "Delete successfully!"})
+        sendSuccess(res, 200, 'Delete successfully!');
     } catch (error) {
-        res.status(500).send({error: error.message})
+        next(error);
     }
 }
