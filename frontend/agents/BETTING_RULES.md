@@ -16,8 +16,8 @@ Business logic must never live inside UI components.
 
 All betting logic belongs inside:
 
-- feature/services/
-- feature/utils/
+- src/services/
+- src/utils/
 
 Screens and components should only display betting information.
 

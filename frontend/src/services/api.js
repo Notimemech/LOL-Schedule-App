@@ -4,7 +4,7 @@ import axios from 'axios';
 const api = axios.create({
   // Use your computer's local IP address if running on a physical device
   // Defaulting to localhost for emulators
-  baseURL: 'http://10.0.2.2:3000/api', 
+  baseURL: 'http://192.168.2.65:9999/api', 
   timeout: 10000, // 10 seconds timeout
   headers: {
     'Content-Type': 'application/json',

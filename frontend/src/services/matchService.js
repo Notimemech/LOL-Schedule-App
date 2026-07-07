@@ -1,0 +1,49 @@
+import api from './api';
+
+export const getMatches = async () => {
+  try {
+    const response = await api.get('/matches');
+    if (response.success && response.data) {
+      // Map database format to UI expected format
+      return response.data.map(match => ({
+        matchId: match.id,
+        leagueName: match.league_name,
+        tournamentName: match.tournament_name,
+        blockName: match.block_name, 
+        startTime: match.scheduled_at,
+        team1: {
+          id: match.team1_id,
+          name: match.team1_name,
+          logoUrl: match.team1_logo,
+          code: match.team1_code,
+          slug: match.team1_slug,
+        },
+        team2: {
+          id: match.team2_id,
+          name: match.team2_name,
+          logoUrl: match.team2_logo,
+          code: match.team2_code,
+          slug: match.team2_slug,
+        },
+        team1Score: match.team1_score,
+        team2Score: match.team2_score,
+        winnerSlug: match.winner_slug,
+        state: match.state,
+      }));
+    }
+    return [];
+  } catch (error) {
+    console.error('Failed to get matches:', error);
+    throw error;
+  }
+};
+
+export const getMatchGames = async (matchId) => {
+  try {
+    const response = await api.get(`/games/match/${matchId}`);
+    return response.success ? response.data : [];
+  } catch (error) {
+    console.error('Failed to get match games:', error);
+    throw error;
+  }
+};

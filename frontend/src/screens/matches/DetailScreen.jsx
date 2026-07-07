@@ -1,14 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   Image,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform
 } from "react-native";
@@ -16,23 +13,32 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import ContentHeader from "../../components/common/ContentHeader";
 import COLORS from "../../styles/colors";
-import { formatMoney, calculatePayout, parseWagerInput } from "../../utils/bettingUtils";
-import { placeBet } from "../../services/bettingService";
+import { getMatchMarketsAndOdds } from "../../services/bettingService";
 import { detailStyles as styles } from "../../styles/matches.styles";
 
 export default function DetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const match = route.params?.match;
+  
+  const [markets, setMarkets] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [selectedOutcome, setSelectedOutcome] = useState(null);
-  const [wagerInput, setWagerInput] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  useEffect(() => {
+    if (match?.matchId) {
+      loadMarkets();
+    }
+  }, [match]);
 
-  // Mock odds for demonstration
-  const ODDS = {
-    team1: 1.85,
-    team2: 2.10
+  const loadMarkets = async () => {
+    try {
+      const data = await getMatchMarketsAndOdds(match.matchId);
+      setMarkets(data);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!match) {
@@ -46,31 +52,17 @@ export default function DetailScreen() {
     );
   }
 
-  const wagerCents = parseWagerInput(wagerInput);
-  const potentialPayoutCents = selectedOutcome ? calculatePayout(wagerCents, ODDS[selectedOutcome]) : 0;
-
-  const handlePlaceBet = async () => {
-    if (!selectedOutcome) {
-      Alert.alert("Selection Required", "Please select an outcome to bet on.");
-      return;
-    }
-    if (wagerCents <= 0) {
-      Alert.alert("Invalid Wager", "Please enter a valid wager amount.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const result = await placeBet(match.matchId, selectedOutcome, wagerCents);
-      Alert.alert("Success", result.message, [
-        { text: "OK", onPress: () => navigation.goBack() }
-      ]);
-    } catch (error) {
-      Alert.alert("Bet Rejected", error.message);
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handlePlaceABetPress = () => {
+    navigation.navigate("PlaceBet", { match, markets });
   };
+
+  // Helper to format market type string nicely
+  const formatMarketName = (marketType) => {
+    return marketType.replace(/_/g, " ").toUpperCase();
+  };
+
+  const mainMarket = markets.find(m => m.market_type === 'winner_team');
+  const secondaryMarkets = markets.filter(m => m.market_type !== 'winner_team');
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -98,62 +90,64 @@ export default function DetailScreen() {
             </View>
           </View>
 
-          {/* MARKET SECTION */}
-          <Text style={styles.sectionTitle}>MATCH WINNER</Text>
-          <View style={styles.marketRow}>
-            <TouchableOpacity
-              style={[styles.oddBox, selectedOutcome === 'team1' && styles.oddBoxSelected]}
-              onPress={() => setSelectedOutcome('team1')}
-            >
-              <Text style={styles.oddTeamCode}>{match.team1.code}</Text>
-              <Text style={styles.oddValue}>{ODDS.team1.toFixed(2)}</Text>
-            </TouchableOpacity>
+          {isLoading ? (
+            <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
+          ) : (
+            <>
+              {/* MARKET SECTION */}
+              {mainMarket && (
+                <>
+                  <Text style={styles.sectionTitle}>MATCH WINNER</Text>
+                  <View style={styles.marketRow}>
+                    {mainMarket.odds.map(odd => {
+                      // odd.option_key is the slug
+                      const teamCode = odd.option_key === match.team1.slug ? match.team1.code : match.team2.code;
+                      return (
+                        <View key={odd.id} style={styles.oddBox}>
+                          <Text style={styles.oddTeamCode}>{teamCode}</Text>
+                          <Text style={styles.oddValue}>{parseFloat(odd.odd_value).toFixed(2)}</Text>
+                        </View>
+                      )
+                    })}
+                  </View>
+                </>
+              )}
 
-            <TouchableOpacity
-              style={[styles.oddBox, selectedOutcome === 'team2' && styles.oddBoxSelected]}
-              onPress={() => setSelectedOutcome('team2')}
-            >
-              <Text style={styles.oddTeamCode}>{match.team2.code}</Text>
-              <Text style={styles.oddValue}>{ODDS.team2.toFixed(2)}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* BET SLIP */}
-          {selectedOutcome && (
-            <View style={styles.betSlipBox}>
-              <Text style={styles.betSlipTitle}>BET SLIP</Text>
-
-              <View style={styles.inputRow}>
-                <Text style={styles.currencyPrefix}>$</Text>
-                <TextInput
-                  style={styles.wagerInput}
-                  placeholder="0.00"
-                  placeholderTextColor={COLORS.textMuted}
-                  keyboardType="decimal-pad"
-                  value={wagerInput}
-                  onChangeText={setWagerInput}
-                  editable={!isSubmitting}
-                />
-              </View>
-
-              <View style={styles.payoutRow}>
-                <Text style={styles.payoutLabel}>POTENTIAL PAYOUT:</Text>
-                <Text style={styles.payoutValue}>${formatMoney(potentialPayoutCents)}</Text>
-              </View>
-
-              <TouchableOpacity
-                style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
-                onPress={handlePlaceBet}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color={COLORS.background} />
-                ) : (
-                  <Text style={styles.submitButtonText}>CONFIRM BET</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+              {secondaryMarkets.length > 0 && (
+                <>
+                  <Text style={[styles.sectionTitle, { marginTop: 16 }]}>SECONDARY MARKETS</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                    {secondaryMarkets.map(market => (
+                      <View key={market.id} style={{ width: '48%', backgroundColor: COLORS.card, borderRadius: 8, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border }}>
+                        <Text style={{ fontFamily: "SpaceGroteskBold", fontSize: 12, color: COLORS.textMuted, marginBottom: 8, textAlign: 'center' }}>
+                          {formatMarketName(market.market_type)}
+                        </Text>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                          {market.odds.map(odd => {
+                            const teamCode = odd.option_key === match.team1.slug ? match.team1.code : match.team2.code;
+                            return (
+                              <View key={odd.id} style={{ alignItems: 'center' }}>
+                                <Text style={{ fontFamily: "ManropeBold", fontSize: 10, color: COLORS.textMuted }}>{teamCode}</Text>
+                                <Text style={{ fontFamily: "SpaceGroteskBold", fontSize: 14, color: COLORS.text }}>{parseFloat(odd.odd_value).toFixed(2)}</Text>
+                              </View>
+                            )
+                          })}
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
+            </>
           )}
+
+          <TouchableOpacity
+            style={[styles.submitButton, markets.length === 0 && { opacity: 0.5 }]}
+            onPress={handlePlaceABetPress}
+            disabled={markets.length === 0}
+          >
+            <Text style={styles.submitButtonText}>PLACE A BET</Text>
+          </TouchableOpacity>
 
         </ScrollView>
       </KeyboardAvoidingView>

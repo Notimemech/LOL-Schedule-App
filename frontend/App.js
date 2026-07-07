@@ -11,15 +11,59 @@ import {
 } from "react-native";
 import ScheduleScreen from "./src/screens/matches/ScheduleScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { NavigationContainer, getFocusedRouteNameFromRoute } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { NavigationContainer } from "@react-navigation/native";
 import HomeScreen from "./src/screens/home/HomeScreen";
 import { Ionicons } from "@expo/vector-icons";
 import ScheduleNavigation from "./src/navigation/ScheduleNavigation";
 import ProfileScreen from "./src/screens/profile/ProfileScreen";
+import DetailScreen from "./src/screens/matches/DetailScreen";
+import PlaceBetScreen from "./src/screens/betting/PlaceBetScreen";
 import COLORS from "./src/styles/colors";
 import { useFonts } from "expo-font";
 
 const BottomTab = createBottomTabNavigator();
+const RootStack = createNativeStackNavigator();
+
+function TabNavigator() {
+  return (
+    <BottomTab.Navigator
+      screenOptions={({ route }) => ({
+        headerShown: false,
+
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          if (route.name === "Home") {
+            iconName = focused ? "home" : "home-outline";
+          } else if (route.name === "ScheduleStack") {
+            iconName = focused ? "calendar" : "calendar-outline";
+          } else if (route.name === "Profile") {
+            iconName = focused ? "person-circle-outline" : "person-outline";
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+
+        tabBarActiveTintColor: COLORS.tabActive,
+        tabBarInactiveTintColor: COLORS.tabInactive,
+
+        tabBarStyle: {
+          backgroundColor: COLORS.tabBackground,
+          height: 70,
+        },
+      })}
+    >
+      <BottomTab.Screen name="Home" component={HomeScreen} />
+      <BottomTab.Screen
+        name="ScheduleStack"
+        component={ScheduleNavigation}
+        options={{ tabBarLabel: "Schedule" }}
+      />
+      <BottomTab.Screen name="Profile" component={ProfileScreen} />
+    </BottomTab.Navigator>
+  );
+}
 
 export default function App() {
   const [loaded] = useFonts({
@@ -37,47 +81,11 @@ export default function App() {
     <>
       <StatusBar barStyle="light-content" />
       <NavigationContainer>
-        <BottomTab.Navigator
-          screenOptions={({ route }) => ({
-            headerShown: false,
-
-            tabBarIcon: ({ focused, color, size }) => {
-              let iconName;
-
-              if (route.name === "Home") {
-                iconName = focused ? "home" : "home-outline";
-              } else if (route.name === "ScheduleStack") {
-                iconName = focused ? "calendar" : "calendar-outline";
-              } else if (route.name === "Profile") {
-                iconName = focused ? "person-circle-outline" : "person-outline";
-              }
-
-              return <Ionicons name={iconName} size={size} color={color} />;
-            },
-
-            tabBarActiveTintColor: COLORS.tabActive,
-            tabBarInactiveTintColor: COLORS.tabInactive,
-
-            tabBarStyle: {
-              backgroundColor: COLORS.tabBackground,
-              height: 70,
-            },
-          })}
-        >
-          <BottomTab.Screen name="Home" component={HomeScreen} />
-          <BottomTab.Screen
-            name="ScheduleStack"
-            component={ScheduleNavigation}
-            options={({ route }) => {
-              const routeName = getFocusedRouteNameFromRoute(route) ?? 'Schedule';
-              return {
-                tabBarLabel: "Schedule",
-                tabBarStyle: routeName === 'Detail' ? { display: 'none' } : { backgroundColor: COLORS.tabBackground, height: 70 },
-              };
-            }}
-          />
-          <BottomTab.Screen name="Profile" component={ProfileScreen} />
-        </BottomTab.Navigator>
+        <RootStack.Navigator screenOptions={{ headerShown: false }}>
+          <RootStack.Screen name="MainTabs" component={TabNavigator} />
+          <RootStack.Screen name="Detail" component={DetailScreen} />
+          <RootStack.Screen name="PlaceBet" component={PlaceBetScreen} />
+        </RootStack.Navigator>
       </NavigationContainer>
     </>
   );
