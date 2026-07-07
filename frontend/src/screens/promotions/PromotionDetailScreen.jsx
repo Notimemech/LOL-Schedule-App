@@ -80,9 +80,10 @@ const PromotionDetailScreen = () => {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero Banner */}
         <ImageBackground
-          source={promo.image}
+          source={{ uri: promo.image }}
           style={styles.heroImage}
           resizeMode="cover"
+          imageStyle={{ width: '100%', height: '100%' }}
         >
           {/* Dark overlay */}
           <View style={styles.heroOverlay} />

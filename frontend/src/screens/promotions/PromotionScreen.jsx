@@ -16,11 +16,11 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 
 // Remote images for web+native compatibility
 const IMAGES = {
-  deposit: 'https://images.unsplash.com/photo-1518544866330-3c7a18059aaa?w=800&q=80',
-  newbie:  'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&q=80',
-  lol:     'https://images.unsplash.com/photo-1614680376573-df3480f0c6ff?w=800&q=80',
+  deposit: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&q=80',
+  newbie:  'https://images.unsplash.com/photo-1535572290543-960a8046f5af?w=800&q=80',
+  lol:     'https://images.unsplash.com/photo-1542751110-97427bbecf20?w=800&q=80',
   dota:    'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800&q=80',
-  vip:     'https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=800&q=80',
+  vip:     'https://images.unsplash.com/photo-1571019613914-85f342c6a11e?w=800&q=80',
 };
 
 const PROMOTIONS = [
@@ -30,7 +30,7 @@ const PROMOTIONS = [
     description: 'Nạp tiền lần đầu tiên sẽ được tặng thêm 100% giá trị nạp. Tối đa 5.000.000 VNĐ. Áp dụng cho tất cả phương thức nạp tiền hỗ trợ.',
     badge: 'HOT',
     badgeColor: COLORS.danger,
-    icon: 'fire',
+    icon: 'bolt',
     image: IMAGES.deposit,
     buttonText: 'NHẬN NGAY',
     expiry: '31/12/2026',
@@ -66,7 +66,7 @@ const PROMOTIONS = [
     description: 'Thành viên VIP từ cấp 5 trở lên được hoàn 5% tổng cược mỗi ngày, không giới hạn số tiền hoàn trả.',
     badge: 'VIP',
     badgeColor: COLORS.vipGold,
-    icon: 'gem',
+    icon: 'star',
     image: IMAGES.vip,
     buttonText: 'LÊN VIP',
     expiry: 'Vĩnh viễn',
@@ -316,19 +316,20 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   filterScroll: {
-    maxHeight: 52,
+    height: 52,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.divider,
   },
   filterContent: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 8,
     gap: 8,
     flexDirection: 'row',
+    alignItems: 'center',
   },
   filterChip: {
     paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -342,6 +343,7 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     fontSize: 13,
     fontFamily: 'ManropeBold',
+    lineHeight: 18,
   },
   filterChipTextActive: {
     color: COLORS.primary,
@@ -441,6 +443,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'ManropeExtraBold',
     letterSpacing: 1,
+  },
+  badge: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  badgeText: {
+    fontSize: 10,
+    fontFamily: 'ManropeExtraBold',
+    letterSpacing: 1.5,
+  },
+  categoryChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  categoryText: {
+    color: '#fff',
+    fontSize: 11,
+    fontFamily: 'ManropeBold',
   },
 });
 
