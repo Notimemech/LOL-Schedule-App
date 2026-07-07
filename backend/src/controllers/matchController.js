@@ -29,22 +29,4 @@ export const updateMatch = async (req, res, next) => {
     }
 };
 
-export const getMatchGames = async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        const games = await matchService.getMatchGames(id);
-        sendSuccess(res, 200, 'Games retrieved successfully', games);
-    } catch (error) {
-        next(error);
-    }
-};
 
-export const addGameToMatch = async (req, res, next) => {
-    try {
-        const { id } = req.params;
-        const game = await matchService.addGameToMatch(id, req.body);
-        sendSuccess(res, 201, 'Game created successfully', game);
-    } catch (error) {
-        next(error);
-    }
-};

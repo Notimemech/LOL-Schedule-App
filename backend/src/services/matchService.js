@@ -10,13 +10,13 @@ export const getAllMatches = async () => {
 };
 
 export const updateMatch = async (matchId, updateData) => {
-    const { state, team1_score, team2_score, winner_slug } = updateData;
+    const { state, team1_score, team2_score, winner_team_id } = updateData;
     const match = await matchRepository.updateMatchState(
         matchId, 
         state, 
         team1_score || 0, 
         team2_score || 0, 
-        winner_slug || null
+        winner_team_id || null
     );
     if (!match) {
         throw new AppError('Match not found', 404);
@@ -24,11 +24,4 @@ export const updateMatch = async (matchId, updateData) => {
     return match;
 };
 
-export const getMatchGames = async (matchId) => {
-    return await matchRepository.getGamesByMatchId(matchId);
-};
 
-export const addGameToMatch = async (matchId, gameData) => {
-    // Inject match_id into payload
-    return await matchRepository.createGame({ ...gameData, match_id: matchId });
-};

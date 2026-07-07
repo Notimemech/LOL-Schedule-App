@@ -30,7 +30,7 @@ export const deposit = async (userId, amount) => {
             wallet.id,
             amount,
             'DEPOSIT',
-            'successed',
+            'success',
             null,
             client
         );
@@ -68,9 +68,9 @@ export const withdraw = async (userId, amount) => {
         
         const transaction = await walletRepository.createTransaction(
             wallet.id,
-            amount,
+            -amount,
             'WITHDRAW',
-            'successed',
+            'success',
             null,
             client
         );

@@ -10,6 +10,17 @@ export const createMarket = async (req, res, next) => {
     }
 };
 
+export const updateMarketStatus = async (req, res, next) => {
+    try {
+        const { marketId } = req.params;
+        const { status, resultOption } = req.body;
+        const market = await betService.updateMarketStatus(marketId, status, resultOption);
+        sendSuccess(res, 200, 'Market status updated successfully', market);
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const createOdd = async (req, res, next) => {
     try {
         const odd = await betService.createOdd(req.body);
@@ -47,6 +58,31 @@ export const getBetHistory = async (req, res, next) => {
         const { userId } = req.params;
         const history = await betService.getUserBetHistory(userId);
         sendSuccess(res, 200, 'Bet history retrieved successfully', history);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const cancelBet = async (req, res, next) => {
+    try {
+        const { betId } = req.params;
+        // userId should ideally come from req.user
+        const { userId } = req.body; 
+        
+        const bet = await betService.cancelBet(userId, betId);
+        sendSuccess(res, 200, 'Bet cancelled successfully', bet);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const settleBet = async (req, res, next) => {
+    try {
+        const { betId } = req.params;
+        const { outcome } = req.body; 
+        
+        const bet = await betService.settleBet(betId, outcome);
+        sendSuccess(res, 200, 'Bet settled successfully', bet);
     } catch (error) {
         next(error);
     }

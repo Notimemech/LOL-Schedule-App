@@ -30,7 +30,7 @@ export const updateWalletBalance = async (wallet_id, amount, client = pool) => {
 
 export const createTransaction = async (wallet_id, amount, type, status, reference_id = null, client = pool) => {
     const query = `
-        INSERT INTO wallettransaction (wallet_id, amount, type, status, reference_id)
+        INSERT INTO wallettransactions (wallet_id, amount, type, status, reference_id)
         VALUES ($1, $2, $3, $4, $5)
         RETURNING *;
     `;
@@ -41,7 +41,7 @@ export const createTransaction = async (wallet_id, amount, type, status, referen
 
 export const getTransactionsByWalletId = async (wallet_id) => {
     const query = `
-        SELECT * FROM wallettransaction 
+        SELECT * FROM wallettransactions 
         WHERE wallet_id = $1 
         ORDER BY created_at DESC;
     `;
