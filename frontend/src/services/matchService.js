@@ -7,6 +7,7 @@ export const getMatches = async () => {
       // Map database format to UI expected format
       return response.data.map(match => ({
         matchId: match.id,
+        matchType: match.match_type_name,
         leagueName: match.league_name,
         tournamentName: match.tournament_name,
         blockName: match.block_name, 

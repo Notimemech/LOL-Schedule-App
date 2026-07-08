@@ -80,8 +80,10 @@ export default function DetailScreen() {
                 <Image source={{ uri: match.team1.logoUrl }} style={styles.logoLarge} resizeMode="contain" />
                 <Text style={styles.teamCode}>{match.team1.code}</Text>
               </View>
-              <View style={styles.vsBox}>
-                <Text style={styles.vsText}>VS</Text>
+              <View style={[styles.vsBox, match.state === "finished" && { borderColor: COLORS.success }]}>
+                <Text style={[styles.vsText, match.state === "finished" && { color: COLORS.success }]}>
+                  {match.state === "finished" ? `${match.team1Score} - ${match.team2Score}` : "VS"}
+                </Text>
               </View>
               <View style={styles.teamCol}>
                 <Image source={{ uri: match.team2.logoUrl }} style={styles.logoLarge} resizeMode="contain" />
@@ -142,11 +144,16 @@ export default function DetailScreen() {
           )}
 
           <TouchableOpacity
-            style={[styles.submitButton, markets.length === 0 && { opacity: 0.5 }]}
+            style={[
+              styles.submitButton, 
+              (markets.length === 0 || match.state === "finished") && { opacity: 0.5 }
+            ]}
             onPress={handlePlaceABetPress}
-            disabled={markets.length === 0}
+            disabled={markets.length === 0 || match.state === "finished"}
           >
-            <Text style={styles.submitButtonText}>PLACE A BET</Text>
+            <Text style={styles.submitButtonText}>
+              {match.state === "finished" ? "BETTING CLOSED" : "PLACE A BET"}
+            </Text>
           </TouchableOpacity>
 
         </ScrollView>

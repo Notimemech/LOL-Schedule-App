@@ -39,3 +39,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# api configurations containing local IP addresses
+src/services/api.js

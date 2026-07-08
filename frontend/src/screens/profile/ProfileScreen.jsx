@@ -13,7 +13,10 @@ import { Ionicons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome6";
 import style from "../../styles/profile.styles";
 
+import { useNavigation } from "@react-navigation/native";
+
 const ProfileScreen = () => {
+  const navigation = useNavigation();
   const mainActivities = [
     {
       iconName: "wallet",
@@ -28,6 +31,12 @@ const ProfileScreen = () => {
       activityName: "Vip",
     },
   ];
+
+  const handleActivityPress = (activityName) => {
+    if (activityName === "Wallet") {
+      navigation.navigate("Deposit");
+    }
+  };
 
   return (
     <SafeAreaView style={style.container}>
@@ -63,7 +72,7 @@ const ProfileScreen = () => {
             <TouchableOpacity
               key={act.activityName}
               style={style.activityItem}
-              onPress={() => {}}
+              onPress={() => handleActivityPress(act.activityName)}
               activeOpacity={0.6}
             >
               <FloatBox style={{justifyContent: "flex-end"}}

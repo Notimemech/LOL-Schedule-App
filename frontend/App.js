@@ -21,6 +21,7 @@ import DetailScreen from "./src/screens/matches/DetailScreen";
 import PlaceBetScreen from "./src/screens/betting/PlaceBetScreen";
 import COLORS from "./src/styles/colors";
 import { useFonts } from "expo-font";
+import DepositScreen from "./src/screens/profile/DepositScreen";
 
 const BottomTab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
@@ -85,6 +86,7 @@ export default function App() {
           <RootStack.Screen name="MainTabs" component={TabNavigator} />
           <RootStack.Screen name="Detail" component={DetailScreen} />
           <RootStack.Screen name="PlaceBet" component={PlaceBetScreen} />
+          <RootStack.Screen name="Deposit" component={DepositScreen} />
         </RootStack.Navigator>
       </NavigationContainer>
     </>
