@@ -2,6 +2,10 @@ import { pool } from '../config/db.config.js';
 import * as walletRepository from '../repositories/walletRepository.js';
 import AppError from '../utils/appError.js';
 
+import crypto from 'crypto';
+import qs from 'qs';
+import moment from 'moment';
+
 export const getBalance = async (userId) => {
     const wallet = await walletRepository.getWalletByUserId(userId);
     if (!wallet) {
@@ -93,4 +97,62 @@ export const getTransactions = async (userId) => {
 
     const transactions = await walletRepository.getTransactionsByWalletId(wallet.id);
     return transactions;
+};
+
+// =====================================
+// PHẦN LOGIC VNPAY
+// =====================================
+
+export const sortObject = (obj) => {
+    let sorted = {};
+    let str = [];
+    let key;
+    for (key in obj) {
+        if (obj.hasOwnProperty(key)) {
+            str.push(encodeURIComponent(key));
+        }
+    }
+    str.sort();
+    for (key = 0; key < str.length; key++) {
+        sorted[str[key]] = encodeURIComponent(obj[str[key]]).replace(/%20/g, "+");
+    }
+    return sorted;
+};
+
+export const createVNPayUrl = (amount, ipAddr, userId) => {
+    const date = new Date();
+    const createDate = moment(date).format('YYYYMMDDHHmmss');
+    const timeStamp = moment(date).format('DDHHmmss'); 
+    
+    // NHÚNG userId vào TxnRef để khi VNPay trả về, ta biết là của user nào
+    // Format: "userId_timeStamp" (Ví dụ: "2_150930")
+    const orderId = `${userId}_${timeStamp}`; 
+
+    const tmnCode = process.env.VNP_TMN_CODE;
+    const secretKey = process.env.VNP_HASH_SECRET;
+    let vnpUrl = process.env.VNP_URL;
+    const returnUrl = process.env.VNP_RETURN_URL;
+
+    let vnp_Params = {};
+    vnp_Params['vnp_Version'] = '2.1.0';
+    vnp_Params['vnp_Command'] = 'pay';
+    vnp_Params['vnp_TmnCode'] = tmnCode;
+    vnp_Params['vnp_Locale'] = 'vn';
+    vnp_Params['vnp_CurrCode'] = 'VND';
+    vnp_Params['vnp_TxnRef'] = orderId;
+    vnp_Params['vnp_OrderInfo'] = `Nap tien vao vi - GD: ${orderId}`;
+    vnp_Params['vnp_OrderType'] = 'other';
+    vnp_Params['vnp_Amount'] = amount * 100;
+    vnp_Params['vnp_ReturnUrl'] = returnUrl;
+    vnp_Params['vnp_IpAddr'] = ipAddr;
+    vnp_Params['vnp_CreateDate'] = createDate;
+
+    vnp_Params = sortObject(vnp_Params);
+    const signData = qs.stringify(vnp_Params, { encode: false });
+    const hmac = crypto.createHmac("sha512", secretKey);
+    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest("hex");
+    vnp_Params['vnp_SecureHash'] = signed;
+
+    vnpUrl += '?' + qs.stringify(vnp_Params, { encode: false });
+    return vnpUrl;
 };
