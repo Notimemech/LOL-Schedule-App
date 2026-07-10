@@ -616,14 +616,14 @@ COMMIT;
 
 select * from matches
 
-SELECT m.*, 
-               t1.name as team1_name, t1.logo_url as team1_logo, t1.code as team1_code,
-               t2.name as team2_name, t2.logo_url as team2_logo, t2.code as team2_code,
-               tr.name as tournament_name,
-               l.name as league_name
-        FROM matches m
-        JOIN teams t1 ON m.team1_id = t1.id
-        JOIN teams t2 ON m.team2_id = t2.id
-        JOIN tournaments tr ON m.tournament_id = tr.id
-        JOIN leagues l ON tr.league_id = l.id
-        ORDER BY m.id DESC;
+-- SELECT m.*, 
+--                t1.name as team1_name, t1.logo_url as team1_logo, t1.code as team1_code,
+--                t2.name as team2_name, t2.logo_url as team2_logo, t2.code as team2_code,
+--                tr.name as tournament_name,
+--                l.name as league_name
+--         FROM matches m
+--         JOIN teams t1 ON m.team1_id = t1.id
+--         JOIN teams t2 ON m.team2_id = t2.id
+--         JOIN tournaments tr ON m.tournament_id = tr.id
+--         JOIN leagues l ON tr.league_id = l.id
+--         ORDER BY m.id DESC;
