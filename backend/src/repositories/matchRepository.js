@@ -21,10 +21,10 @@ export const getMatches = async () => {
                tr.name as tournament_name,
                l.name as league_name
         FROM matches m
-        JOIN teams t1 ON m.team1_id = t1.id
-        JOIN teams t2 ON m.team2_id = t2.id
-        JOIN tournaments tr ON m.tournament_id = tr.id
-        JOIN leagues l ON tr.league_id = l.id
+        LEFT JOIN teams t1 ON m.team1_id = t1.id
+        LEFT JOIN teams t2 ON m.team2_id = t2.id
+        LEFT JOIN tournaments tr ON m.tournament_id = tr.id
+        LEFT JOIN leagues l ON tr.league_id = l.id
         ORDER BY m.id DESC;
     `;
     const { rows } = await pool.query(query);
