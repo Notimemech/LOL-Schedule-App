@@ -1,6 +1,6 @@
 import express from 'express';
-import  dotenv  from 'dotenv';
 import { pool } from './config/db.config.js';
+import dotenv from 'dotenv';
 import cors from 'cors';
 import { router } from './routes/index.route.js';
 import { errorHandler } from './middlewares/errorMiddleware.js';
