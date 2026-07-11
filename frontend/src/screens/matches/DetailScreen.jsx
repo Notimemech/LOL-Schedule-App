@@ -7,7 +7,8 @@ import {
   ScrollView,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Alert
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
@@ -55,6 +56,17 @@ export default function DetailScreen() {
   const handlePlaceABetPress = () => {
     navigation.navigate("PlaceBet", { match, markets });
   };
+
+  // Determine if match has started or already passed (disable betting)
+  const hasStarted = (() => {
+    try {
+      if (!match || !match.startTime) return false;
+      const start = new Date(match.startTime).getTime();
+      return Date.now() >= start;
+    } catch (e) {
+      return false;
+    }
+  })();
 
   // Helper to format market type string nicely
   const formatMarketName = (marketType) => {
@@ -142,9 +154,19 @@ export default function DetailScreen() {
           )}
 
           <TouchableOpacity
-            style={[styles.submitButton, markets.length === 0 && { opacity: 0.5 }]}
-            onPress={handlePlaceABetPress}
-            disabled={markets.length === 0}
+            style={[
+              styles.submitButton,
+              (markets.length === 0 || hasStarted) && { opacity: 0.5 }
+            ]}
+            onPress={() => {
+              if (markets.length === 0) return;
+              if (hasStarted) {
+                Alert.alert('Unavailable', 'This match has already started or finished. Placing bets is disabled.');
+                return;
+              }
+              handlePlaceABetPress();
+            }}
+            disabled={markets.length === 0 || hasStarted}
           >
             <Text style={styles.submitButtonText}>PLACE A BET</Text>
           </TouchableOpacity>
