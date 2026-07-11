@@ -35,6 +35,7 @@ export default function PlaceBetScreen() {
   const [history, setHistory] = useState([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [walletBalance, setWalletBalance] = useState(0);
+  const [balanceRefreshKey, setBalanceRefreshKey] = useState(0);
 
   const [alertConfig, setAlertConfig] = useState({
     visible: false,
@@ -124,6 +125,7 @@ export default function PlaceBetScreen() {
         setSelectedOutcomeId(null);
         setSelectedMarketId(null);
         setCurrentOddValue(0);
+        setBalanceRefreshKey(prev => prev + 1);
         await loadData();
         hideAlert();
       });
@@ -138,6 +140,7 @@ export default function PlaceBetScreen() {
     try {
       const result = await cancelBet(betId);
       showAlert("Success", result.message, false, async () => {
+        setBalanceRefreshKey(prev => prev + 1);
         await loadData();
         hideAlert();
       });
@@ -214,7 +217,7 @@ export default function PlaceBetScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <ContentHeader title="PLACE BET" showBack={true} />
+      <ContentHeader title="PLACE BET" showBack={true} refreshTrigger={balanceRefreshKey} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -224,8 +227,6 @@ export default function PlaceBetScreen() {
           <Text style={styles.sectionTitle}>SELECT MARKET</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
             {markets.map((market) => {
-              const existingBet = history.find(b => b.marketId === market.id && b.status === "Accepted");
-
               return (
                 <View key={market.id} style={{ width: '48%', backgroundColor: COLORS.card, borderRadius: 8, padding: 8, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border }}>
                   <Text style={{ fontFamily: "SpaceGroteskBold", fontSize: 11, color: COLORS.textMuted, marginBottom: 8, textAlign: 'center' }}>
@@ -235,14 +236,12 @@ export default function PlaceBetScreen() {
                     {market.odds.map(odd => {
                       const outcomeLabel = getOutcomeLabel(odd, market);
                       const isSelected = selectedMarketId === market.id && selectedOutcomeId === odd.option_key;
-                      const isDisabled = !!(existingBet && existingBet.outcomeId !== odd.option_key);
                       const parsedOdd = parseFloat(odd.odd_value);
 
                       return (
                         <TouchableOpacity
                           key={odd.id}
-                          disabled={isDisabled}
-                          style={[styles.oddBox, { padding: 6, marginHorizontal: 2 }, isSelected && styles.oddBoxSelected, isDisabled && { opacity: 0.3 }]}
+                          style={[styles.oddBox, { padding: 6, marginHorizontal: 2 }, isSelected && styles.oddBoxSelected]}
                           onPress={() => {
                             setSelectedMarketId(market.id);
                             setSelectedOutcomeId(odd.option_key);

@@ -4,32 +4,30 @@ import COLORS from "../../styles/colors";
 import { contentHeaderStyles as styles } from "../../styles/common.styles";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { getWalletBalance } from "../../services/bettingService";
 
-const ContentHeader = ({ title, showBack = false }) => {
+const ContentHeader = ({ title, showBack = false, refreshTrigger = 0 }) => {
   const navigation = useNavigation();
   const canGoBack = navigation.canGoBack();
   const [walletBalance, setWalletBalance] = useState(0);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      let isMounted = true;
+  useEffect(() => {
+    let isMounted = true;
 
-      const loadBalance = async () => {
-        const balance = await getWalletBalance();
-        if (isMounted) {
-          setWalletBalance(balance);
-        }
-      };
+    const loadBalance = async () => {
+      const balance = await getWalletBalance();
+      if (isMounted) {
+        setWalletBalance(balance);
+      }
+    };
 
-      loadBalance();
+    loadBalance();
 
-      return () => {
-        isMounted = false;
-      };
-    }, [])
-  );
+    return () => {
+      isMounted = false;
+    };
+  }, [refreshTrigger]);
 
   return (
     <View style={styles.header}>
