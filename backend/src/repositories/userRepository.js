@@ -24,7 +24,7 @@ export const findUserByUsername = async (username) => {
 };
 
 export const getDefaultRole = async () => {
-    const query = `SELECT * FROM roles WHERE name = 'users' LIMIT 1`;
+    const query = `SELECT * FROM roles WHERE name = 'user' LIMIT 1`;
     const { rows } = await pool.query(query);
     return rows[0];
 };

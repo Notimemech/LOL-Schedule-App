@@ -25,6 +25,7 @@ import WalletScreen from "./src/screens/wallet/WalletScreen"; // Import file báº
 import WithdrawScreen from "./src/screens/wallet/WithdrawScreen";
 import HistoryScreen from "./src/screens/profile/HistoryScreen";
 import SettingScreen from "./src/screens/profile/SettingScreen";
+import SignInScreen from "./src/screens/auth/SignInScreen";
 
 const BottomTab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
@@ -86,6 +87,7 @@ export default function App() {
       <StatusBar barStyle="light-content" />
       <NavigationContainer>
         <RootStack.Navigator screenOptions={{ headerShown: false }}>
+          <RootStack.Screen name="SignIn" component={SignInScreen} />
           <RootStack.Screen name="MainTabs" component={TabNavigator} />
           <RootStack.Screen name="Detail" component={DetailScreen} />
           <RootStack.Screen name="PlaceBet" component={PlaceBetScreen} />
