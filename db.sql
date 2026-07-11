@@ -614,7 +614,7 @@ INSERT INTO WalletTransactions
 
 COMMIT;
 
-select * from matches
+select * from matches;
 
 SELECT m.*, 
                t1.name as team1_name, t1.logo_url as team1_logo, t1.code as team1_code,
