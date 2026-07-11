@@ -50,14 +50,25 @@ const ProfileScreen = () => {
       "Are you sure you want to logout from your account?",
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Logout", 
-          style: "destructive", 
-          onPress: () => {
-            // TODO: Thêm logic xóa token, clear AsyncStorage, update Auth Context...
-            console.log("Xử lý đăng xuất tại đây");
-          } 
-        }
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem("userInfo");
+              await AsyncStorage.removeItem("token");
+              await AsyncStorage.removeItem("accessToken");
+
+              navigation.reset({
+                index: 0,
+                routes: [{ name: "SignIn" }],
+              });
+            } catch (err) {
+              console.error("Logout failed:", err);
+              Alert.alert("Error", "Unable to log out right now.");
+            }
+          },
+        },
       ]
     );
   };
@@ -89,9 +100,9 @@ const ProfileScreen = () => {
     return () => { isMounted = false; };
   }, []);
 
-  const handleActivityPress = (activityName) => {
-    if (activityName === "Wallet") {
-      navigation.navigate("Deposit");
+  const handleActivityPress = (activity) => {
+    if (activity?.route) {
+      navigation.navigate(activity.route);
     }
   };
 
@@ -128,7 +139,7 @@ const ProfileScreen = () => {
             <TouchableOpacity
               key={act.activityName}
               style={style.activityItem}
-              onPress={() => handleActivityPress(act.activityName)}
+              onPress={() => handleActivityPress(act)}
               activeOpacity={0.6}
             >
               <FloatBox style={localStyles.floatBoxWrapper}
