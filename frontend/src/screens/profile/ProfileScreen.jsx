@@ -16,6 +16,8 @@ import { Ionicons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome6";
 import style from "../../styles/profile.styles";
 
+import { useNavigation } from "@react-navigation/native";
+
 const ProfileScreen = () => {
   const navigation = useNavigation();
 
@@ -89,6 +91,12 @@ const ProfileScreen = () => {
     return () => { isMounted = false; };
   }, []);
 
+  const handleActivityPress = (activityName) => {
+    if (activityName === "Wallet") {
+      navigation.navigate("Deposit");
+    }
+  };
+
   return (
     <SafeAreaView style={style.container}>
       <ScrollView style={style.body} showsVerticalScrollIndicator={false}>
@@ -121,9 +129,9 @@ const ProfileScreen = () => {
           {mainActivities.map((act) => (
             <TouchableOpacity
               key={act.activityName}
-              style={localStyles.gridItem}
-              onPress={() => navigation.navigate(act.route)} // Chuyển trang
-              activeOpacity={0.7}
+              style={style.activityItem}
+              onPress={() => handleActivityPress(act.activityName)}
+              activeOpacity={0.6}
             >
               <FloatBox style={localStyles.floatBoxWrapper}
                 children={

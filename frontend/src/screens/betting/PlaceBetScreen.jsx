@@ -296,15 +296,18 @@ export default function PlaceBetScreen() {
             </View>
 
             <TouchableOpacity
-              style={[styles.submitButton, (!selectedOutcomeId || isSubmitting || !!errorMessage || wagerAmount <= 0) && styles.submitButtonDisabled]}
+              style={[
+                styles.submitButton, 
+                (!selectedOutcomeId || isSubmitting || !!errorMessage || wagerAmount <= 0 || match.state === "finished") && styles.submitButtonDisabled
+              ]}
               onPress={handlePlaceBet}
-              disabled={isSubmitting || !selectedOutcomeId || !!errorMessage || wagerAmount <= 0}
+              disabled={isSubmitting || !selectedOutcomeId || !!errorMessage || wagerAmount <= 0 || match.state === "finished"}
             >
               {isSubmitting ? (
                 <ActivityIndicator color={COLORS.background} />
               ) : (
                 <Text style={[styles.submitButtonText, !selectedOutcomeId && styles.submitButtonTextDisabled]}>
-                  CONFIRM BET
+                  {match.state === "finished" ? "BETTING CLOSED" : "CONFIRM BET"}
                 </Text>
               )}
             </TouchableOpacity>
