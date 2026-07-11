@@ -9,14 +9,12 @@ import {
 import React, { useEffect, useState } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native"; // Import navigation
+import { useNavigation } from "@react-navigation/native";
 import FloatBox from "../../components/common/FloatBox";
 import COLORS from "../../styles/colors";
 import { Ionicons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome6";
 import style from "../../styles/profile.styles";
-
-import { useNavigation } from "@react-navigation/native";
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
