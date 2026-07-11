@@ -4,7 +4,7 @@ import COLORS from "../../styles/colors";
 import { contentHeaderStyles as styles } from "../../styles/common.styles";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { getWalletBalance } from "../../services/bettingService";
 
 const ContentHeader = ({ title, showBack = false }) => {
@@ -12,22 +12,24 @@ const ContentHeader = ({ title, showBack = false }) => {
   const canGoBack = navigation.canGoBack();
   const [walletBalance, setWalletBalance] = useState(0);
 
-  useEffect(() => {
-    let isMounted = true;
+  useFocusEffect(
+    React.useCallback(() => {
+      let isMounted = true;
 
-    const loadBalance = async () => {
-      const balance = await getWalletBalance();
-      if (isMounted) {
-        setWalletBalance(balance);
-      }
-    };
+      const loadBalance = async () => {
+        const balance = await getWalletBalance();
+        if (isMounted) {
+          setWalletBalance(balance);
+        }
+      };
 
-    loadBalance();
+      loadBalance();
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
 
   return (
     <View style={styles.header}>

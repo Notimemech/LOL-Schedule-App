@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import COLORS from "../../styles/colors";
 import { homeHeaderStyles as styles } from "../../styles/common.styles";
 import Icon from "react-native-vector-icons/FontAwesome";
@@ -20,27 +20,28 @@ const HomeHeader = ({ searchQuery, onSearch }) => {
   const [walletBalance, setWalletBalance] = useState(0);
 
   // 2. Logic lấy số dư ví (từ bản của bạn)
-  useEffect(() => {
-    let isMounted = true;
+  useFocusEffect(
+    React.useCallback(() => {
+      let isMounted = true;
 
-    const fetchBalance = async () => {
-      try {
-        const balance = await getWalletBalance();
-        if (isMounted) {
-          // Đảm bảo balance trả về là số trước khi set
-          setWalletBalance(Number(balance) || 0);
+      const fetchBalance = async () => {
+        try {
+          const balance = await getWalletBalance();
+          if (isMounted) {
+            setWalletBalance(Number(balance) || 0);
+          }
+        } catch (error) {
+          console.error("Lỗi khi lấy số dư ví:", error);
         }
-      } catch (error) {
-        console.error("Lỗi khi lấy số dư ví:", error);
-      }
-    };
+      };
 
-    fetchBalance();
+      fetchBalance();
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>

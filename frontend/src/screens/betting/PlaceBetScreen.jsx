@@ -41,7 +41,7 @@ export default function PlaceBetScreen() {
     title: "",
     message: "",
     isError: false,
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   const showAlert = (title, message, isError = false, onConfirm = null) => {
@@ -119,12 +119,12 @@ export default function PlaceBetScreen() {
     setIsSubmitting(true);
     try {
       const result = await placeBet(match.matchId, selectedMarketId, selectedOutcomeId, wagerAmount);
-      showAlert("Success", result.message, false, () => {
+      showAlert("Success", result.message, false, async () => {
         setWagerInput("");
         setSelectedOutcomeId(null);
         setSelectedMarketId(null);
         setCurrentOddValue(0);
-        loadData();
+        await loadData();
         hideAlert();
       });
     } catch (error) {
@@ -137,8 +137,8 @@ export default function PlaceBetScreen() {
   const handleCancelBet = async (betId) => {
     try {
       const result = await cancelBet(betId);
-      showAlert("Success", result.message, false, () => {
-        loadData();
+      showAlert("Success", result.message, false, async () => {
+        await loadData();
         hideAlert();
       });
     } catch (error) {
@@ -157,7 +157,7 @@ export default function PlaceBetScreen() {
     if (base === 0) return [10000, 50000, 100000, 200000];
 
     const suggestions = [];
-    
+
     [10, 100, 1000, 10000, 100000, 1000000].forEach(mult => {
       const val = base * mult;
       if (val >= 10000 && val <= MAX_STAKE_VND) {
@@ -175,7 +175,7 @@ export default function PlaceBetScreen() {
         if (suggestions.length >= 4) break;
       }
     }
-    
+
     return suggestions.sort((a, b) => a - b).slice(0, 4);
   };
 
@@ -192,6 +192,25 @@ export default function PlaceBetScreen() {
   };
 
   const formatMarketName = (marketType) => marketType.replace(/_/g, " ").toUpperCase();
+
+  const getOutcomeLabel = (odd, market) => {
+    const team1Slug = match?.team1?.slug;
+    const team2Slug = match?.team2?.slug;
+
+    if (odd.option_key === team1Slug) {
+      return match?.team1?.code || match?.team1?.name || "Team 1";
+    }
+
+    if (odd.option_key === team2Slug) {
+      return match?.team2?.code || match?.team2?.name || "Team 2";
+    }
+
+    if (market?.market_type === "winner_team") {
+      return odd.option_key || "Outcome";
+    }
+
+    return odd.option_key || "Outcome";
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -214,7 +233,7 @@ export default function PlaceBetScreen() {
                   </Text>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     {market.odds.map(odd => {
-                      const teamCode = odd.option_key === match.team1.slug ? match.team1.code : match.team2.code;
+                      const outcomeLabel = getOutcomeLabel(odd, market);
                       const isSelected = selectedMarketId === market.id && selectedOutcomeId === odd.option_key;
                       const isDisabled = !!(existingBet && existingBet.outcomeId !== odd.option_key);
                       const parsedOdd = parseFloat(odd.odd_value);
@@ -230,7 +249,7 @@ export default function PlaceBetScreen() {
                             setCurrentOddValue(parsedOdd);
                           }}
                         >
-                          <Text style={[styles.oddLabel, { fontSize: 10, marginBottom: 2 }]}>{teamCode}</Text>
+                          <Text style={[styles.oddLabel, { fontSize: 10, marginBottom: 2 }]}>{outcomeLabel}</Text>
                           <Text style={[styles.oddValue, { fontSize: 13 }, isSelected && styles.oddValueSelected]}>{parsedOdd.toFixed(2)}</Text>
                         </TouchableOpacity>
                       )
@@ -297,7 +316,7 @@ export default function PlaceBetScreen() {
 
             <TouchableOpacity
               style={[
-                styles.submitButton, 
+                styles.submitButton,
                 (!selectedOutcomeId || isSubmitting || !!errorMessage || wagerAmount <= 0 || match.state === "finished") && styles.submitButtonDisabled
               ]}
               onPress={handlePlaceBet}
@@ -319,7 +338,7 @@ export default function PlaceBetScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <CustomAlert 
+      <CustomAlert
         visible={alertConfig.visible}
         title={alertConfig.title}
         message={alertConfig.message}
