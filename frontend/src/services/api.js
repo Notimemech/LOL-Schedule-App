@@ -1,10 +1,11 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Create an Axios instance with default configurations
 const api = axios.create({
   // Use your computer's local IP address if running on a physical device
   // Defaulting to localhost for emulators
-  baseURL: 'http://192.168.2.65:9999/api', 
+  baseURL: 'http://192.168.79.8:9999/api', 
   timeout: 10000, // 10 seconds timeout
   headers: {
     'Content-Type': 'application/json',
@@ -15,11 +16,10 @@ const api = axios.create({
 // Request Interceptor
 api.interceptors.request.use(
   async (config) => {
-    // TODO: Inject auth tokens here once authentication is implemented
-    // const token = await AsyncStorage.getItem('userToken');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    const token = await AsyncStorage.getItem('userToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     
     // Log requests in development
     if (__DEV__) {

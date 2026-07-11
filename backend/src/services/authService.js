@@ -10,6 +10,10 @@ export const register = async (userData) => {
         throw new AppError('Username, password and email are required', 400);
     }
 
+    if (password.length < 6) {
+        throw new AppError('Password must be at least 6 characters', 400);
+    }
+
     const existingUser = await userRepository.findUserByEmail(email);
     if (existingUser) {
         throw new AppError('Email is already registered', 400);
