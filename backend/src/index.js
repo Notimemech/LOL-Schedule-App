@@ -16,8 +16,9 @@ app.use('/api', router);
 // Error handling middleware should be placed after all routes
 app.use(errorHandler);
 
-const port = process.env.PORT;
+const port = Number(process.env.PORT || 9999);
+const host = process.env.HOST || '0.0.0.0'; // bind to all interfaces by default
 
-app.listen(port, () =>{
-    console.log("server is running on port ", port )
+app.listen(port, host, () =>{
+    console.log(`server is running on ${host}:${port}`)
 })

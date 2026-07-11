@@ -6,7 +6,8 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native"; // Import navigation
 import FloatBox from "../../components/common/FloatBox";
@@ -61,34 +62,57 @@ const ProfileScreen = () => {
     );
   };
 
+  const [username, setUsername] = useState('User');
+  const [balance, setBalance] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadProfile = async () => {
+      try {
+        const raw = await AsyncStorage.getItem('userInfo');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (isMounted) setUsername(parsed.username || parsed.name || parsed.email || 'User');
+        }
+        // get wallet balance via service
+        const { getWalletBalance } = await import('../../services/bettingService');
+        const b = await getWalletBalance();
+        if (isMounted) setBalance(b);
+      } catch (err) {
+        console.error('Failed to load profile:', err);
+      }
+    };
+
+    loadProfile();
+
+    return () => { isMounted = false; };
+  }, []);
+
   return (
     <SafeAreaView style={style.container}>
       <ScrollView style={style.body} showsVerticalScrollIndicator={false}>
         {/* Phần Thông tin Profile */}
         <FloatBox style={style.bodyContent}
           children={
-            <View style={style.profileInfo}>
-              <Ionicons
-                name={"person-circle-outline"}
-                color={COLORS.primary}
-                style={{ fontSize: 80 }}
-              />
-              <View>
-                <Text style={style.text}>quanganh0123</Text>
-                <View style={style.vipBadge}>
-                  <Text style={style.vipText}>VIP 10</Text>
-                  <Icon name="gem" style={style.vipText} />
+              <View style={style.profileInfo}>
+                <Ionicons
+                  name={"person-circle-outline"}
+                  color={COLORS.primary}
+                  style={{ fontSize: 80 }}
+                />
+                <View>
+                  <Text style={style.text}>{username}</Text>
+                  <Text
+                    style={[
+                      style.text,
+                      { fontSize: 20, fontFamily: "ManropeBold", marginTop: 5 },
+                    ]}
+                  >
+                    BALANCE: {balance.toLocaleString()} VNĐ
+                  </Text>
                 </View>
-                <Text
-                  style={[
-                    style.text,
-                    { fontSize: 20, fontFamily: "ManropeBold", marginTop: 5 },
-                  ]}
-                >
-                  BALANCE: 1.000.000 VNĐ
-                </Text>
               </View>
-            </View>
           }
         />
 

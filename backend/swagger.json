@@ -1,0 +1,1067 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "LOL Schedule App API",
+    "version": "1.0.0",
+    "description": "Swagger JSON for backend API of LOL Schedule App"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:9999/api",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User registered successfully"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "User login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "Get all users",
+        "responses": {
+          "200": {
+            "description": "Users retrieved successfully"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully"
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "summary": "Get user by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User retrieved successfully"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update user by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated successfully"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete user by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete successfully"
+          }
+        }
+      }
+    },
+    "/wallet/{userId}": {
+      "get": {
+        "summary": "Get wallet balance by user ID",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Wallet balance retrieved"
+          }
+        }
+      }
+    },
+    "/wallet/deposit": {
+      "post": {
+        "summary": "Deposit amount into wallet",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalletTransactionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deposit successful"
+          }
+        }
+      }
+    },
+    "/wallet/withdraw": {
+      "post": {
+        "summary": "Withdraw amount from wallet",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WalletTransactionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Withdrawal successful"
+          }
+        }
+      }
+    },
+    "/wallet/transactions/{userId}": {
+      "get": {
+        "summary": "Get wallet transaction history by user ID",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transactions retrieved successfully"
+          }
+        }
+      }
+    },
+    "/wallet/create-payment-url": {
+      "post": {
+        "summary": "Create VNPay payment URL",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaymentUrlRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment URL created successfully"
+          }
+        }
+      }
+    },
+    "/wallet/vnpay-return": {
+      "get": {
+        "summary": "VNPay return or IPN callback endpoint",
+        "responses": {
+          "200": {
+            "description": "VNPay return response"
+          }
+        }
+      }
+    },
+    "/teams": {
+      "get": {
+        "summary": "Get all teams",
+        "responses": {
+          "200": {
+            "description": "Teams retrieved successfully"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new team",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Team created successfully"
+          }
+        }
+      }
+    },
+    "/teams/{slug}": {
+      "get": {
+        "summary": "Get team by slug",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Team retrieved successfully"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update team by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TeamUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Team updated successfully"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete team by slug",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete successfully"
+          }
+        }
+      }
+    },
+    "/leagues": {
+      "get": {
+        "summary": "Get all leagues",
+        "responses": {
+          "200": {
+            "description": "Leagues retrieved successfully"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new league",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeagueCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "League created successfully"
+          }
+        }
+      }
+    },
+    "/leagues/{slug}": {
+      "get": {
+        "summary": "Get league by slug",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "League retrieved successfully"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update league by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeagueUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "League updated successfully"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete league by slug",
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete successfully"
+          }
+        }
+      }
+    },
+    "/tournaments": {
+      "get": {
+        "summary": "Get all tournaments",
+        "responses": {
+          "200": {
+            "description": "Tournaments retrieved successfully"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new tournament",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TournamentCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tournament created successfully"
+          }
+        }
+      }
+    },
+    "/tournaments/{id}": {
+      "get": {
+        "summary": "Get tournament by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tournament retrieved successfully"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update tournament by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TournamentUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tournament updated successfully"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete tournament by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Delete successfully"
+          }
+        }
+      }
+    },
+    "/matches": {
+      "get": {
+        "summary": "Get all matches",
+        "responses": {
+          "200": {
+            "description": "Matches retrieved successfully"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new match",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Match created successfully"
+          }
+        }
+      }
+    },
+    "/matches/{id}": {
+      "put": {
+        "summary": "Update match by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Match updated successfully"
+          }
+        }
+      }
+    },
+    "/games": {
+      "post": {
+        "summary": "Create a new game",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GameCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Game created successfully"
+          }
+        }
+      }
+    },
+    "/games/{id}": {
+      "get": {
+        "summary": "Get game by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Game retrieved successfully"
+          }
+        }
+      }
+    },
+    "/games/match/{matchId}": {
+      "get": {
+        "summary": "Get games by match ID",
+        "parameters": [
+          {
+            "name": "matchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Games retrieved successfully"
+          }
+        }
+      }
+    },
+    "/games/{id}/state": {
+      "patch": {
+        "summary": "Update game state",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GameStateUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Game updated successfully"
+          }
+        }
+      }
+    },
+    "/bets/markets": {
+      "post": {
+        "summary": "Create a market",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarketCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Market created successfully"
+          }
+        }
+      }
+    },
+    "/bets/markets/{marketId}/status": {
+      "patch": {
+        "summary": "Update market status",
+        "parameters": [
+          {
+            "name": "marketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarketStatusUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Market status updated successfully"
+          }
+        }
+      }
+    },
+    "/bets/odds": {
+      "post": {
+        "summary": "Create a new odd",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OddCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Odd created successfully"
+          }
+        }
+      }
+    },
+    "/bets/markets/{matchId}": {
+      "get": {
+        "summary": "Get markets for a match",
+        "parameters": [
+          {
+            "name": "matchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Markets retrieved successfully"
+          }
+        }
+      }
+    },
+    "/bets/place": {
+      "post": {
+        "summary": "Place a bet",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaceBetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Bet placed successfully"
+          }
+        }
+      }
+    },
+    "/bets/history/{userId}": {
+      "get": {
+        "summary": "Get bet history by user ID",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bet history retrieved successfully"
+          }
+        }
+      }
+    },
+    "/bets/{betId}/cancel": {
+      "post": {
+        "summary": "Cancel a bet",
+        "parameters": [
+          {
+            "name": "betId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BetCancelRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bet cancelled successfully"
+          }
+        }
+      }
+    },
+    "/bets/{betId}/settle": {
+      "post": {
+        "summary": "Settle a bet",
+        "parameters": [
+          {
+            "name": "betId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BetSettleRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bet settled successfully"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RegisterRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" }
+        },
+        "required": ["name", "email", "password"]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" }
+        },
+        "required": ["email", "password"]
+      },
+      "UserCreateRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" },
+          "role": { "type": "string" }
+        },
+        "required": ["name", "email", "password"]
+      },
+      "UserUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string" },
+          "role": { "type": "string" }
+        }
+      },
+      "WalletTransactionRequest": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "string" },
+          "amount": { "type": "number", "minimum": 0 }
+        },
+        "required": ["userId", "amount"]
+      },
+      "PaymentUrlRequest": {
+        "type": "object",
+        "properties": {
+          "amount": { "type": "number", "minimum": 0 }
+        },
+        "required": ["amount"]
+      },
+      "TeamCreateRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "description": { "type": "string" }
+        },
+        "required": ["name", "slug"]
+      },
+      "TeamUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      },
+      "LeagueCreateRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "slug": { "type": "string" },
+          "description": { "type": "string" }
+        },
+        "required": ["name", "slug"]
+      },
+      "LeagueUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "description": { "type": "string" }
+        }
+      },
+      "TournamentCreateRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "startDate": { "type": "string", "format": "date" },
+          "endDate": { "type": "string", "format": "date" }
+        },
+        "required": ["name"]
+      },
+      "TournamentUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "startDate": { "type": "string", "format": "date" },
+          "endDate": { "type": "string", "format": "date" }
+        }
+      },
+      "MatchCreateRequest": {
+        "type": "object",
+        "properties": {
+          "homeTeamId": { "type": "string" },
+          "awayTeamId": { "type": "string" },
+          "leagueId": { "type": "string" },
+          "startTime": { "type": "string", "format": "date-time" }
+        }
+      },
+      "MatchUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "homeTeamId": { "type": "string" },
+          "awayTeamId": { "type": "string" },
+          "leagueId": { "type": "string" },
+          "startTime": { "type": "string", "format": "date-time" },
+          "status": { "type": "string" }
+        }
+      },
+      "GameCreateRequest": {
+        "type": "object",
+        "properties": {
+          "matchId": { "type": "string" },
+          "status": { "type": "string" },
+          "score": { "type": "string" }
+        }
+      },
+      "GameStateUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string" },
+          "score": { "type": "string" }
+        }
+      },
+      "MarketCreateRequest": {
+        "type": "object",
+        "properties": {
+          "matchId": { "type": "string" },
+          "name": { "type": "string" }
+        },
+        "required": ["matchId", "name"]
+      },
+      "MarketStatusUpdateRequest": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string" },
+          "resultOption": { "type": "string" }
+        }
+      },
+      "OddCreateRequest": {
+        "type": "object",
+        "properties": {
+          "marketId": { "type": "string" },
+          "name": { "type": "string" },
+          "value": { "type": "number" }
+        },
+        "required": ["marketId", "name", "value"]
+      },
+      "PlaceBetRequest": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "string" },
+          "matchId": { "type": "string" },
+          "marketId": { "type": "string" },
+          "oddId": { "type": "string" },
+          "amount": { "type": "number" }
+        },
+        "required": ["userId", "matchId", "marketId", "oddId", "amount"]
+      },
+      "BetCancelRequest": {
+        "type": "object",
+        "properties": {
+          "userId": { "type": "string" }
+        },
+        "required": ["userId"]
+      },
+      "BetSettleRequest": {
+        "type": "object",
+        "properties": {
+          "outcome": { "type": "string" }
+        },
+        "required": ["outcome"]
+      }
+    }
+  }
+}
