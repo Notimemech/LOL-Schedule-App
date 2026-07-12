@@ -13,11 +13,11 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from "react-native-vector-icons/FontAwesome6";
 import { Ionicons } from "@expo/vector-icons";
 import COLORS from "../../styles/colors";
-// Nhớ import instance api của bạn, ví dụ:
-// import api from "../../services/api"; 
+import api from "../../services/api";
 
 const QUICK_AMOUNTS = [50000, 100000, 200000, 500000, 1000000, 2000000];
 
@@ -26,9 +26,32 @@ const WalletScreen = () => {
   const [amount, setAmount] = useState("");
   const [paymentUrl, setPaymentUrl] = useState(null);
   const [loading, setLoading] = useState(false);
-  
-  // TODO: Fetch số dư thật từ backend. Tạm thời để số giả lập.
-  const currentBalance = 1000000; 
+  const [currentBalance, setCurrentBalance] = useState(0);
+  const [transactions, setTransactions] = useState([]);
+
+  useEffect(() => {
+    const loadWalletData = async () => {
+      try {
+        const rawUser = await AsyncStorage.getItem('userInfo');
+        if (!rawUser) return;
+        const user = JSON.parse(rawUser);
+
+        const balanceResponse = await api.get(`/wallet/${user.id}`);
+        if (balanceResponse?.data) {
+          setCurrentBalance(Number(balanceResponse.data.balance || 0));
+        }
+
+        const transactionsResponse = await api.get(`/wallet/transactions/${user.id}`);
+        if (transactionsResponse?.data) {
+          setTransactions(transactionsResponse.data.slice(0, 5));
+        }
+      } catch (error) {
+        console.error('Failed to load wallet data:', error);
+      }
+    };
+
+    loadWalletData();
+  }, []);
 
   const handleDeposit = async () => {
     const depositAmount = parseInt(amount.replace(/\D/g, ""), 10);
@@ -40,43 +63,62 @@ const WalletScreen = () => {
 
     setLoading(true);
     try {
-      // TODO: Thay thế bằng API thực tế của bạn
-      // const response = await api.post('/wallet/create-payment-url', { amount: depositAmount });
-      // if (response.data && response.data.data && response.data.data.paymentUrl) {
-      //   setPaymentUrl(response.data.data.paymentUrl);
-      // }
-      
-      // LOGIC GIẢ LẬP ĐỂ TEST UI (Xóa khi có API thật)
-      console.log("Call the API to generate a URL with the amount:", depositAmount);
-      setTimeout(() => {
-        setPaymentUrl("https://sandbox.vnpayment.vn/tryitnow"); // Link giả để test
+      const rawUser = await AsyncStorage.getItem('userInfo');
+      if (!rawUser) {
+        Alert.alert('Error', 'Please sign in first.');
         setLoading(false);
-      }, 1000);
+        return;
+      }
 
+      const user = JSON.parse(rawUser);
+      const response = await api.post('/wallet/create-payment-url', {
+        amount: depositAmount,
+        userId: user.id,
+      });
+
+      const paymentUrlFromServer = response?.data?.paymentUrl || response?.paymentUrl;
+      if (paymentUrlFromServer) {
+        setPaymentUrl(paymentUrlFromServer);
+      } else {
+        throw new Error('No payment URL returned from server.');
+      }
     } catch (error) {
       Alert.alert("Error", "Cannot create VNPay order at the moment");
       console.error(error);
+    } finally {
       setLoading(false);
     }
   };
 
-  const handleNavigationStateChange = (navState) => {
+  const refreshWalletData = async () => {
+    try {
+      const rawUser = await AsyncStorage.getItem('userInfo');
+      if (!rawUser) return;
+      const user = JSON.parse(rawUser);
+
+      const balanceResponse = await api.get(`/wallet/${user.id}`);
+      if (balanceResponse?.data) {
+        setCurrentBalance(Number(balanceResponse.data.balance || 0));
+      }
+
+      const transactionsResponse = await api.get(`/wallet/transactions/${user.id}`);
+      if (transactionsResponse?.data) {
+        setTransactions(transactionsResponse.data.slice(0, 5));
+      }
+    } catch (error) {
+      console.error('Failed to refresh wallet data:', error);
+    }
+  };
+
+  const handleNavigationStateChange = async (navState) => {
     const { url } = navState;
 
-    // Lắng nghe URL trả về từ VNPay
     if (url.includes("vnpay-return")) {
-      setPaymentUrl(null); // Đóng WebView
-      
+      setPaymentUrl(null);
+
       if (url.includes("vnp_ResponseCode=00")) {
-        Alert.alert("Success", "You have successfully deposited money into your wallet!", [
-          { 
-            text: "OK", 
-            onPress: () => {
-              // TODO: Gọi API refresh số dư ví ở đây
-              navigation.goBack(); 
-            }
-          }
-        ]);
+        await refreshWalletData();
+        Alert.alert("Success", "You have successfully deposited money into your wallet!");
       } else {
         Alert.alert("Failed", "Transaction was cancelled or an error occurred.");
       }
@@ -175,6 +217,25 @@ const WalletScreen = () => {
                 </Text>
               </TouchableOpacity>
             ))}
+          </View>
+
+          <View style={styles.historyCard}>
+            <Text style={styles.historyTitle}>Recent Transactions</Text>
+            {transactions.length === 0 ? (
+              <Text style={styles.historyEmpty}>No transaction history yet.</Text>
+            ) : (
+              transactions.map((item) => (
+                <View key={item.id} style={styles.historyItem}>
+                  <View>
+                    <Text style={styles.historyType}>{item.type || 'DEPOSIT'}</Text>
+                    <Text style={styles.historyTime}>{item.created_at ? new Date(item.created_at).toLocaleString('vi-VN') : ''}</Text>
+                  </View>
+                  <Text style={styles.historyAmount}>
+                    {Number(item.amount || 0) > 0 ? '+' : ''}{formatNumber(Number(item.amount || 0))} VNĐ
+                  </Text>
+                </View>
+              ))
+            )}
           </View>
         </View>
 
@@ -346,6 +407,47 @@ const styles = StyleSheet.create({
     top: "50%",
     left: "50%",
     transform: [{ translateX: -15 }, { translateY: -15 }],
+  },
+  historyCard: {
+    marginTop: 20,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  historyTitle: {
+    color: COLORS.text,
+    fontSize: 15,
+    fontFamily: "ManropeBold",
+    marginBottom: 8,
+  },
+  historyItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255,255,255,0.08)",
+  },
+  historyType: {
+    color: COLORS.textSecondary,
+    fontSize: 13,
+    fontFamily: "ManropeBold",
+  },
+  historyTime: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    marginTop: 2,
+  },
+  historyAmount: {
+    color: COLORS.primary,
+    fontSize: 13,
+    fontFamily: "ManropeBold",
+  },
+  historyEmpty: {
+    color: COLORS.textMuted,
+    fontSize: 13,
   }
 });
 

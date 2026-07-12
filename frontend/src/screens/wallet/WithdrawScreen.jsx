@@ -10,26 +10,42 @@ import {
   KeyboardAvoidingView,
   Platform,
   Modal,
+  DeviceEventEmitter,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/FontAwesome6";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import COLORS from "../../styles/colors";
-// import api from "../../services/api"; // Import API instance của bạn
+import api from "../../services/api";
 
 const WithdrawScreen = () => {
   const navigation = useNavigation();
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
-  
-  // State quản lý OTP
+  const [currentBalance, setCurrentBalance] = useState(0);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [verifying, setVerifying] = useState(false);
 
-  // TODO: Fetch số dư thực tế từ backend. Tạm thời để số giả lập.
-  const currentBalance = 1100000; 
+  React.useEffect(() => {
+    const loadBalance = async () => {
+      try {
+        const rawUser = await AsyncStorage.getItem('userInfo');
+        if (!rawUser) return;
+        const user = JSON.parse(rawUser);
+        const response = await api.get(`/wallet/${user.id}`);
+        if (response?.data) {
+          setCurrentBalance(Number(response.data.balance || 0));
+        }
+      } catch (error) {
+        console.error('Failed to load wallet balance:', error);
+      }
+    };
+
+    loadBalance();
+  }, []);
 
   // Format số tiền (vd: 1000000 -> 1,000,000)
   const formatNumber = (num) => {
@@ -41,8 +57,8 @@ const WithdrawScreen = () => {
     setAmount(numericValue ? formatNumber(numericValue) : "");
   };
 
-  // Bước 1: Yêu cầu rút tiền (Kiểm tra số dư và bật form OTP)
-  const handleRequestWithdraw = () => {
+  // Bước 1: Kiểm tra dữ liệu và mở form OTP
+  const handleRequestWithdraw = async () => {
     const withdrawAmount = parseInt(amount.replace(/\D/g, ""), 10);
 
     if (!withdrawAmount || withdrawAmount < 50000) {
@@ -56,12 +72,21 @@ const WithdrawScreen = () => {
     }
 
     setLoading(true);
-    // GIẢ LẬP GỌI API GỬI OTP (Thực tế bạn sẽ gọi API request-otp ở đây)
-    setTimeout(() => {
+    try {
+      const rawUser = await AsyncStorage.getItem('userInfo');
+      if (!rawUser) {
+        Alert.alert('Error', 'Please sign in first.');
+        setLoading(false);
+        return;
+      }
+
       setLoading(false);
-      setShowOtpModal(true); // Mở form nhập OTP
-      Alert.alert("Notification", "OTP code has been sent to your phone number.");
-    }, 1000);
+      setShowOtpModal(true);
+      Alert.alert('Notification', 'Please enter the OTP to confirm your withdrawal.');
+    } catch (error) {
+      setLoading(false);
+      Alert.alert('Error', 'Unable to prepare withdrawal.');
+    }
   };
 
   // Bước 2: Xác nhận OTP và Thực hiện Rút tiền (Gọi DB)
@@ -75,31 +100,38 @@ const WithdrawScreen = () => {
     const withdrawAmount = parseInt(amount.replace(/\D/g, ""), 10);
 
     try {
-      // TODO: Uncomment đoạn code dưới đây khi ghép API thật
-      /*
-      const userId = 2; // Lấy từ Auth Context
-      const response = await api.post('/wallet/withdraw', {
-        userId: userId,
-        amount: withdrawAmount,
-        otp: otpCode // Nếu backend của bạn có check OTP
-      });
-      */
-
-      // GIẢ LẬP KẾT QUẢ TỪ BACKEND
-      setTimeout(() => {
+      const rawUser = await AsyncStorage.getItem('userInfo');
+      if (!rawUser) {
+        Alert.alert('Error', 'Please sign in first.');
         setVerifying(false);
-        setShowOtpModal(false);
-        setOtpCode(""); // Reset form
+        return;
+      }
 
-        Alert.alert("Success", `You have successfully withdrawn ${formatNumber(withdrawAmount)} VNĐ to your bank account.`, [
-          { text: "Great", onPress: () => navigation.goBack() }
-        ]);
-      }, 1500);
+      const user = JSON.parse(rawUser);
+      const response = await api.post('/wallet/withdraw', {
+        userId: user.id,
+        amount: withdrawAmount,
+        otp: otpCode,
+      });
 
-    } catch (error) {
-      console.error(error);
       setVerifying(false);
-      Alert.alert("Error", "Transaction failed or incorrect OTP code.");
+      setShowOtpModal(false);
+      setOtpCode("");
+
+      const balanceResponse = await api.get(`/wallet/${user.id}`);
+      if (balanceResponse?.data) {
+        setCurrentBalance(Number(balanceResponse.data.balance || 0));
+      }
+
+      DeviceEventEmitter.emit('wallet:transactions-updated');
+
+      Alert.alert("Success", `You have successfully withdrawn ${formatNumber(withdrawAmount)} VNĐ.`, [
+        { text: "Great", onPress: () => navigation.goBack() }
+      ]);
+    } catch (error) {
+      setVerifying(false);
+      const message = error?.response?.data?.message || 'Transaction failed or incorrect OTP code.';
+      Alert.alert("Error", message);
     }
   };
 

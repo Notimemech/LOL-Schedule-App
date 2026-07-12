@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Switch,
+  DeviceEventEmitter,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -29,19 +31,17 @@ const ProfileScreen = () => {
     {
       iconName: "money-bill-transfer",
       activityName: "Withdraw",
-      route: "WithdrawScreen", // Yêu cầu gửi OTP ở màn hình này
+      route: "WithdrawScreen",
     },
     {
       iconName: "clock-rotate-left",
       activityName: "Transaction History",
       route: "HistoryScreen",
     },
-    {
-      iconName: "gear",
-      activityName: "Settings",
-      route: "SettingScreen",
-    },
   ];
+
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isNotificationEnabled, setIsNotificationEnabled] = useState(true);
 
   // Logic Đăng xuất
   const handleLogout = () => {
@@ -76,28 +76,42 @@ const ProfileScreen = () => {
   const [username, setUsername] = useState('User');
   const [balance, setBalance] = useState(0);
 
+  const loadProfile = async () => {
+    try {
+      const raw = await AsyncStorage.getItem('userInfo');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setUsername(parsed.username || parsed.name || parsed.email || 'User');
+      }
+
+      const { getWalletBalance } = await import('../../services/bettingService');
+      const b = await getWalletBalance();
+      setBalance(b);
+    } catch (err) {
+      console.error('Failed to load profile:', err);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
-    const loadProfile = async () => {
-      try {
-        const raw = await AsyncStorage.getItem('userInfo');
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (isMounted) setUsername(parsed.username || parsed.name || parsed.email || 'User');
-        }
-        // get wallet balance via service
-        const { getWalletBalance } = await import('../../services/bettingService');
-        const b = await getWalletBalance();
-        if (isMounted) setBalance(b);
-      } catch (err) {
-        console.error('Failed to load profile:', err);
-      }
+    const safeLoadProfile = async () => {
+      if (!isMounted) return;
+      await loadProfile();
     };
 
-    loadProfile();
+    safeLoadProfile();
 
-    return () => { isMounted = false; };
+    const subscription = DeviceEventEmitter.addListener('wallet:transactions-updated', () => {
+      if (isMounted) {
+        loadProfile();
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.remove();
+    };
   }, []);
 
   const handleActivityPress = (activity) => {
@@ -159,7 +173,44 @@ const ProfileScreen = () => {
           ))}
         </View>
 
-        {/* Nút Đăng Xuất */}
+        <View style={localStyles.sectionCard}>
+          <Text style={localStyles.sectionTitle}>Preferences</Text>
+
+          <View style={localStyles.settingRow}>
+            <View style={localStyles.settingLabelWrap}>
+              <Icon name="moon" size={18} color={COLORS.primary} />
+              <Text style={localStyles.settingText}>Dark mode</Text>
+            </View>
+            <Switch
+              value={isDarkMode}
+              onValueChange={setIsDarkMode}
+              trackColor={{ false: '#767577', true: COLORS.primary }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          <View style={localStyles.settingRow}>
+            <View style={localStyles.settingLabelWrap}>
+              <Icon name="bell" size={18} color={COLORS.primary} />
+              <Text style={localStyles.settingText}>Match notifications</Text>
+            </View>
+            <Switch
+              value={isNotificationEnabled}
+              onValueChange={setIsNotificationEnabled}
+              trackColor={{ false: '#767577', true: COLORS.primary }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          <TouchableOpacity style={localStyles.settingRow} onPress={() => Alert.alert('Info', 'Language options will be available soon.')}>
+            <View style={localStyles.settingLabelWrap}>
+              <Icon name="language" size={18} color={COLORS.primary} />
+              <Text style={localStyles.settingText}>Language</Text>
+            </View>
+            <Text style={localStyles.settingHint}>Tiếng Việt</Text>
+          </TouchableOpacity>
+        </View>
+
         <TouchableOpacity 
           style={localStyles.logoutButton} 
           onPress={handleLogout}
@@ -198,8 +249,49 @@ const localStyles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 10,
   },
+  sectionCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 18,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  sectionTitle: {
+    color: COLORS.textSecondary,
+    fontSize: 13,
+    fontFamily: "ManropeBold",
+    marginBottom: 8,
+    marginLeft: 6,
+    textTransform: "uppercase",
+  },
+  settingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  settingLabelWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  settingText: {
+    color: COLORS.text,
+    fontSize: 14,
+    fontFamily: "ManropeBold",
+    marginLeft: 10,
+  },
+  settingHint: {
+    color: COLORS.textMuted,
+    fontSize: 13,
+  },
   logoutButton: {
-    backgroundColor: "#ff4757", // Màu đỏ cảnh báo (có thể đổi sang COLORS.danger nếu có)
+    backgroundColor: "#ff4757",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -207,8 +299,8 @@ const localStyles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 15,
     marginBottom: 40,
-    elevation: 3, // Bóng cho Android
-    shadowColor: "#ff4757", // Bóng cho iOS
+    elevation: 3,
+    shadowColor: "#ff4757",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
