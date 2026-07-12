@@ -26,6 +26,7 @@ import WithdrawScreen from "./src/screens/wallet/WithdrawScreen";
 import HistoryScreen from "./src/screens/profile/HistoryScreen";
 import SettingScreen from "./src/screens/profile/SettingScreen";
 import SignInScreen from "./src/screens/auth/SignInScreen";
+import DepositScreen from "./src/screens/profile/DepositScreen";
 
 const BottomTab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
@@ -97,6 +98,7 @@ export default function App() {
           <RootStack.Screen name="WithdrawScreen" component={WithdrawScreen} />
           <RootStack.Screen name="HistoryScreen" component={HistoryScreen} />
           <RootStack.Screen name="SettingScreen" component={SettingScreen} />
+          <RootStack.Screen name="Deposit" component={DepositScreen} />
         </RootStack.Navigator>
       </NavigationContainer>
     </>

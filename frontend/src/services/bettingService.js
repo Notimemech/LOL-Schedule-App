@@ -1,15 +1,31 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from './api';
-
-// For simplicity, we hardcode the user ID since there's no auth yet
-export const MOCK_USER_ID = 1;
 
 export const MIN_STAKE_VND = 10000;
 export const MAX_STAKE_VND = 10000000;
 
+const getCurrentUserId = async () => {
+  try {
+    const storedUserInfo = await AsyncStorage.getItem('userInfo');
+    if (storedUserInfo) {
+      const parsedUser = JSON.parse(storedUserInfo);
+      const userId = parsedUser?.id || parsedUser?.userId || parsedUser?.user_id || parsedUser?.user?.id;
+      if (userId) return Number(userId);
+    }
+  } catch (error) {
+    console.error('Failed to read current user id:', error);
+  }
+
+  return null;
+};
+
 export const placeBet = async (matchId, marketId, outcomeId, wagerAmount) => {
   try {
+    const userId = await getCurrentUserId();
+    if (!userId) throw new Error('User not logged in');
+
     const response = await api.post('/bets/place', {
-      userId: MOCK_USER_ID,
+      userId,
       market_id: marketId,
       option_key: outcomeId,
       amount: wagerAmount
@@ -26,8 +42,11 @@ export const placeBet = async (matchId, marketId, outcomeId, wagerAmount) => {
 
 export const cancelBet = async (betId) => {
   try {
+    const userId = await getCurrentUserId();
+    if (!userId) throw new Error('User not logged in');
+
     const response = await api.post(`/bets/${betId}/cancel`, {
-      userId: MOCK_USER_ID
+      userId
     });
     return {
       success: true,
@@ -40,7 +59,10 @@ export const cancelBet = async (betId) => {
 
 export const getWalletBalance = async () => {
   try {
-    const response = await api.get(`/wallet/${MOCK_USER_ID}`);
+    const userId = await getCurrentUserId();
+    if (!userId) return 0;
+
+    const response = await api.get(`/wallet/${userId}`);
     if (response.success && response.data) {
       return parseFloat(response.data.balance);
     }
@@ -53,7 +75,10 @@ export const getWalletBalance = async () => {
 
 export const getBetHistory = async (matchId) => {
   try {
-    const response = await api.get(`/bets/history/${MOCK_USER_ID}`);
+    const userId = await getCurrentUserId();
+    if (!userId) return [];
+
+    const response = await api.get(`/bets/history/${userId}`);
     if (response.success && response.data) {
       // Filter for this match on the frontend, or the backend should do it.
       // Assuming backend returns all user bets

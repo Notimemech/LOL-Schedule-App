@@ -9,7 +9,7 @@ import {
 import React, { useEffect, useState } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native"; // Import navigation
+import { useNavigation } from "@react-navigation/native";
 import FloatBox from "../../components/common/FloatBox";
 import COLORS from "../../styles/colors";
 import { Ionicons } from "@expo/vector-icons";
@@ -50,14 +50,25 @@ const ProfileScreen = () => {
       "Are you sure you want to logout from your account?",
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Logout", 
-          style: "destructive", 
-          onPress: () => {
-            // TODO: Thêm logic xóa token, clear AsyncStorage, update Auth Context...
-            console.log("Xử lý đăng xuất tại đây");
-          } 
-        }
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem("userInfo");
+              await AsyncStorage.removeItem("token");
+              await AsyncStorage.removeItem("accessToken");
+
+              navigation.reset({
+                index: 0,
+                routes: [{ name: "SignIn" }],
+              });
+            } catch (err) {
+              console.error("Logout failed:", err);
+              Alert.alert("Error", "Unable to log out right now.");
+            }
+          },
+        },
       ]
     );
   };
@@ -88,6 +99,12 @@ const ProfileScreen = () => {
 
     return () => { isMounted = false; };
   }, []);
+
+  const handleActivityPress = (activity) => {
+    if (activity?.route) {
+      navigation.navigate(activity.route);
+    }
+  };
 
   return (
     <SafeAreaView style={style.container}>
@@ -121,9 +138,9 @@ const ProfileScreen = () => {
           {mainActivities.map((act) => (
             <TouchableOpacity
               key={act.activityName}
-              style={localStyles.gridItem}
-              onPress={() => navigation.navigate(act.route)} // Chuyển trang
-              activeOpacity={0.7}
+              style={style.activityItem}
+              onPress={() => handleActivityPress(act)}
+              activeOpacity={0.6}
             >
               <FloatBox style={localStyles.floatBoxWrapper}
                 children={

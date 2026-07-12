@@ -1,7 +1,6 @@
 import {
   View,
   Text,
-  StyleSheet,
   Image,
   TextInput,
   TouchableWithoutFeedback,
@@ -9,51 +8,74 @@ import {
   TouchableOpacity,
 } from "react-native";
 import React, { useEffect, useState } from "react";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import COLORS from "../../styles/colors";
 import { homeHeaderStyles as styles } from "../../styles/common.styles";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { getWalletBalance } from "../../services/bettingService";
 
-const HomeHeader = () => {
+const HomeHeader = ({ searchQuery, onSearch }) => {
+  // 1. Khai báo Hooks và State
+  const navigation = useNavigation();
   const [walletBalance, setWalletBalance] = useState(0);
 
-  useEffect(() => {
-    let isMounted = true;
+  // 2. Logic lấy số dư ví (từ bản của bạn)
+  useFocusEffect(
+    React.useCallback(() => {
+      let isMounted = true;
 
-    const fetchBalance = async () => {
-      const balance = await getWalletBalance();
-      if (isMounted) {
-        setWalletBalance(balance);
-      }
-    };
+      const fetchBalance = async () => {
+        try {
+          const balance = await getWalletBalance();
+          if (isMounted) {
+            setWalletBalance(Number(balance) || 0);
+          }
+        } catch (error) {
+          console.error("Lỗi khi lấy số dư ví:", error);
+        }
+      };
 
-    fetchBalance();
+      fetchBalance();
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.header}>
+        {/* Phần bên trái: Logo và Thanh tìm kiếm */}
         <View style={styles.leftPart}>
-          <Image 
-            source={require("../../../assets/favicon.png")} 
+          <Image
+            source={require("../../../assets/logo.png")}
             style={styles.logo}
             resizeMode="contain"
           />
-          <TextInput 
-            style={styles.searchBox} 
-            placeholder="SEARCH..." 
+          <TextInput
+            style={styles.searchBox}
+            placeholder="SEARCH TEAM / LEAGUE..."
             placeholderTextColor={COLORS.textMuted}
+            value={searchQuery}
+            onChangeText={onSearch}
           />
         </View>
+
+        {/* Phần bên phải: Thông tin ví và Nút nạp tiền */}
         <View style={styles.rightPart}>
           <View style={styles.wallet}>
+            {/* Hiển thị số dư thực tế lấy từ API */}
             <Text style={styles.walletInfo}>{walletBalance.toFixed(2)}$</Text>
-            <TouchableOpacity style={styles.walletAdd} onPress={() => { }}>
-              <Icon name={"plus"} style={{ fontSize: 14, color: COLORS.primary }} />
+            
+            <TouchableOpacity 
+              style={styles.wallet} 
+              onPress={() => navigation.navigate("Deposit")}
+            >
+              {/* Lưu ý: Tôi đã bỏ số 40.00$ cứng để dùng biến walletBalance của bạn cho đồng nhất */}
+              <View style={styles.walletAdd}>
+                <Icon name={"plus"} style={{ fontSize: 14, color: COLORS.primary }} />
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -61,7 +83,5 @@ const HomeHeader = () => {
     </TouchableWithoutFeedback>
   );
 };
-
-
 
 export default HomeHeader;

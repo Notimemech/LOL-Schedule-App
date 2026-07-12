@@ -7,7 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { getWalletBalance } from "../../services/bettingService";
 
-const ContentHeader = ({ title, showBack = false }) => {
+const ContentHeader = ({ title, showBack = false, refreshTrigger = 0 }) => {
   const navigation = useNavigation();
   const canGoBack = navigation.canGoBack();
   const [walletBalance, setWalletBalance] = useState(0);
@@ -27,7 +27,7 @@ const ContentHeader = ({ title, showBack = false }) => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [refreshTrigger]);
 
   return (
     <View style={styles.header}>
