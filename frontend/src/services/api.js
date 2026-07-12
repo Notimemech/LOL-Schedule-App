@@ -1,11 +1,17 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
+const host =
+  Constants.expoConfig?.hostUri?.split(':')[0] ??
+  'localhost';
+
+export const API_BASE_URL = `http://${host}:9999/api`;
 // Create an Axios instance with default configurations
 const api = axios.create({
   // Use your computer's local IP address if running on a physical device
   // Defaulting to localhost for emulators
-  baseURL: 'http://192.168.137.1:9999/api', 
+  baseURL: API_BASE_URL, 
   timeout: 10000, // 10 seconds timeout
   headers: {
     'Content-Type': 'application/json',
