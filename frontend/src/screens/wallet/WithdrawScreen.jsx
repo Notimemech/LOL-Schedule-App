@@ -36,8 +36,8 @@ const WithdrawScreen = () => {
         if (!rawUser) return;
         const user = JSON.parse(rawUser);
         const response = await api.get(`/wallet/${user.id}`);
-        if (response?.data) {
-          setCurrentBalance(Number(response.data.balance || 0));
+        if (response) {
+          setCurrentBalance(Number(response.balance || 0));
         }
       } catch (error) {
         console.error('Failed to load wallet balance:', error);
@@ -119,8 +119,8 @@ const WithdrawScreen = () => {
       setOtpCode("");
 
       const balanceResponse = await api.get(`/wallet/${user.id}`);
-      if (balanceResponse?.data) {
-        setCurrentBalance(Number(balanceResponse.data.balance || 0));
+      if (balanceResponse) {
+        setCurrentBalance(Number(balanceResponse.balance || 0));
       }
 
       DeviceEventEmitter.emit('wallet:transactions-updated');

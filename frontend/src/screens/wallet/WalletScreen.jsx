@@ -37,13 +37,13 @@ const WalletScreen = () => {
         const user = JSON.parse(rawUser);
 
         const balanceResponse = await api.get(`/wallet/${user.id}`);
-        if (balanceResponse?.data) {
-          setCurrentBalance(Number(balanceResponse.data.balance || 0));
+        if (balanceResponse) {
+          setCurrentBalance(Number(balanceResponse.balance || 0));
         }
 
         const transactionsResponse = await api.get(`/wallet/transactions/${user.id}`);
-        if (transactionsResponse?.data) {
-          setTransactions(transactionsResponse.data.slice(0, 5));
+        if (transactionsResponse) {
+          setTransactions(transactionsResponse.slice(0, 5));
         }
       } catch (error) {
         console.error('Failed to load wallet data:', error);
@@ -76,8 +76,8 @@ const WalletScreen = () => {
         userId: user.id,
       });
 
-      // Axios interceptor trả về response.data, trong đó data chứa paymentUrl.
-      const paymentUrlFromServer = response?.data?.paymentUrl || response?.paymentUrl;
+      // Axios interceptor trả về payload trực tiếp.
+      const paymentUrlFromServer = response?.paymentUrl || response?.data?.paymentUrl;
       if (paymentUrlFromServer) {
         setPaymentUrl(paymentUrlFromServer);
       } else {
@@ -99,13 +99,13 @@ const WalletScreen = () => {
       const user = JSON.parse(rawUser);
 
       const balanceResponse = await api.get(`/wallet/${user.id}`);
-      if (balanceResponse?.data) {
-        setCurrentBalance(Number(balanceResponse.data.balance || 0));
+      if (balanceResponse) {
+        setCurrentBalance(Number(balanceResponse.balance || 0));
       }
 
       const transactionsResponse = await api.get(`/wallet/transactions/${user.id}`);
-      if (transactionsResponse?.data) {
-        setTransactions(transactionsResponse.data.slice(0, 5));
+      if (transactionsResponse) {
+        setTransactions(transactionsResponse.slice(0, 5));
       }
     } catch (error) {
       console.error('Failed to refresh wallet data:', error);
@@ -124,6 +124,22 @@ const WalletScreen = () => {
       } else {
         Alert.alert("Failed", "Transaction was cancelled or an error occurred.");
       }
+    }
+  };
+
+  const handleWebViewMessage = async (event) => {
+    try {
+      const payload = JSON.parse(event.nativeEvent.data);
+      if (payload?.status === 'success') {
+        setPaymentUrl(null);
+        await refreshWalletData();
+        Alert.alert('Success', 'You have successfully deposited money into your wallet!');
+      } else {
+        setPaymentUrl(null);
+        Alert.alert('Failed', 'Transaction did not complete successfully. Please try again.');
+      }
+    } catch (error) {
+      console.warn('Unable to parse WebView message:', error);
     }
   };
 
@@ -152,6 +168,7 @@ const WalletScreen = () => {
           source={{ uri: paymentUrl }}
           style={{ flex: 1 }}
           onNavigationStateChange={handleNavigationStateChange}
+          onMessage={handleWebViewMessage}
           startInLoadingState={true}
           renderLoading={() => <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />}
         />

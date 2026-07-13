@@ -275,6 +275,25 @@ CREATE INDEX idx_wallet_tx_wallet     ON WalletTransactions(wallet_id);
 CREATE INDEX idx_wallet_tx_created_at ON WalletTransactions(created_at);
 CREATE INDEX idx_wallet_tx_reference  ON WalletTransactions(reference_type, reference_id);
 
+CREATE TABLE vnpay_payments (
+    id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id         bigint        NOT NULL,
+    txn_ref         varchar(255)  NOT NULL UNIQUE,
+    amount          decimal(15,2) NOT NULL CHECK (amount > 0),
+    status          status_enum   NOT NULL DEFAULT 'pending',
+    response_code   varchar(10),
+    created_at      timestamptz   NOT NULL DEFAULT now(),
+    updated_at      timestamptz   NOT NULL DEFAULT now(),
+
+    CONSTRAINT fk_vnpay_user
+        FOREIGN KEY (user_id)
+        REFERENCES Users(id)
+        ON DELETE RESTRICT
+);
+
+CREATE INDEX idx_vnpay_txn_ref ON vnpay_payments(txn_ref);
+CREATE INDEX idx_vnpay_user ON vnpay_payments(user_id);
+
 -- =====================
 -- 10. BET MARKETS
 -- =====================

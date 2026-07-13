@@ -48,6 +48,95 @@ export const getTransactionsByWalletId = async (wallet_id) => {
     return rows;
 };
 
+export const createVnpayPayment = async (userId, txnRef, amount, client = pool) => {
+    const query = `
+        INSERT INTO vnpay_payments (user_id, txn_ref, amount, status)
+        VALUES ($1, $2, $3, 'pending')
+        RETURNING *;
+    `;
+    const { rows } = await client.query(query, [userId, txnRef, amount]);
+    return rows[0];
+};
+
+export const getVnpayPaymentByTxnRef = async (txnRef, client = pool) => {
+    const query = `
+        SELECT * FROM vnpay_payments WHERE txn_ref = $1;
+    `;
+    const { rows } = await client.query(query, [txnRef]);
+    return rows[0];
+};
+
+export const updateVnpayPaymentStatus = async (txnRef, status, responseCode, client = pool) => {
+    const query = `
+        UPDATE vnpay_payments
+        SET status = $1,
+            response_code = $2,
+            updated_at = now()
+        WHERE txn_ref = $3
+        RETURNING *;
+    `;
+    const { rows } = await client.query(query, [status, responseCode, txnRef]);
+    return rows[0];
+};
+
+export const processDepositByVnpayPayment = async (txnRef, responseCode) => {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        const paymentRes = await client.query(
+            `SELECT * FROM vnpay_payments WHERE txn_ref = $1 FOR UPDATE`,
+            [txnRef]
+        );
+        if (paymentRes.rows.length === 0) {
+            throw new Error('VNPAY order not found');
+        }
+
+        const payment = paymentRes.rows[0];
+        if (payment.status === 'success') {
+            await client.query('COMMIT');
+            return payment;
+        }
+
+        const walletRes = await client.query(
+            `SELECT id, balance FROM wallets WHERE user_id = $1 FOR UPDATE`,
+            [payment.user_id]
+        );
+
+        if (walletRes.rows.length === 0) {
+            throw new Error('Wallet not found for user');
+        }
+
+        const walletId = walletRes.rows[0].id;
+
+        await client.query(
+            `UPDATE wallets SET balance = balance + $1 WHERE id = $2`,
+            [payment.amount, walletId]
+        );
+
+        await client.query(
+            `INSERT INTO wallettransactions 
+            (wallet_id, amount, type, status, reference_type, reference_id) 
+            VALUES ($1, $2, 'DEPOSIT', 'success', 'PAYMENT', $3)`,
+            [walletId, payment.amount, payment.id]
+        );
+
+        await client.query(
+            `UPDATE vnpay_payments SET status = 'success', response_code = $1, updated_at = now() WHERE txn_ref = $2`,
+            [responseCode, txnRef]
+        );
+
+        await client.query('COMMIT');
+        return payment;
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Lỗi khi xử lý nạp tiền VNPay:', error);
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
 // ==========================================
 // THÊM HÀM XỬ LÝ VNPay DÙNG CÚ PHÁP ES MODULE
 // ==========================================

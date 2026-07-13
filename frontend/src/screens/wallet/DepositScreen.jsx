@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
-//import api from '../../services/api'; // Axios instance đã cấu hình
+import api from '../../services/api';
 
 const DepositScreen = ({ navigation }) => {
     const [amount, setAmount] = useState('');
@@ -21,8 +21,9 @@ const DepositScreen = ({ navigation }) => {
                 amount: parseInt(amount, 10)
             });
             
-            if (response.data && response.data.paymentUrl) {
-                setPaymentUrl(response.data.paymentUrl);
+            const paymentUrl = response?.paymentUrl || response?.data?.paymentUrl;
+            if (paymentUrl) {
+                setPaymentUrl(paymentUrl);
             }
         } catch (error) {
             Alert.alert('Error', 'Cannot create VNPay order at the moment');
