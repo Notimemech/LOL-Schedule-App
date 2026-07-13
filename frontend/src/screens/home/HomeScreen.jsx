@@ -21,6 +21,8 @@ import { Ionicons } from "@expo/vector-icons";
 import HomeBanner from "./HomeBanner";
 import { homeStyles as style } from "../../styles/home.styles";
 import { getMatches } from "../../services/matchService";
+import { getActivePromotion, getAllPromotions } from "../../services/promotionService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width } = Dimensions.get("window");
 
@@ -39,6 +41,7 @@ export default function HomeScreen() {
   // Popup Modal states
   const [promoModalVisible, setPromoModalVisible] = useState(false);
   const [dontShowAgainChecked, setDontShowAgainChecked] = useState(false);
+  const [activePromo, setActivePromo] = useState(null);
 
   const carouselItems = [
     {
@@ -57,6 +60,8 @@ export default function HomeScreen() {
     },
   ];
 
+  const [carouselData, setCarouselData] = useState(carouselItems);
+
   // Trigger whenever the screen comes into focus
   useFocusEffect(
     useCallback(() => {
@@ -68,9 +73,40 @@ export default function HomeScreen() {
     try {
       const data = await getMatches();
       setAllGames(data);
-      // Show promotions popup modal if not disabled in current session
-      if (!hidePromoModalGlobal) {
-        setPromoModalVisible(true);
+      
+      const userDataStr = await AsyncStorage.getItem("userData") || await AsyncStorage.getItem("userInfo");
+      let userId = null;
+      if (userDataStr) {
+        try {
+          userId = JSON.parse(userDataStr).id;
+        } catch (e) {
+          console.log("Error parsing user data:", e);
+        }
+      }
+
+      // Fetch dynamic promotion
+      const promoResp = await getActivePromotion(userId);
+      if (promoResp && promoResp.success && promoResp.data && !promoResp.data.is_used) {
+        setActivePromo(promoResp.data);
+        // Show promotions popup modal if not disabled in current session
+        if (!hidePromoModalGlobal) {
+          setPromoModalVisible(true);
+        }
+      }
+
+      // Fetch all promotions for carousel
+      const allPromosResp = await getAllPromotions(userId);
+      if (allPromosResp && allPromosResp.success && allPromosResp.data) {
+        const promoItems = allPromosResp.data
+          .filter(p => !p.is_used)
+          .map(p => ({
+            id: `promo_${p.id}`,
+            bannerInfo: p.title,
+            buttonInfo: p.button_text,
+            image: require("../../../assets/lol_background.jpg"),
+            onPress: () => navigation.navigate(p.button_link === "Deposit" ? "WalletScreen" : (p.button_link || "WalletScreen"), { promotion: p }),
+          }));
+        setCarouselData([...carouselItems, ...promoItems]);
       }
     } catch (error) {
       console.log(error);
@@ -133,44 +169,33 @@ export default function HomeScreen() {
       <Modal
         animationType="fade"
         transparent={true}
-        visible={promoModalVisible}
+        visible={promoModalVisible && activePromo !== null}
         onRequestClose={() => setPromoModalVisible(false)}
       >
+        {activePromo && (
         <View style={style.promoModalOverlay}>
           <View style={style.promoModalContent}>
             
             {/* Exciting Quote Box */}
             <View style={[style.promoQuoteBox, { marginBottom: 12 }]}>
               <Text style={style.promoQuoteText}>
-                🔥 HOT PROMO: 92% of VIPs predicted T1's victory! Deposit now to unlock exclusive 2026 VCS Odds!
+                {activePromo.quote_text}
               </Text>
             </View>
 
             {/* Promotions Card */}
             <View style={[style.promoCard, { marginVertical: 0 }]}>
-              <View style={style.promoBadge}>
-                <Text style={style.promoBadgeText}>LIMITED OFFER</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8, gap: 10 }}>
+                <Text style={[style.promoTitle, { fontSize: 18, lineHeight: 22, marginBottom: 0, flex: 1 }]}>
+                  {activePromo.title}
+                </Text>
+                <View style={[style.promoBadge, { position: 'relative', top: 0, right: 0 }]}>
+                  <Text style={style.promoBadgeText}>{activePromo.badge_text}</Text>
+                </View>
               </View>
-              <Text style={[style.promoTitle, { fontSize: 18, lineHeight: 22, marginBottom: 4 }]}>DOUBLE YOUR DEPOSIT!</Text>
               <Text style={[style.promoSubtitle, { fontSize: 12, marginBottom: 12 }]}>
-                Get +100% bonus on your first top-up up to 2.000.000đ!
+                {activePromo.subtitle}
               </Text>
-
-              {/* Hot match info visualization */}
-              <View style={[style.promoResultRow, { padding: 10, marginBottom: 12 }]}>
-                <View style={style.promoResultCol}>
-                  <Text style={style.promoResultLabel}>RECENT HOT WIN</Text>
-                  <Text style={[style.promoResultVal, { fontSize: 11 }]}>T1 vs GEN (3 - 2)</Text>
-                </View>
-                <View style={style.promoResultCol}>
-                  <Text style={style.promoResultLabel}>TOTAL POOL</Text>
-                  <Text style={[style.promoResultVal, { fontSize: 11 }]}>100.000đ</Text>
-                </View>
-                <View style={style.promoResultCol}>
-                  <Text style={style.promoResultLabel}>WINNING ODDS</Text>
-                  <Text style={[style.promoResultWin, { fontSize: 11 }]}>T1 (1.65x)</Text>
-                </View>
-              </View>
 
               <TouchableOpacity 
                 style={[style.promoButton, { paddingVertical: 12 }]}
@@ -179,11 +204,11 @@ export default function HomeScreen() {
                   if (dontShowAgainChecked) {
                     hidePromoModalGlobal = true;
                   }
-                  navigation.navigate("Deposit");
+                  navigation.navigate(activePromo.button_link === "Deposit" ? "WalletScreen" : (activePromo.button_link || "WalletScreen"), { promotion: activePromo });
                 }}
                 activeOpacity={0.8}
               >
-                <Text style={[style.promoButtonText, { fontSize: 14 }]}>CLAIM 100% BONUS NOW</Text>
+                <Text style={[style.promoButtonText, { fontSize: 14 }]}>{activePromo.button_text}</Text>
               </TouchableOpacity>
             </View>
 
@@ -219,6 +244,7 @@ export default function HomeScreen() {
 
           </View>
         </View>
+        )}
       </Modal>
 
       <View style={style.body}>
@@ -309,7 +335,7 @@ export default function HomeScreen() {
               {/* TOP CAROUSEL BANNER */}
               <View style={style.carouselContainer}>
                 <FlatList
-                  data={carouselItems}
+                  data={carouselData}
                   renderItem={renderCarouselItem}
                   keyExtractor={(item) => item.id}
                   horizontal
@@ -321,7 +347,7 @@ export default function HomeScreen() {
                 />
               </View>
               <View style={style.carouselDotContainer}>
-                {carouselItems.map((_, index) => (
+                {carouselData.map((_, index) => (
                   <View
                     key={index}
                     style={[

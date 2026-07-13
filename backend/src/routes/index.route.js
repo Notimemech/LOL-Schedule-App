@@ -8,6 +8,7 @@ import { walletRouter } from './wallet.route.js';
 import { matchRouter } from './match.route.js';
 import { betRouter } from './bet.route.js';
 import { gameRouter } from './game.route.js';
+import { promotionRouter } from './promotion.route.js';
 
 export const router = express.Router();
 
@@ -20,3 +21,4 @@ router.use('/wallet', walletRouter);
 router.use('/matches', matchRouter);
 router.use('/bets', betRouter);
 router.use('/games', gameRouter);
+router.use('/promotions', promotionRouter);

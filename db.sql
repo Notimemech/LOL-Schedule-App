@@ -467,9 +467,9 @@ INSERT INTO Roles (name) VALUES
 -- (1=admin, 2=ledat, 3=minhquan)
 -- =====================
 INSERT INTO Users (username, password, role_id, phone, email, is_active) VALUES
-    ('admin',    '123456', 1, '0900000001', 'admin@betgg.vn',    TRUE),
-    ('ledat',    '123456', 2, '0900000002', 'ledat@example.com', TRUE),
-    ('minhquan', '123456', 2, '0900000003', 'minhquan@example.com', TRUE);
+    ('admin',    '$2b$10$nt23xQxOCxcSnd7qbghzEeMayVBEj3GxOCy1jgwIMTNPQdDbVXgMa', 1, '0900000001', 'admin@betgg.vn',    TRUE),
+    ('ledat',    '$2b$10$nt23xQxOCxcSnd7qbghzEeMayVBEj3GxOCy1jgwIMTNPQdDbVXgMa', 2, '0900000002', 'ledat@example.com', TRUE),
+    ('minhquan', '$2b$10$nt23xQxOCxcSnd7qbghzEeMayVBEj3GxOCy1jgwIMTNPQdDbVXgMa', 2, '0900000003', 'minhquan@example.com', TRUE);
 
 -- =====================
 -- MatchTypes (tựa game) (1=LOL, 2=Dota 2)
@@ -569,7 +569,10 @@ INSERT INTO BetMarkets
     (5, 'winner_team', '{"selections":["team-liquid","team-spirit"]}'::jsonb, 0.00, 'open',    NULL,       '2026-07-15 18:00:00+02'),
     (2, 'first_blood', '{"selections":["hle","kt"]}'::jsonb,            10000.00, 'open',    NULL,       '2026-07-12 17:00:00+09'),
     (2, 'total_kill',  '{"selections":["over_20.5","under_20.5"]}'::jsonb, 0.00,   'open',    NULL,       '2026-07-12 17:00:00+09'),
-    (2, 'most_kill',   '{"selections":["hle","kt"]}'::jsonb,                0.00, 'open',    NULL,       '2026-07-12 17:00:00+09');
+    (2, 'most_kill',   '{"selections":["hle","kt"]}'::jsonb,                0.00, 'open',    NULL,       '2026-07-12 17:00:00+09'),
+    (1, 'first_blood', '{"selections":["t1","geng"]}'::jsonb,           15000.00, 'settled', 't1',       '2025-08-31 17:00:00+09'),
+    (1, 'total_kill',  '{"selections":["over_20.5","under_20.5"]}'::jsonb, 5000.00, 'settled', 'over_20.5', '2025-08-31 17:00:00+09'),
+    (1, 'most_kill',   '{"selections":["t1","geng"]}'::jsonb,           12000.00, 'settled', 't1',       '2025-08-31 17:00:00+09');
 
 -- =====================
 -- Odds (mỗi market 2 lựa chọn; trigger tự ghi OddsHistory)
@@ -590,7 +593,13 @@ INSERT INTO Odds (market_id, option_key, odd_value) VALUES
     (7, 'over_20.5',     1.9000),
     (7, 'under_20.5',    1.8000),
     (8, 'hle',           1.9000),
-    (8, 'kt',            1.9000);
+    (8, 'kt',            1.9000),
+    (9, 't1',            1.8000),
+    (9, 'geng',          1.9000),
+    (10, 'over_20.5',    1.8500),
+    (10, 'under_20.5',   1.8500),
+    (11, 't1',           1.7500),
+    (11, 'geng',         1.9500);
 
 -- =====================
 -- Bets
@@ -621,18 +630,47 @@ INSERT INTO WalletTransactions
     (3, 1000000.00, 'DEPOSIT', 'success', 'MANUAL', NULL, '2025-09-01 09:00:00+07'),
     (3, -200000.00, 'BET',     'success', 'BET',    2,    '2025-09-14 17:30:00+02');
 
+-- =====================
+-- Promotions
+-- =====================
+CREATE TABLE IF NOT EXISTS Promotions (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    subtitle TEXT NOT NULL,
+    badge_text VARCHAR(100),
+    quote_text TEXT,
+    button_text VARCHAR(100),
+    button_link VARCHAR(255),
+    is_active BOOLEAN DEFAULT true,
+    bonus_percentage NUMERIC DEFAULT 0,
+    max_bonus NUMERIC DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO Promotions 
+    (title, subtitle, badge_text, quote_text, button_text, button_link, is_active, bonus_percentage, max_bonus)
+VALUES 
+    ('DOUBLE YOUR DEPOSIT!', 'Get +100% bonus on your first top-up up to 2.000.000đ!', 'LIMITED OFFER', '🔥 HOT PROMO: Deposit now to double your balance and unlock VIP features!', 'CLAIM 100% BONUS NOW', 'Deposit', true, 100, 2000000);
+
+-- =====================
+-- UserPromotions
+-- =====================
+CREATE TABLE IF NOT EXISTS UserPromotions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES Users(id),
+    promotion_id INTEGER NOT NULL REFERENCES Promotions(id),
+    status VARCHAR(50) DEFAULT 'used',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    used_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, promotion_id)
+);
+
+INSERT INTO UserPromotions (user_id, promotion_id) 
+VALUES (2, 1); -- Simulate user ledat (id=2) having already claimed promotion 1
+
 COMMIT;
 
 select * from users
 
-SELECT m.*, 
-               t1.name as team1_name, t1.logo_url as team1_logo, t1.code as team1_code,
-               t2.name as team2_name, t2.logo_url as team2_logo, t2.code as team2_code,
-               tr.name as tournament_name,
-               l.name as league_name
-        FROM matches m
-        JOIN teams t1 ON m.team1_id = t1.id
-        JOIN teams t2 ON m.team2_id = t2.id
-        JOIN tournaments tr ON m.tournament_id = tr.id
-        JOIN leagues l ON tr.league_id = l.id
-        ORDER BY m.id DESC;
+
+

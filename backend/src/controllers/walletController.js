@@ -51,7 +51,7 @@ export const getTransactions = async (req, res, next) => {
 
 export const createPaymentUrl = async (req, res, next) => {
     try {
-        const { amount, userId: userIdFromBody } = req.body;
+        const { amount, userId: userIdFromBody, promotionId } = req.body;
         
         // Lấy ID người dùng từ token (middleware auth) hoặc payload body
         const userId = req.user?.id || userIdFromBody;
@@ -67,7 +67,7 @@ export const createPaymentUrl = async (req, res, next) => {
             return next(new AppError('Số tiền không hợp lệ', 400));
         }
 
-        const paymentUrl = walletService.createVNPayUrl(amount, ipAddr, userId);
+        const paymentUrl = walletService.createVNPayUrl(amount, ipAddr, userId, promotionId);
         
         // Trả URL về cho Frontend mở WebView sử dụng sendSuccess cho đồng bộ
         sendSuccess(res, 200, 'Payment URL created successfully', { paymentUrl });
@@ -98,12 +98,14 @@ export const vnpayReturn = async (req, res, next) => {
             const amount = parseInt(vnp_Params['vnp_Amount'], 10) / 100; // Đưa về số tiền gốc
             const vnp_TxnRef = vnp_Params['vnp_TxnRef']; 
             
-            // Tách userId từ TxnRef (Ví dụ TxnRef là "2_150930" thì lấy ra số 2)
-            const userId = vnp_TxnRef.split('_')[0]; 
+            // Tách userId từ TxnRef (Ví dụ TxnRef là "2_150930" thì lấy ra số 2, hoặc "2_150930_1")
+            const txnParts = vnp_TxnRef.split('_'); 
+            const userId = txnParts[0];
+            const promotionId = txnParts.length > 2 ? txnParts[2] : null;
 
             if (responseCode === '00') {
                 // Gọi tới Repository thực thi lệnh SQL cập nhật 2 bảng
-                await walletRepository.processDeposit(userId, amount, vnp_TxnRef);
+                await walletRepository.processDeposit(userId, amount, vnp_TxnRef, promotionId);
                 
                 // Giao dịch DB thành công, trả về trang HTML đơn giản cho React Native WebView đọc
                 res.status(200).send(`

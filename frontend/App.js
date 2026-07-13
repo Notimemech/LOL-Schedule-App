@@ -19,6 +19,7 @@ import ScheduleNavigation from "./src/navigation/ScheduleNavigation";
 import ProfileScreen from "./src/screens/profile/ProfileScreen";
 import DetailScreen from "./src/screens/matches/DetailScreen";
 import PlaceBetScreen from "./src/screens/betting/PlaceBetScreen";
+import PromotionsScreen from "./src/screens/promotions/PromotionsScreen";
 import COLORS from "./src/styles/colors";
 import { useFonts } from "expo-font";
 import WalletScreen from "./src/screens/wallet/WalletScreen"; // Import file bạn vừa tạo
@@ -26,7 +27,6 @@ import WithdrawScreen from "./src/screens/wallet/WithdrawScreen";
 import HistoryScreen from "./src/screens/profile/HistoryScreen";
 import SettingScreen from "./src/screens/profile/SettingScreen";
 import SignInScreen from "./src/screens/auth/SignInScreen";
-import DepositScreen from "./src/screens/profile/DepositScreen";
 
 const BottomTab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
@@ -44,6 +44,8 @@ function TabNavigator() {
             iconName = focused ? "home" : "home-outline";
           } else if (route.name === "ScheduleStack") {
             iconName = focused ? "calendar" : "calendar-outline";
+          } else if (route.name === "Promotions") {
+            iconName = focused ? "gift" : "gift-outline";
           } else if (route.name === "Profile") {
             iconName = focused ? "person-circle-outline" : "person-outline";
           }
@@ -66,6 +68,7 @@ function TabNavigator() {
         component={ScheduleNavigation}
         options={{ tabBarLabel: "Schedule" }}
       />
+      <BottomTab.Screen name="Promotions" component={PromotionsScreen} />
       <BottomTab.Screen name="Profile" component={ProfileScreen} />
     </BottomTab.Navigator>
   );
@@ -98,7 +101,6 @@ export default function App() {
           <RootStack.Screen name="WithdrawScreen" component={WithdrawScreen} />
           <RootStack.Screen name="HistoryScreen" component={HistoryScreen} />
           <RootStack.Screen name="SettingScreen" component={SettingScreen} />
-          <RootStack.Screen name="Deposit" component={DepositScreen} />
         </RootStack.Navigator>
       </NavigationContainer>
     </>
