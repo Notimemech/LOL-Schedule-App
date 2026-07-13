@@ -76,10 +76,12 @@ const WalletScreen = () => {
         userId: user.id,
       });
 
+      // Axios interceptor trả về response.data, trong đó data chứa paymentUrl.
       const paymentUrlFromServer = response?.data?.paymentUrl || response?.paymentUrl;
       if (paymentUrlFromServer) {
         setPaymentUrl(paymentUrlFromServer);
       } else {
+        console.error('Payment URL response:', response);
         throw new Error('No payment URL returned from server.');
       }
     } catch (error) {
