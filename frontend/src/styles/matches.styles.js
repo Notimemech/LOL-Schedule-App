@@ -201,13 +201,14 @@ export const scheduleStyles = StyleSheet.create({
     elevation: 5,
   },
   matchHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "column",
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
     borderBottomWidth: 1,
     borderBottomColor: COLORS.divider,
     paddingBottom: 8,
     marginBottom: 12,
+    gap: 4,
   },
   leagueText: {
     color: COLORS.primary,

@@ -140,7 +140,7 @@ export const processDepositByVnpayPayment = async (txnRef, responseCode) => {
 // ==========================================
 // THÊM HÀM XỬ LÝ VNPay DÙNG CÚ PHÁP ES MODULE
 // ==========================================
-export const processDeposit = async (userId, amount, txnRef) => {
+export const processDeposit = async (userId, originalAmount, txnRef, promotionId = null) => {
     const client = await pool.connect();
     
     try {
@@ -157,21 +157,63 @@ export const processDeposit = async (userId, amount, txnRef) => {
         }
 
         const walletId = walletRes.rows[0].id;
+        
+        let totalAmount = originalAmount;
+        let bonusAmount = 0;
+
+        // Xử lý promotion nếu có
+        if (promotionId) {
+            // Kiểm tra xem promotion có tồn tại và đang active
+            const promoRes = await client.query(
+                `SELECT bonus_percentage, max_bonus FROM Promotions WHERE id = $1 AND is_active = true FOR UPDATE`,
+                [promotionId]
+            );
+
+            // Kiểm tra user đã dùng chưa
+            const userPromoRes = await client.query(
+                `SELECT 1 FROM UserPromotions WHERE user_id = $1 AND promotion_id = $2 FOR UPDATE`,
+                [userId, promotionId]
+            );
+
+            if (promoRes.rows.length > 0 && userPromoRes.rows.length === 0) {
+                const promo = promoRes.rows[0];
+                bonusAmount = (originalAmount * promo.bonus_percentage) / 100;
+                if (promo.max_bonus > 0 && bonusAmount > promo.max_bonus) {
+                    bonusAmount = promo.max_bonus;
+                }
+                totalAmount += bonusAmount;
+
+                // Ghi nhận đã dùng
+                await client.query(
+                    `INSERT INTO UserPromotions (user_id, promotion_id, status, used_at) VALUES ($1, $2, 'used', now())`,
+                    [userId, promotionId]
+                );
+            }
+        }
 
         // 2. Cập nhật số dư (Wallets)
         await client.query(
             `UPDATE wallets SET balance = balance + $1 WHERE id = $2`,
-            [amount, walletId]
+            [totalAmount, walletId]
         );
 
-        // 3. Ghi log giao dịch (WalletTransactions)
-        // Enum: type = 'DEPOSIT', status = 'success', reference_type = 'PAYMENT'
+        // 3. Ghi log giao dịch (WalletTransactions) - original deposit
         await client.query(
             `INSERT INTO wallettransactions 
             (wallet_id, amount, type, status, reference_type, created_at) 
             VALUES ($1, $2, 'DEPOSIT', 'success', 'PAYMENT', now())`,
-            [walletId, amount]
+            [walletId, originalAmount]
         );
+        
+        // Ghi log giao dịch bonus nếu có
+        if (bonusAmount > 0) {
+            await client.query(
+                `INSERT INTO wallettransactions 
+                (wallet_id, amount, type, status, reference_type, reference_id, created_at) 
+                VALUES ($1, $2, 'DEPOSIT', 'success', 'PROMOTION', $3, now())`,
+                [walletId, bonusAmount, promotionId]
+            );
+        }
 
         await client.query('COMMIT');
         return true;

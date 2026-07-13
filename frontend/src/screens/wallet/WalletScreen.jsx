@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
+  Keyboard,
+  TouchableWithoutFeedback
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from "react-native-vector-icons/FontAwesome6";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,6 +23,8 @@ const QUICK_AMOUNTS = [50000, 100000, 200000, 500000, 1000000, 2000000];
 
 const WalletScreen = () => {
   const navigation = useNavigation();
+  const route = useRoute();
+  const promotion = route.params?.promotion || null;
   const [amount, setAmount] = useState("");
   const [paymentUrl, setPaymentUrl] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -53,6 +55,18 @@ const WalletScreen = () => {
     loadWalletData();
   }, []);
 
+  const calculateBonus = () => {
+    if (!promotion || !amount) return 0;
+    const deposit = parseInt(amount.replace(/\D/g, ""), 10) || 0;
+    const bonusPercent = Number(promotion.bonus_percentage) || 0;
+    let bonus = (deposit * bonusPercent) / 100;
+    const maxBonus = Number(promotion.max_bonus) || 0;
+    if (maxBonus > 0 && bonus > maxBonus) {
+      bonus = maxBonus;
+    }
+    return bonus;
+  };
+
   const handleDeposit = async () => {
     const depositAmount = parseInt(amount.replace(/\D/g, ""), 10);
 
@@ -71,10 +85,16 @@ const WalletScreen = () => {
       }
 
       const user = JSON.parse(rawUser);
-      const response = await api.post('/wallet/create-payment-url', {
+      const payload = {
         amount: depositAmount,
         userId: user.id,
-      });
+      };
+
+      if (promotion) {
+        payload.promotionId = promotion.id;
+      }
+
+      const response = await api.post('/wallet/create-payment-url', payload);
 
       // Axios interceptor trả về payload trực tiếp.
       const paymentUrlFromServer = response?.paymentUrl || response?.data?.paymentUrl;
@@ -162,7 +182,7 @@ const WalletScreen = () => {
             <Ionicons name="close" size={28} color="#fff" />
           </TouchableOpacity>
           <Text style={styles.webviewTitle}>Pay with VNPay</Text>
-          <View style={{ width: 48 }} /> 
+          <View style={{ width: 48 }} />
         </View>
         <WebView
           source={{ uri: paymentUrl }}
@@ -179,89 +199,97 @@ const WalletScreen = () => {
   // GIAO DIỆN CHÍNH CỦA MÀN HÌNH NẠP TIỀN
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={28} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Top up</Text>
-          <View style={{ width: 28 }} />
-        </View>
-
-        <View style={styles.content}>
-          {/* Card Số dư */}
-          <View style={styles.balanceCard}>
-            <Text style={styles.balanceLabel}>Current Balance</Text>
-            <Text style={styles.balanceAmount}>{formatNumber(currentBalance)} VNĐ</Text>
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={{ flex: 1 }}>
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+              <Ionicons name="chevron-back" size={28} color="#fff" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Top up</Text>
+            <View style={{ width: 28 }} />
           </View>
 
-          {/* Form nhập số tiền */}
-          <View style={styles.inputSection}>
-            <Text style={styles.inputLabel}>Amount to Deposit (VNĐ)</Text>
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="0"
-                placeholderTextColor="#888"
-                keyboardType="numeric"
-                value={amount}
-                onChangeText={handleAmountChange}
-                maxLength={12}
-              />
-              <Text style={styles.currency}>VNĐ</Text>
+          <View style={styles.content}>
+            {/* Active Promotion Banner */}
+            {promotion && (
+              <View style={styles.promoBanner}>
+                <Text style={styles.promoTitle}>🎉 {promotion.title}</Text>
+                <Text style={styles.promoSubtitle}>Applying for this deposit!</Text>
+              </View>
+            )}
+
+            {/* Card Số dư */}
+            <View style={styles.balanceCard}>
+              <Text style={styles.balanceLabel}>Current Balance</Text>
+              <Text style={styles.balanceAmount}>{formatNumber(currentBalance)} VNĐ</Text>
+            </View>
+
+            {/* Form nhập số tiền */}
+            <View style={styles.inputSection}>
+              <Text style={styles.inputLabel}>Amount to Deposit (VNĐ)</Text>
+              <View style={styles.inputContainer}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="0"
+                  placeholderTextColor="#888"
+                  keyboardType="numeric"
+                  value={amount}
+                  onChangeText={handleAmountChange}
+                  maxLength={12}
+                />
+                <Text style={styles.currency}>VNĐ</Text>
+              </View>
+            </View>
+
+            {/* Gợi ý số tiền nhanh */}
+            <Text style={styles.quickSelectLabel}>Quick Select</Text>
+            <View style={styles.quickSelectContainer}>
+              {QUICK_AMOUNTS.map((val) => (
+                <TouchableOpacity
+                  key={val}
+                  style={[
+                    styles.quickSelectBtn,
+                    amount === formatNumber(val) && styles.quickSelectBtnActive
+                  ]}
+                  onPress={() => setAmount(formatNumber(val))}
+                >
+                  <Text style={[
+                    styles.quickSelectText,
+                    amount === formatNumber(val) && styles.quickSelectTextActive
+                  ]}>
+                    {formatNumber(val)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+
+          </View>
+
+        {/* Receipt Box */}
+        {promotion && amount && parseInt(amount.replace(/\D/g, ""), 10) > 0 ? (
+          <View style={styles.receiptBox}>
+            <View style={styles.receiptRow}>
+              <Text style={styles.receiptLabel}>Deposit Amount:</Text>
+              <Text style={styles.receiptValue}>{formatNumber(parseInt(amount.replace(/\D/g, ""), 10))} VNĐ</Text>
+            </View>
+            <View style={styles.receiptRow}>
+              <Text style={styles.receiptLabel}>Promotion Bonus:</Text>
+              <Text style={styles.receiptBonus}>+ {formatNumber(calculateBonus())} VNĐ</Text>
+            </View>
+            <View style={styles.receiptDivider} />
+            <View style={styles.receiptRow}>
+              <Text style={styles.receiptLabelTotal}>Total Wallet Value:</Text>
+              <Text style={styles.receiptTotal}>{formatNumber(parseInt(amount.replace(/\D/g, ""), 10) + calculateBonus())} VNĐ</Text>
             </View>
           </View>
-
-          {/* Gợi ý số tiền nhanh */}
-          <Text style={styles.quickSelectLabel}>Quick Select</Text>
-          <View style={styles.quickSelectContainer}>
-            {QUICK_AMOUNTS.map((val) => (
-              <TouchableOpacity
-                key={val}
-                style={[
-                  styles.quickSelectBtn,
-                  amount === formatNumber(val) && styles.quickSelectBtnActive
-                ]}
-                onPress={() => setAmount(formatNumber(val))}
-              >
-                <Text style={[
-                  styles.quickSelectText,
-                  amount === formatNumber(val) && styles.quickSelectTextActive
-                ]}>
-                  {formatNumber(val)}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={styles.historyCard}>
-            <Text style={styles.historyTitle}>Recent Transactions</Text>
-            {transactions.length === 0 ? (
-              <Text style={styles.historyEmpty}>No transaction history yet.</Text>
-            ) : (
-              transactions.map((item) => (
-                <View key={item.id} style={styles.historyItem}>
-                  <View>
-                    <Text style={styles.historyType}>{item.type || 'DEPOSIT'}</Text>
-                    <Text style={styles.historyTime}>{item.created_at ? new Date(item.created_at).toLocaleString('vi-VN') : ''}</Text>
-                  </View>
-                  <Text style={styles.historyAmount}>
-                    {Number(item.amount || 0) > 0 ? '+' : ''}{formatNumber(Number(item.amount || 0))} VNĐ
-                  </Text>
-                </View>
-              ))
-            )}
-          </View>
-        </View>
+        ) : null}
 
         {/* Nút Thanh toán */}
         <View style={styles.footer}>
-          <TouchableOpacity 
-            style={[styles.submitBtn, loading && { opacity: 0.7 }]} 
+          <TouchableOpacity
+            style={[styles.submitBtn, loading && { opacity: 0.7 }]}
             onPress={handleDeposit}
             disabled={loading}
           >
@@ -276,7 +304,8 @@ const WalletScreen = () => {
           </TouchableOpacity>
         </View>
 
-      </KeyboardAvoidingView>
+        </View>
+      </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 };
@@ -467,6 +496,69 @@ const styles = StyleSheet.create({
   historyEmpty: {
     color: COLORS.textMuted,
     fontSize: 13,
+  },
+  promoBanner: {
+    backgroundColor: 'rgba(0, 168, 255, 0.1)',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#00a8ff',
+  },
+  promoTitle: {
+    color: '#00a8ff',
+    fontSize: 16,
+    fontFamily: "ManropeBold",
+    marginBottom: 5,
+  },
+  promoSubtitle: {
+    color: '#fff',
+    fontSize: 14,
+    fontFamily: "ManropeMedium",
+  },
+  receiptBox: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 16,
+    borderRadius: 12,
+    marginHorizontal: 20,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  receiptRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  receiptLabel: {
+    color: '#aaa',
+    fontSize: 14,
+    fontFamily: "ManropeMedium",
+  },
+  receiptValue: {
+    color: '#fff',
+    fontSize: 14,
+    fontFamily: "ManropeBold",
+  },
+  receiptBonus: {
+    color: '#4cd137',
+    fontSize: 14,
+    fontFamily: "ManropeBold",
+  },
+  receiptDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginVertical: 10,
+  },
+  receiptLabelTotal: {
+    color: '#fff',
+    fontSize: 16,
+    fontFamily: "ManropeBold",
+  },
+  receiptTotal: {
+    color: '#fbc531',
+    fontSize: 18,
+    fontFamily: "SpaceGrotesk-Bold",
   }
 });
 

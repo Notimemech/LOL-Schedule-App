@@ -119,16 +119,14 @@ export const sortObject = (obj) => {
     return sorted;
 };
 
-export const createVNPayUrl = async (amount, ipAddr, userId) => {
-    if (!amount || amount <= 0) {
-        throw new AppError('Số tiền không hợp lệ', 400);
-    }
-
+export const createVNPayUrl = (amount, ipAddr, userId, promotionId) => {
     const date = new Date();
     const createDate = moment(date).format('YYYYMMDDHHmmss');
-    const orderId = `${userId}_${date.getTime()}`;
-
-    await walletRepository.createVnpayPayment(userId, orderId, amount);
+    const timeStamp = moment(date).format('DDHHmmss'); 
+    
+    // NHÚNG userId vào TxnRef để khi VNPay trả về, ta biết là của user nào
+    // Format: "userId_timeStamp" hoặc "userId_timeStamp_promotionId"
+    const orderId = promotionId ? `${userId}_${timeStamp}_${promotionId}` : `${userId}_${timeStamp}`; 
 
     const tmnCode = process.env.VNP_TMN_CODE;
     const secretKey = process.env.VNP_HASH_SECRET;

@@ -208,11 +208,11 @@ export default function PlaceBetScreen() {
       return match?.team2?.code || match?.team2?.name || "Team 2";
     }
 
-    if (market?.market_type === "winner_team") {
-      return odd.option_key || "Outcome";
+    if (odd.option_key) {
+      return odd.option_key.replace(/_/g, ' ').toUpperCase();
     }
 
-    return odd.option_key || "Outcome";
+    return "Outcome";
   };
 
   return (
