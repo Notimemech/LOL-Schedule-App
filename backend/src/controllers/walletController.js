@@ -51,13 +51,15 @@ export const getTransactions = async (req, res, next) => {
 
 export const createPaymentUrl = async (req, res, next) => {
     try {
-        const { amount } = req.body;
+        const { amount, userId: userIdFromBody } = req.body;
         
-        // Lấy ID người dùng từ token (middleware auth)
-        // Lưu ý: Nếu middleware của bạn set user ID vào req.user.id thì dùng dòng dưới. 
-        // Nếu set vào chỗ khác, hãy điều chỉnh lại cho phù hợp.
-        const userId = req.user ? req.user.id : req.body.userId; 
+        // Lấy ID người dùng từ token (middleware auth) hoặc payload body
+        const userId = req.user?.id || userIdFromBody;
         
+        if (!userId) {
+            return next(new AppError('User ID is required to create the payment URL', 400));
+        }
+
         // Lấy IP của người dùng gửi request
         const ipAddr = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
 
