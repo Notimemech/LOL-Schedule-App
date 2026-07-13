@@ -8,15 +8,19 @@ import {
   Switch,
   DeviceEventEmitter,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import FloatBox from "../../components/common/FloatBox";
 import COLORS from "../../styles/colors";
 import { Ionicons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome6";
 import style from "../../styles/profile.styles";
+
+const formatVND = (amount) => {
+  return new Intl.NumberFormat('en-US').format(amount) + ' VND';
+};
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
@@ -92,16 +96,25 @@ const ProfileScreen = () => {
     }
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+
+      const safeLoadProfile = async () => {
+        if (!isMounted) return;
+        await loadProfile();
+      };
+
+      safeLoadProfile();
+
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
+
   useEffect(() => {
     let isMounted = true;
-
-    const safeLoadProfile = async () => {
-      if (!isMounted) return;
-      await loadProfile();
-    };
-
-    safeLoadProfile();
-
     const subscription = DeviceEventEmitter.addListener('wallet:transactions-updated', () => {
       if (isMounted) {
         loadProfile();
@@ -140,7 +153,7 @@ const ProfileScreen = () => {
                       { fontSize: 20, fontFamily: "ManropeBold", marginTop: 5 },
                     ]}
                   >
-                    BALANCE: {balance.toLocaleString()} VNĐ
+                    BALANCE: {formatVND(balance)}
                   </Text>
                 </View>
               </View>

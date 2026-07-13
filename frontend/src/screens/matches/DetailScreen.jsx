@@ -114,12 +114,29 @@ export default function DetailScreen() {
                   <Text style={styles.sectionTitle}>MATCH WINNER</Text>
                   <View style={styles.marketRow}>
                     {mainMarket.odds.map(odd => {
-                      // odd.option_key is the slug
                       const teamCode = odd.option_key === match.team1.slug ? match.team1.code : match.team2.code;
+                      const isSettled = mainMarket.status === 'settled';
+                      const isWinner = isSettled && mainMarket.result_option === odd.option_key;
+                      const isLoser = isSettled && !isWinner;
+
                       return (
-                        <View key={odd.id} style={styles.oddBox}>
-                          <Text style={styles.oddTeamCode}>{teamCode}</Text>
-                          <Text style={styles.oddValue}>{parseFloat(odd.odd_value).toFixed(2)}</Text>
+                        <View 
+                          key={odd.id} 
+                          style={[
+                            styles.oddBox,
+                            isWinner && { borderColor: COLORS.primary, backgroundColor: COLORS.glowSoft },
+                            isLoser && { opacity: 0.4, borderColor: COLORS.border }
+                          ]}
+                        >
+                          <Text style={[
+                            styles.oddTeamCode, 
+                            isWinner && { color: COLORS.primary },
+                            isLoser && { color: COLORS.textMuted }
+                          ]}>{teamCode}</Text>
+                          <Text style={[
+                            styles.oddValue, 
+                            isLoser && { color: COLORS.textMuted }
+                          ]}>{parseFloat(odd.odd_value).toFixed(2)}</Text>
                         </View>
                       )
                     })}
@@ -138,11 +155,26 @@ export default function DetailScreen() {
                         </Text>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                           {market.odds.map(odd => {
-                            const teamCode = odd.option_key === match.team1.slug ? match.team1.code : match.team2.code;
+                            let label = odd.option_key;
+                            if (odd.option_key === match.team1.slug) label = match.team1.code;
+                            else if (odd.option_key === match.team2.slug) label = match.team2.code;
+                            else label = label.replace(/_/g, ' ').toUpperCase();
+
+                            const isSettled = market.status === 'settled';
+                            const isWinner = isSettled && market.result_option === odd.option_key;
+                            const isLoser = isSettled && !isWinner;
+
                             return (
-                              <View key={odd.id} style={{ alignItems: 'center' }}>
-                                <Text style={{ fontFamily: "ManropeBold", fontSize: 10, color: COLORS.textMuted }}>{teamCode}</Text>
-                                <Text style={{ fontFamily: "SpaceGroteskBold", fontSize: 14, color: COLORS.text }}>{parseFloat(odd.odd_value).toFixed(2)}</Text>
+                              <View key={odd.id} style={[{ alignItems: 'center' }, isLoser && { opacity: 0.4 }]}>
+                                <Text style={[
+                                  { fontFamily: "ManropeBold", fontSize: 10, color: COLORS.textMuted },
+                                  isWinner && { color: COLORS.primary }
+                                ]}>{label}</Text>
+                                <Text style={[
+                                  { fontFamily: "SpaceGroteskBold", fontSize: 14, color: COLORS.text },
+                                  isWinner && { color: COLORS.primary },
+                                  isLoser && { color: COLORS.textMuted }
+                                ]}>{parseFloat(odd.odd_value).toFixed(2)}</Text>
                               </View>
                             )
                           })}

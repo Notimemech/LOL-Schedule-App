@@ -498,7 +498,7 @@ INSERT INTO Tournaments (league_id, name, start_date, end_date) VALUES
 -- Dota 2 (TI): 5=Falcons, 6=Xtreme, 7=Liquid, 8=Spirit
 -- =====================
 INSERT INTO Teams (name, code, slug, logo_url) VALUES
-    ('T1',                  'T1',   't1',             'https://vi.wikipedia.org/wiki/T%E1%BA%ADp_tin:T1_esports_logo.svg'),
+    ('T1',                  'T1',   't1',             'https://static.lolesports.com/teams/1726801573959_539px-T1_2019_full_allmode.png'),
     ('Gen.G Esports',       'GEN',  'geng',           'https://static.lolesports.com/teams/1773829250929_GENGLOGO_GOLD.png'),
     ('Hanwha Life Esports', 'HLE',  'hle',            'https://static.lolesports.com/teams/1631819564399_hle-2021-worlds.png'),
     ('KT Rolster',          'KT',   'kt',             'https://static.lolesports.com/teams/kt_darkbackground.png'),
@@ -566,7 +566,10 @@ INSERT INTO BetMarkets
     (2, 'winner_team', '{"selections":["hle","kt"]}'::jsonb,            50000.00, 'open',    NULL,       '2026-07-12 17:00:00+09'),
     (3, 'winner_team', '{"selections":["t1","hle"]}'::jsonb,                0.00, 'open',    NULL,       '2026-07-13 17:00:00+09'),
     (4, 'winner_team', '{"selections":["falcons","xtreme-gaming"]}'::jsonb, 200000.00, 'settled', 'falcons', '2025-09-14 18:00:00+02'),
-    (5, 'winner_team', '{"selections":["team-liquid","team-spirit"]}'::jsonb, 0.00, 'open',    NULL,       '2026-07-15 18:00:00+02');
+    (5, 'winner_team', '{"selections":["team-liquid","team-spirit"]}'::jsonb, 0.00, 'open',    NULL,       '2026-07-15 18:00:00+02'),
+    (2, 'first_blood', '{"selections":["hle","kt"]}'::jsonb,            10000.00, 'open',    NULL,       '2026-07-12 17:00:00+09'),
+    (2, 'total_kill',  '{"selections":["over_20.5","under_20.5"]}'::jsonb, 0.00,   'open',    NULL,       '2026-07-12 17:00:00+09'),
+    (2, 'most_kill',   '{"selections":["hle","kt"]}'::jsonb,                0.00, 'open',    NULL,       '2026-07-12 17:00:00+09');
 
 -- =====================
 -- Odds (mỗi market 2 lựa chọn; trigger tự ghi OddsHistory)
@@ -581,7 +584,13 @@ INSERT INTO Odds (market_id, option_key, odd_value) VALUES
     (4, 'falcons',       2.1000),
     (4, 'xtreme-gaming', 1.7500),
     (5, 'team-liquid',   1.8500),
-    (5, 'team-spirit',   1.9500);
+    (5, 'team-spirit',   1.9500),
+    (6, 'hle',           1.8500),
+    (6, 'kt',            1.8500),
+    (7, 'over_20.5',     1.9000),
+    (7, 'under_20.5',    1.8000),
+    (8, 'hle',           1.9000),
+    (8, 'kt',            1.9000);
 
 -- =====================
 -- Bets
@@ -614,16 +623,16 @@ INSERT INTO WalletTransactions
 
 COMMIT;
 
-select * from matches;
+select * from users
 
--- SELECT m.*, 
---                t1.name as team1_name, t1.logo_url as team1_logo, t1.code as team1_code,
---                t2.name as team2_name, t2.logo_url as team2_logo, t2.code as team2_code,
---                tr.name as tournament_name,
---                l.name as league_name
---         FROM matches m
---         JOIN teams t1 ON m.team1_id = t1.id
---         JOIN teams t2 ON m.team2_id = t2.id
---         JOIN tournaments tr ON m.tournament_id = tr.id
---         JOIN leagues l ON tr.league_id = l.id
---         ORDER BY m.id DESC;
+SELECT m.*, 
+               t1.name as team1_name, t1.logo_url as team1_logo, t1.code as team1_code,
+               t2.name as team2_name, t2.logo_url as team2_logo, t2.code as team2_code,
+               tr.name as tournament_name,
+               l.name as league_name
+        FROM matches m
+        JOIN teams t1 ON m.team1_id = t1.id
+        JOIN teams t2 ON m.team2_id = t2.id
+        JOIN tournaments tr ON m.tournament_id = tr.id
+        JOIN leagues l ON tr.league_id = l.id
+        ORDER BY m.id DESC;

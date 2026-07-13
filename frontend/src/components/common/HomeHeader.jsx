@@ -6,20 +6,23 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   TouchableOpacity,
+  Alert,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import COLORS from "../../styles/colors";
 import { homeHeaderStyles as styles } from "../../styles/common.styles";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { getWalletBalance } from "../../services/bettingService";
 
+const formatVND = (amount) => {
+  return new Intl.NumberFormat('en-US').format(amount) + ' VND';
+};
+
 const HomeHeader = ({ searchQuery, onSearch }) => {
-  // 1. Khai báo Hooks và State
   const navigation = useNavigation();
   const [walletBalance, setWalletBalance] = useState(0);
 
-  // 2. Logic lấy số dư ví (từ bản của bạn)
   useFocusEffect(
     React.useCallback(() => {
       let isMounted = true;
@@ -43,10 +46,20 @@ const HomeHeader = ({ searchQuery, onSearch }) => {
     }, [])
   );
 
+  const handleDepositPress = () => {
+    Alert.alert(
+      "Nạp tiền",
+      "Bạn có muốn chuyển sang trang nạp tiền không?",
+      [
+        { text: "Hủy", style: "cancel" },
+        { text: "Đồng ý", onPress: () => navigation.navigate("Deposit") }
+      ]
+    );
+  };
+
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.header}>
-        {/* Phần bên trái: Logo và Thanh tìm kiếm */}
         <View style={styles.leftPart}>
           <Image
             source={require("../../../assets/logo.png")}
@@ -62,20 +75,15 @@ const HomeHeader = ({ searchQuery, onSearch }) => {
           />
         </View>
 
-        {/* Phần bên phải: Thông tin ví và Nút nạp tiền */}
         <View style={styles.rightPart}>
           <View style={styles.wallet}>
-            {/* Hiển thị số dư thực tế lấy từ API */}
-            <Text style={styles.walletInfo}>{walletBalance.toFixed(2)}$</Text>
-            
-            <TouchableOpacity 
-              style={styles.wallet} 
-              onPress={() => navigation.navigate("Deposit")}
+            <Text style={styles.walletInfo}>{formatVND(walletBalance)}</Text>
+
+            <TouchableOpacity
+              style={styles.walletAdd}
+              onPress={handleDepositPress}
             >
-              {/* Lưu ý: Tôi đã bỏ số 40.00$ cứng để dùng biến walletBalance của bạn cho đồng nhất */}
-              <View style={styles.walletAdd}>
-                <Icon name={"plus"} style={{ fontSize: 14, color: COLORS.primary }} />
-              </View>
+              <Icon name={"plus"} style={{ fontSize: 14, color: COLORS.primary }} />
             </TouchableOpacity>
           </View>
         </View>

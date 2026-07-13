@@ -19,9 +19,11 @@ export const contentHeaderStyles = StyleSheet.create({
     zIndex: 10,
   },
   leftPart: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    marginRight: 10,
   },
   backButton: {
     padding: 4,
@@ -36,15 +38,17 @@ export const contentHeaderStyles = StyleSheet.create({
   title: {
     color: COLORS.text,
     fontFamily: "SpaceGroteskBold",
-    fontSize: 22,
-    letterSpacing: 2,
+    fontSize: 18,
+    letterSpacing: 1,
     textShadowColor: COLORS.primary,
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 8,
+    flexShrink: 1,
   },
   rightPart: {
     flexDirection: "row",
     alignItems: "center",
+    flexShrink: 0,
   },
   wallet: {
     flexDirection: "row",
@@ -60,14 +64,14 @@ export const contentHeaderStyles = StyleSheet.create({
   walletInfo: {
     color: COLORS.primary,
     fontFamily: "SpaceGroteskBold",
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 6,
     borderRightWidth: 1,
     borderColor: COLORS.primary,
-    fontSize: 14,
+    fontSize: 12,
   },
   walletAdd: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 6,
     backgroundColor: COLORS.glowSoft,
     borderTopRightRadius: 5,
@@ -97,6 +101,7 @@ export const homeHeaderStyles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     alignItems: "center",
+    marginRight: 10,
   },
   logo: {
     width: 32,
@@ -115,9 +120,9 @@ export const homeHeaderStyles = StyleSheet.create({
     borderRadius: 6,
   },
   rightPart: {
-    marginLeft: 16,
     flexDirection: "row",
     alignItems: "center",
+    flexShrink: 0,
   },
   wallet: {
     flexDirection: "row",
@@ -133,14 +138,14 @@ export const homeHeaderStyles = StyleSheet.create({
   walletInfo: {
     color: COLORS.primary,
     fontFamily: "SpaceGroteskBold",
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 6,
     borderRightWidth: 1,
     borderColor: COLORS.primary,
-    fontSize: 14,
+    fontSize: 12,
   },
   walletAdd: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 6,
     backgroundColor: COLORS.glowSoft,
     borderTopRightRadius: 5,
