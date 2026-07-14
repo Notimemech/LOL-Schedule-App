@@ -108,7 +108,7 @@ export const sortObject = (obj) => {
     let str = [];
     let key;
     for (key in obj) {
-        if (obj.hasOwnProperty(key)) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
             str.push(encodeURIComponent(key));
         }
     }
@@ -213,6 +213,11 @@ export const handleVnpayReturn = async (params) => {
         return { status: 'failed', responseCode };
     }
 
-    await walletRepository.processDepositByVnpayPayment(txnRef, responseCode);
+    // Tách userId và promotionId từ txnRef để áp dụng promotion
+    const txnParts = txnRef.split('_'); 
+    const userId = txnParts[0];
+    const promotionId = txnParts.length > 2 ? txnParts[2] : null;
+
+    await walletRepository.processDeposit(userId, amount, txnRef, promotionId);
     return { status: 'success', alreadyProcessed: false, responseCode };
 };

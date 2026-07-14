@@ -46,7 +46,7 @@ CREATE TYPE transaction_type_enum AS ENUM (
 CREATE TYPE bet_status_enum AS ENUM ('pending', 'won', 'lost', 'cancelled', 'cashout');
 
 -- Loại tham chiếu cho WalletTransactions.reference_id (FK đa hình)
-CREATE TYPE reference_type_enum AS ENUM ('BET', 'PAYMENT', 'MANUAL');
+CREATE TYPE reference_type_enum AS ENUM ('BET', 'PAYMENT', 'MANUAL', 'PROMOTION');
 
 -- =====================
 -- 0. ROLES

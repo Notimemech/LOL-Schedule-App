@@ -146,6 +146,16 @@ export const processDeposit = async (userId, originalAmount, txnRef, promotionId
     try {
         await client.query('BEGIN');
 
+        // 0. Kiểm tra giao dịch đã được xử lý chưa
+        const paymentRes = await client.query(
+            `SELECT * FROM vnpay_payments WHERE txn_ref = $1 FOR UPDATE`,
+            [txnRef]
+        );
+        if (paymentRes.rows.length > 0 && paymentRes.rows[0].status === 'success') {
+            await client.query('COMMIT');
+            return true; // Đã xử lý
+        }
+
         // 1. Tìm ví của user và lock (FOR UPDATE)
         const walletRes = await client.query(
             `SELECT id, balance FROM wallets WHERE user_id = $1 FOR UPDATE`, 
@@ -214,6 +224,12 @@ export const processDeposit = async (userId, originalAmount, txnRef, promotionId
                 [walletId, bonusAmount, promotionId]
             );
         }
+
+        // Cập nhật trạng thái vnpay_payments để IPN không xử lý lại
+        await client.query(
+            `UPDATE vnpay_payments SET status = 'success', response_code = '00', updated_at = now() WHERE txn_ref = $1`,
+            [txnRef]
+        );
 
         await client.query('COMMIT');
         return true;
