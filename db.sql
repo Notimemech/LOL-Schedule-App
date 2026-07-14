@@ -669,7 +669,12 @@ CREATE TABLE IF NOT EXISTS Promotions (
 INSERT INTO Promotions 
     (title, subtitle, badge_text, quote_text, button_text, button_link, is_active, bonus_percentage, max_bonus)
 VALUES 
-    ('DOUBLE YOUR DEPOSIT!', 'Get +100% bonus on your first top-up up to 2.000.000đ!', 'LIMITED OFFER', '🔥 HOT PROMO: Deposit now to double your balance and unlock VIP features!', 'CLAIM 100% BONUS NOW', 'Deposit', true, 100, 2000000);
+    ('DOUBLE YOUR DEPOSIT!', 'Get +100% bonus on your first top-up up to 2.000.000đ!', 'LIMITED OFFER', '🔥 HOT PROMO: Deposit now to double your balance and unlock VIP features!', 'CLAIM 100% BONUS NOW', 'Deposit', true, 100, 2000000),
+    ('WELCOME BONUS 50%', 'Get 50% extra on your first deposit up to 500.000đ. New members only!', 'NEW MEMBER', '🎮 Join 50,000+ bettors already winning on BetGG! Your esports journey starts here.', 'CLAIM 50% BONUS', 'Deposit', true, 50, 500000),
+    ('VIP RELOAD BONUS', 'Every Monday get +30% on your deposit. VIP Level 2+ only.', 'WEEKLY OFFER', '💎 VIP members earned 3x more last month. Upgrade and reload today!', 'RELOAD NOW', 'Deposit', true, 30, 1000000),
+    ('FREE BET FRIDAY', 'Place a bet of 100.000đ+ on any LOL match and get a 50.000đ free bet token.', 'EVERY FRIDAY', '⚡ Last Friday: 2,341 free bets claimed. Don''t miss out this week!', 'GET FREE BET', 'ScheduleStack', true, 0, 0),
+    ('REFER A FRIEND', 'Invite a friend and earn 100.000đ when they make their first deposit of 200.000đ+.', 'REFERRAL', '👥 Top referrer earned 5,000,000đ this month. Start sharing now!', 'SHARE LINK', 'Deposit', true, 0, 0),
+    ('CASHBACK MONDAY', 'Lost last week? Get 10% cashback on net losses up to 2.000.000đ every Monday.', 'CASHBACK', '🛡️ We''ve got your back. 10% cashback keeps you in the game even on bad days.', 'ACTIVATE CASHBACK', 'Deposit', true, 10, 2000000);
 
 -- =====================
 -- UserPromotions
@@ -690,6 +695,3 @@ VALUES (2, 1); -- Simulate user ledat (id=2) having already claimed promotion 1
 COMMIT;
 
 select * from users
-
-
-
