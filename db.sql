@@ -803,4 +803,4 @@ CREATE TABLE IF NOT EXISTS UserPromotions (
 
 COMMIT;
 
-select * from teams
+select * from wallets
