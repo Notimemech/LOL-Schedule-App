@@ -1,10 +1,10 @@
 import { View, Text, TouchableOpacity, Alert } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback } from "react";
 import COLORS from "../../styles/colors";
 import { contentHeaderStyles as styles } from "../../styles/common.styles";
 import Icon from "react-native-vector-icons/FontAwesome";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { getWalletBalance } from "../../services/bettingService";
 
 const formatVND = (amount) => {
@@ -16,22 +16,24 @@ const ContentHeader = ({ title, showBack = false, refreshTrigger = 0 }) => {
   const canGoBack = navigation.canGoBack();
   const [walletBalance, setWalletBalance] = useState(0);
 
-  useEffect(() => {
-    let isMounted = true;
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
 
-    const loadBalance = async () => {
-      const balance = await getWalletBalance();
-      if (isMounted) {
-        setWalletBalance(Number(balance) || 0);
-      }
-    };
+      const loadBalance = async () => {
+        const balance = await getWalletBalance();
+        if (isMounted) {
+          setWalletBalance(Number(balance) || 0);
+        }
+      };
 
-    loadBalance();
+      loadBalance();
 
-    return () => {
-      isMounted = false;
-    };
-  }, [refreshTrigger]);
+      return () => {
+        isMounted = false;
+      };
+    }, [refreshTrigger])
+  );
 
   const handleDepositPress = () => {
     Alert.alert(

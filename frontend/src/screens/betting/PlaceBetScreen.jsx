@@ -215,6 +215,13 @@ export default function PlaceBetScreen() {
     return "Outcome";
   };
 
+  const userBetOptions = history.reduce((acc, bet) => {
+    if (bet.status !== 'Cancelled') {
+      acc[bet.marketId] = bet.outcomeId;
+    }
+    return acc;
+  }, {});
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ContentHeader title="PLACE BET" showBack={true} refreshTrigger={balanceRefreshKey} />
@@ -227,6 +234,7 @@ export default function PlaceBetScreen() {
           <Text style={styles.sectionTitle}>SELECT MARKET</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
             {markets.map((market) => {
+              const betOptionForMarket = userBetOptions[market.id];
               return (
                 <View key={market.id} style={{ width: '48%', backgroundColor: COLORS.card, borderRadius: 8, padding: 8, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border }}>
                   <Text style={{ fontFamily: "SpaceGroteskBold", fontSize: 11, color: COLORS.textMuted, marginBottom: 8, textAlign: 'center' }}>
@@ -237,11 +245,18 @@ export default function PlaceBetScreen() {
                       const outcomeLabel = getOutcomeLabel(odd, market);
                       const isSelected = selectedMarketId === market.id && selectedOutcomeId === odd.option_key;
                       const parsedOdd = parseFloat(odd.odd_value);
+                      const isOppositeOption = betOptionForMarket && betOptionForMarket !== odd.option_key;
 
                       return (
                         <TouchableOpacity
                           key={odd.id}
-                          style={[styles.oddBox, { padding: 6, marginHorizontal: 2 }, isSelected && styles.oddBoxSelected]}
+                          style={[
+                            styles.oddBox, 
+                            { padding: 6, marginHorizontal: 2 }, 
+                            isSelected && styles.oddBoxSelected,
+                            isOppositeOption && { opacity: 0.3 }
+                          ]}
+                          disabled={isOppositeOption}
                           onPress={() => {
                             setSelectedMarketId(market.id);
                             setSelectedOutcomeId(odd.option_key);
