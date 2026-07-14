@@ -16,7 +16,7 @@ import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/nativ
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ContentHeader from "../../components/common/ContentHeader";
 import COLORS from "../../styles/colors";
-import { getMatchMarketsAndOdds, getUserBetsForMatch, autoCloseMarkets } from "../../services/bettingService";
+import { getMatchMarketsAndOdds, getAllBetsForMatch, autoCloseMarkets } from "../../services/bettingService";
 import { detailStyles as styles } from "../../styles/matches.styles";
 import MarketSection from "./MarketSection";
 import BetHistorySection from "./BetHistorySection";
@@ -55,7 +55,7 @@ export default function DetailScreen() {
   const loadUserBets = async () => {
     setLoadingBets(true);
     try {
-      const bets = await getUserBetsForMatch(match.matchId);
+      const bets = await getAllBetsForMatch(match.matchId);
       setUserBets(bets);
     } catch (error) {
       console.log('Failed to load user bets:', error);

@@ -9,9 +9,11 @@ const profileStyles = StyleSheet.create({
   body:{
     paddingHorizontal: 20,
   },
-  bodyContent:{
+  bodyContent: {
+    paddingVertical: 10,
     marginTop: 20,
-    height: 110,
+    minHeight: 110,
+    height: 'auto',
   },
   profileInfo: {
     flexDirection: "row",

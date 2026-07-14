@@ -33,23 +33,22 @@ const DepositScreen = ({ navigation }) => {
         }
     };
 
-    // Theo dõi URL của WebView để biết khi nào thanh toán xong
     const handleNavigationStateChange = (navState) => {
-        const { url } = navState;
+        // Intercept logic removed. Handled by onMessage.
+    };
 
-        // Nếu URL trỏ về máy chủ của bạn (chứa 'vnpay-return')
-        if (url.includes('vnpay-return')) {
-            // Đóng WebView
+    const handleWebViewMessage = async (event) => {
+        try {
+            const payload = JSON.parse(event.nativeEvent.data);
             setPaymentUrl(null);
-            
-            // Phân tích URL để biết thành công hay thất bại
-            if (url.includes('vnp_ResponseCode=00')) {
+            if (payload?.status === 'success') {
                 Alert.alert('Success', 'You have successfully deposited money into your wallet!');
-                // TODO: Gọi API refresh lại thông tin người dùng / số dư ví ở đây
                 navigation.goBack();
             } else {
                 Alert.alert('Failed', 'Transaction was cancelled or an error occurred.');
             }
+        } catch (error) {
+            console.warn('Unable to parse WebView message:', error);
         }
     };
 
@@ -60,6 +59,7 @@ const DepositScreen = ({ navigation }) => {
                 source={{ uri: paymentUrl }}
                 style={{ flex: 1 }}
                 onNavigationStateChange={handleNavigationStateChange}
+                onMessage={handleWebViewMessage}
             />
         );
     }

@@ -11,62 +11,11 @@ import SectionHeader from "../../components/ui/SectionHeader";
 const BetHistorySection = ({ bets, match, markets }) => {
   if (!bets || bets.length === 0) return null;
 
-  // Calculate totals
-  const totalPotentialWin = bets.reduce((sum, bet) => {
-    if (bet.status === "pending") {
-      return sum + Number(bet.potential_win);
-    }
-    return sum;
-  }, 0);
-
-  const totalWon = bets.reduce((sum, bet) => bet.status === "won" ? sum + Number(bet.payout_amount || bet.potential_win) : sum, 0);
-  const totalLost = bets.reduce((sum, bet) => bet.status === "lost" ? sum + Number(bet.amount) : sum, 0);
-  const netResult = totalWon - totalLost;
-
-  // Determine market status to see if it's settled or closed
-  let isAnyMarketSettled = false;
-  let isAnyMarketClosed = false;
-  if (markets && markets.length > 0) {
-    isAnyMarketSettled = markets.some(m => m.status === 'settled');
-    isAnyMarketClosed = markets.some(m => m.status === 'closed' || m.status === 'settled');
-  }
-
   return (
     <View style={{ marginTop: 10 }}>
-      <SectionHeader title="YOUR BETS" />
-
-      {/* POTENTIAL WINNINGS MOVED TO TOP */}
-      {(!isAnyMarketSettled && (isAnyMarketClosed || totalPotentialWin > 0)) ? (
-        <View style={styles.potentialWinBox}>
-          <View style={styles.potentialWinRow}>
-            <Text style={styles.potentialWinLabel}>POTENTIAL WINNINGS</Text>
-            <Text style={styles.potentialWinAmount}>{formatMoney(totalPotentialWin)}</Text>
-          </View>
-        </View>
-      ) : null}
-
-      {isAnyMarketSettled && (
-        <View style={styles.summaryBox}>
-          <Text style={styles.summaryTitle}>SETTLEMENT SUMMARY</Text>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Total Wagered:</Text>
-            <Text style={styles.summaryValue}>{formatMoney(bets.reduce((sum, b) => sum + Number(b.amount), 0))}</Text>
-          </View>
-          <View style={styles.summaryRow}>
-            <Text style={styles.summaryLabel}>Total Won:</Text>
-            <Text style={[styles.summaryValue, { color: COLORS.success }]}>+{formatMoney(totalWon)}</Text>
-          </View>
-          <View style={[styles.summaryRow, { borderBottomWidth: 0 }]}>
-            <Text style={styles.summaryLabel}>NET RESULT:</Text>
-            <Text style={[styles.summaryValue, { color: netResult >= 0 ? COLORS.success : COLORS.danger, fontSize: 16 }]}>
-              {netResult >= 0 ? "+" : ""}{formatMoney(netResult)}
-            </Text>
-          </View>
-        </View>
-      )}
+      <SectionHeader title="ALL BETS" />
 
       {bets.map(bet => {
-        const payout = parseFloat(bet.payout_amount || bet.potential_win || 0);
         const isPending = bet.status === "pending";
         const isWon = bet.status === "won";
         const isLost = bet.status === "lost";
@@ -75,33 +24,36 @@ const BetHistorySection = ({ bets, match, markets }) => {
         if (bet.option_key === match?.team1?.slug) outcomeText = match?.team1?.code;
         if (bet.option_key === match?.team2?.slug) outcomeText = match?.team2?.code;
 
+        const displayUsername = bet.username || bet.name || bet.email || 'Anonymous';
+
         return (
           <View key={bet.id} style={styles.card}>
             <View style={styles.rowTop}>
               <View style={styles.topLeft}>
                 <Text style={styles.marketTitle}>
-                  {formatMarketName(bet.market_type)} - {outcomeText}
+                  {formatMarketName(bet.market_type)}
                 </Text>
-                <Text style={styles.date}>{formatDate(bet.created_at)}</Text>
-              </View>
-
-              <View style={styles.topRight}>
-                <Text style={[styles.statusText, { color: isPending ? COLORS.primary : (isWon ? COLORS.success : COLORS.danger) }]}>
-                  {isPending ? 'ACCEPTED' : bet.status}
-                </Text>
+                <Text style={styles.date}>{formatDate(bet.placed_at || bet.created_at)}</Text>
               </View>
             </View>
 
             <View style={styles.rowMiddle}>
               <View style={styles.wagerBlock}>
-                <Text style={styles.label}>Wager:</Text>
-                <Text style={styles.wagerAmount}>{formatMoney(bet.amount)} VND</Text>
+                <Text style={styles.label}>User:</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={styles.wagerAmount}>{displayUsername}</Text>
+                  {bet.vip_name && (
+                    <View style={{ marginLeft: 6, backgroundColor: '#f5af19', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                      <Text style={{ color: '#000', fontSize: 10, fontWeight: 'bold' }}>{bet.vip_name}</Text>
+                    </View>
+                  )}
+                </View>
               </View>
 
               <View style={styles.payoutBlock}>
-                <Text style={styles.label}>{isWon ? 'Payout:' : (isLost ? 'Return:' : 'Potential Payout:')}</Text>
-                <Text style={[styles.payoutAmount, (isLost ? { color: COLORS.textMuted } : {})]}>
-                  {isLost ? '0' : formatMoney(isWon ? payout : bet.potential_win)} VND
+                <Text style={styles.label}>Choice:</Text>
+                <Text style={[styles.payoutAmount, { fontSize: 16, color: COLORS.text }]}>
+                  {outcomeText}
                 </Text>
               </View>
             </View>

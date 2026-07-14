@@ -26,7 +26,9 @@ import WalletScreen from "./src/screens/wallet/WalletScreen"; // Import file báº
 import WithdrawScreen from "./src/screens/wallet/WithdrawScreen";
 import HistoryScreen from "./src/screens/profile/HistoryScreen";
 import SettingScreen from "./src/screens/profile/SettingScreen";
+import ThemeSettingScreen from "./src/screens/profile/ThemeSettingScreen";
 import SignInScreen from "./src/screens/auth/SignInScreen";
+import VipScreen from "./src/screens/profile/VipScreen";
 
 const BottomTab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
@@ -74,7 +76,7 @@ function TabNavigator() {
   );
 }
 
-export default function App() {
+export default function App({ initialRouteName = "SignIn" }) {
   const [loaded] = useFonts({
     Manrope: require("./assets/fonts/Manrope-Regular.ttf"),
     ManropeBold: require("./assets/fonts/Manrope-Bold.ttf"),
@@ -90,7 +92,7 @@ export default function App() {
     <>
       <StatusBar barStyle="light-content" />
       <NavigationContainer>
-        <RootStack.Navigator screenOptions={{ headerShown: false }}>
+        <RootStack.Navigator initialRouteName={initialRouteName} screenOptions={{ headerShown: false }}>
           <RootStack.Screen name="SignIn" component={SignInScreen} />
           <RootStack.Screen name="MainTabs" component={TabNavigator} />
           <RootStack.Screen name="Detail" component={DetailScreen} />
@@ -101,6 +103,8 @@ export default function App() {
           <RootStack.Screen name="WithdrawScreen" component={WithdrawScreen} />
           <RootStack.Screen name="HistoryScreen" component={HistoryScreen} />
           <RootStack.Screen name="SettingScreen" component={SettingScreen} />
+          <RootStack.Screen name="ThemeSettingScreen" component={ThemeSettingScreen} />
+          <RootStack.Screen name="VipScreen" component={VipScreen} />
         </RootStack.Navigator>
       </NavigationContainer>
     </>

@@ -7,8 +7,10 @@ import {
   Alert,
   Switch,
   DeviceEventEmitter,
+  Animated,
 } from "react-native";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { LinearGradient } from "expo-linear-gradient";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -76,6 +78,26 @@ const ProfileScreen = () => {
 
   const [username, setUsername] = useState('User');
   const [balance, setBalance] = useState(0);
+  const [vipStatus, setVipStatus] = useState(null);
+
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.05,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
 
   const loadProfile = async () => {
     try {
@@ -88,6 +110,21 @@ const ProfileScreen = () => {
       const { getWalletBalance } = await import('../../services/bettingService');
       const b = await getWalletBalance();
       setBalance(b);
+
+      const api = (await import('../../services/api')).default;
+      try {
+        const raw = await AsyncStorage.getItem('userInfo');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const userId = parsed.id;
+          const statusRes = await api.get(`/vip/status/${userId}`);
+          if (statusRes && statusRes.data) {
+            setVipStatus(statusRes.data);
+          }
+        }
+      } catch (err) {
+        // ignore if not logged in or error
+      }
     } catch (err) {
       console.error('Failed to load profile:', err);
     }
@@ -136,26 +173,63 @@ const ProfileScreen = () => {
         {/* Phần Thông tin Profile */}
         <FloatBox style={style.bodyContent}
           children={
-              <View style={style.profileInfo}>
-                <Ionicons
-                  name={"person-circle-outline"}
-                  color={COLORS.primary}
-                  style={{ fontSize: 80 }}
-                />
-                <View>
-                  <Text style={style.text}>{username}</Text>
-                  <Text
-                    style={[
-                      style.text,
-                      { fontSize: 20, fontFamily: "ManropeBold", marginTop: 5 },
-                    ]}
-                  >
-                    BALANCE: {formatMoney(balance)} VNĐ
-                  </Text>
-                </View>
+            <View style={style.profileInfo}>
+              <Ionicons
+                name={"person-circle-outline"}
+                color={COLORS.primary}
+                style={{ fontSize: 80 }}
+              />
+              <View>
+                <Text style={style.text}>{username}</Text>
+
+                {vipStatus && vipStatus.vip_tier_id && (
+                  <Animated.View style={{ transform: [{ scale: scaleAnim }], alignSelf: 'flex-start', marginTop: 5 }}>
+                    <LinearGradient
+                      colors={
+                        vipStatus.vip_name === 'VIP 5' ? ['#FFD700', '#DAA520'] :
+                          vipStatus.vip_name === 'VIP 4' ? ['#f12711', '#f5af19'] :
+                            vipStatus.vip_name === 'VIP 3' ? ['#DA22FF', '#9733EE'] :
+                              vipStatus.vip_name === 'VIP 2' ? ['#00c6ff', '#0072ff'] :
+                                ['#11998e', '#38ef7d']
+                      }
+                      start={[0, 0]} end={[1, 1]}
+                      style={{ paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}
+                    >
+                      <Icon name="crown" size={14} color="#FFF" />
+                      <Text style={{ color: '#FFF', fontSize: 13, fontWeight: 'bold', marginLeft: 5 }}>
+                        {vipStatus.vip_name}
+                      </Text>
+                    </LinearGradient>
+                  </Animated.View>
+                )}
+
+                <Text
+                  style={[
+                    style.text,
+                    { fontSize: 20, fontFamily: "ManropeBold", marginTop: 5 },
+                  ]}
+                >
+                  BALANCE: {formatMoney(balance)} VNĐ
+                </Text>
               </View>
+            </View>
           }
         />
+
+        {(!vipStatus || !vipStatus.vip_tier_id) && (
+          <TouchableOpacity onPress={() => navigation.navigate("VipScreen")} activeOpacity={0.8}>
+            <Animated.View style={{ transform: [{ scale: scaleAnim }], marginHorizontal: 20, marginTop: 15 }}>
+              <LinearGradient
+                colors={['#f12711', '#f5af19']}
+                start={[0, 0]} end={[1, 1]}
+                style={{ padding: 15, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', shadowColor: '#f5af19', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 5, elevation: 5 }}
+              >
+                <Icon name="crown" size={20} color="#FFF" style={{ marginRight: 10 }} />
+                <Text style={{ color: '#FFF', fontSize: 18, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1 }}>Up to VIP</Text>
+              </LinearGradient>
+            </Animated.View>
+          </TouchableOpacity>
+        )}
 
         {/* Lưới các chức năng chính (Grid Layout) */}
         <View style={style.gridContainer}>
@@ -169,9 +243,9 @@ const ProfileScreen = () => {
               <FloatBox style={style.floatBoxWrapper}
                 children={
                   <View style={style.itemContent}>
-                    <Icon 
-                      name={act.iconName} 
-                      style={[style.text, { color: COLORS.primary, fontSize: 32, marginBottom: 10 }]} 
+                    <Icon
+                      name={act.iconName}
+                      style={[style.text, { color: COLORS.primary, fontSize: 32, marginBottom: 10 }]}
                     />
                     <Text style={[style.text, { fontSize: 14, fontFamily: "ManropeBold", textAlign: "center" }]}>
                       {act.activityName}
@@ -194,17 +268,27 @@ const ProfileScreen = () => {
             <Icon name="chevron-right" size={16} color={COLORS.textMuted} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={style.settingRow} onPress={() => Alert.alert('Info', 'Themes will be available soon.')}>
+          <TouchableOpacity style={style.settingRow} onPress={() => navigation.navigate("ThemeSettingScreen")}>
             <View style={style.settingLabelWrap}>
               <Icon name="palette" size={18} color={COLORS.primary} />
               <Text style={style.settingText}>Themes</Text>
             </View>
             <Icon name="chevron-right" size={16} color={COLORS.textMuted} />
           </TouchableOpacity>
+
+          {vipStatus && vipStatus.vip_tier_id && (
+            <TouchableOpacity style={style.settingRow} onPress={() => navigation.navigate("VipScreen")}>
+              <View style={style.settingLabelWrap}>
+                <Icon name="crown" size={18} color={COLORS.secondary} />
+                <Text style={style.settingText}>VIP Management</Text>
+              </View>
+              <Icon name="chevron-right" size={16} color={COLORS.textMuted} />
+            </TouchableOpacity>
+          )}
         </View>
 
-        <TouchableOpacity 
-          style={style.logoutButton} 
+        <TouchableOpacity
+          style={style.logoutButton}
           onPress={handleLogout}
           activeOpacity={0.8}
         >

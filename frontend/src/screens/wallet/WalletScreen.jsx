@@ -123,16 +123,9 @@ const WalletScreen = () => {
   };
 
   const handleNavigationStateChange = async (navState) => {
-    const { url } = navState;
-    if (url.includes("vnpay-return")) {
-      setPaymentUrl(null);
-      if (url.includes("vnp_ResponseCode=00")) {
-        await refreshWalletData();
-        Alert.alert("Success", "You have successfully deposited money into your wallet!");
-      } else {
-        Alert.alert("Failed", "Transaction was cancelled or an error occurred.");
-      }
-    }
+    // We let the backend process the return URL and respond with an HTML page
+    // that sends a postMessage to handleWebViewMessage.
+    // So we don't intercept 'vnpay-return' here anymore.
   };
 
   const handleWebViewMessage = async (event) => {

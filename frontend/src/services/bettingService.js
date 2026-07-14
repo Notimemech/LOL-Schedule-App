@@ -119,6 +119,19 @@ export const getUserBetsForMatch = async (matchId) => {
   }
 };
 
+export const getAllBetsForMatch = async (matchId) => {
+  try {
+    const response = await api.get(`/bets/match/${matchId}/all`);
+    if (response.success && response.data) {
+      return response.data;
+    }
+    return [];
+  } catch (error) {
+    console.error('Failed to load all bets for match:', error);
+    return [];
+  }
+};
+
 export const getMatchMarketsAndOdds = async (matchId) => {
   try {
     const response = await api.get(`/bets/markets/${matchId}`);
