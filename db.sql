@@ -801,9 +801,6 @@ CREATE TABLE IF NOT EXISTS UserPromotions (
     UNIQUE(user_id, promotion_id)
 );
 
-INSERT INTO UserPromotions (user_id, promotion_id) 
-VALUES (2, 1); -- Simulate user ledat (id=2) having already claimed promotion 1
-
 COMMIT;
 
 select * from teams

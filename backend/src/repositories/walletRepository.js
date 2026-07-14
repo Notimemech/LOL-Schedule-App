@@ -10,9 +10,9 @@ export const createWallet = async (user_id) => {
     return rows[0];
 };
 
-export const getWalletByUserId = async (user_id) => {
+export const getWalletByUserId = async (user_id, client = pool) => {
     const query = `SELECT * FROM wallets WHERE user_id = $1`;
-    const { rows } = await pool.query(query, [user_id]);
+    const { rows } = await client.query(query, [user_id]);
     return rows[0];
 };
 

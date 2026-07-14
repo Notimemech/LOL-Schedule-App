@@ -218,11 +218,33 @@ export const vnpayReturn = async (req, res, next) => {
                                 <h2 style="color:#4cd137;">Thanh toán thành công!</h2>
                                 <p>Hệ thống đang chuyển hướng, vui lòng đợi...</p>
                             </div>
+                            <script>
+                                if (window.ReactNativeWebView) {
+                                    window.ReactNativeWebView.postMessage(JSON.stringify({status:'success'}));
+                                }
+                            </script>
                         </body>
                     </html>
                 `);
             } else {
-                res.status(200).send('Giao dịch đã bị huỷ hoặc thất bại từ VNPay!');
+                res.status(200).send(`
+                    <html>
+                        <head>
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        </head>
+                        <body style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#1a1a2e;color:white;font-family:sans-serif;text-align:center;">
+                            <div>
+                                <h2 style="color:#ff4d67;">Giao dịch thất bại</h2>
+                                <p>Giao dịch đã bị huỷ hoặc xảy ra lỗi từ VNPay!</p>
+                            </div>
+                            <script>
+                                if (window.ReactNativeWebView) {
+                                    window.ReactNativeWebView.postMessage(JSON.stringify({status:'failed'}));
+                                }
+                            </script>
+                        </body>
+                    </html>
+                `);
             }
         } else {
             res.status(400).send('Dữ liệu không hợp lệ (Sai chữ ký)!');

@@ -73,6 +73,16 @@ export const getUserBetsForMatch = async (req, res, next) => {
     }
 };
 
+export const getAllBetsForMatch = async (req, res, next) => {
+    try {
+        const { matchId } = req.params;
+        const bets = await betService.getAllBetsForMatch(matchId);
+        sendSuccess(res, 200, 'All bets for match retrieved successfully', bets);
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const cancelBet = async (req, res, next) => {
     try {
         const { betId } = req.params;

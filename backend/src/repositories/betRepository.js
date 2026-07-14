@@ -103,6 +103,23 @@ export const getBetsByUserIdAndMatchId = async (userId, matchId) => {
     return rows;
 };
 
+export const getAllBetsByMatchId = async (matchId) => {
+    const query = `
+        SELECT b.id, b.option_key, b.placed_at, b.status,
+               u.username, u.email,
+               v.name as vip_name,
+               bm.market_type, bm.status as market_status
+        FROM bets b
+        JOIN betmarkets bm ON b.market_id = bm.id
+        JOIN users u ON b.user_id = u.id
+        LEFT JOIN viptiers v ON u.vip_tier_id = v.id
+        WHERE bm.match_id = $1
+        ORDER BY b.placed_at DESC;
+    `;
+    const { rows } = await pool.query(query, [matchId]);
+    return rows;
+};
+
 export const getBetById = async (betId) => {
     const query = `SELECT * FROM bets WHERE id = $1`;
     const { rows } = await pool.query(query, [betId]);

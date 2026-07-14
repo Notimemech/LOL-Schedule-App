@@ -10,6 +10,9 @@ import { betRouter } from './bet.route.js';
 import { gameRouter } from './game.route.js';
 import { promotionRouter } from './promotion.route.js';
 
+import { vipRouter } from './vip.route.js';
+import { notificationRouter } from './notification.route.js';
+
 export const router = express.Router();
 
 router.use('/users',userRouter);
@@ -22,3 +25,5 @@ router.use('/matches', matchRouter);
 router.use('/bets', betRouter);
 router.use('/games', gameRouter);
 router.use('/promotions', promotionRouter);
+router.use('/vip', vipRouter);
+router.use('/notifications', notificationRouter);
