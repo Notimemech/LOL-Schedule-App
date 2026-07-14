@@ -40,8 +40,8 @@ const HistoryScreen = () => {
       setUserId(user.id);
 
       const response = await api.get(`/wallet/transactions/${user.id}`);
-      const list = response?.data || [];
-      setTransactions(list);
+      const list = response?.data ?? response ?? [];
+      setTransactions(Array.isArray(list) ? list : []);
     } catch (error) {
       console.error("Error loading history:", error);
       setTransactions([]);

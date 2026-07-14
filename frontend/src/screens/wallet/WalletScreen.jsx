@@ -39,13 +39,17 @@ const WalletScreen = () => {
         const user = JSON.parse(rawUser);
 
         const balanceResponse = await api.get(`/wallet/${user.id}`);
-        if (balanceResponse) {
-          setCurrentBalance(Number(balanceResponse.balance || 0));
+        const walletData = balanceResponse?.data ?? balanceResponse;
+        if (walletData) {
+          setCurrentBalance(Number(walletData.balance || 0));
         }
 
         const transactionsResponse = await api.get(`/wallet/transactions/${user.id}`);
-        if (transactionsResponse) {
-          setTransactions(transactionsResponse.slice(0, 5));
+        const transactionsData = transactionsResponse?.data ?? transactionsResponse;
+        if (Array.isArray(transactionsData)) {
+          setTransactions(transactionsData.slice(0, 5));
+        } else {
+          setTransactions([]);
         }
       } catch (error) {
         console.error('Failed to load wallet data:', error);
@@ -119,13 +123,17 @@ const WalletScreen = () => {
       const user = JSON.parse(rawUser);
 
       const balanceResponse = await api.get(`/wallet/${user.id}`);
-      if (balanceResponse) {
-        setCurrentBalance(Number(balanceResponse.balance || 0));
+      const walletData = balanceResponse?.data ?? balanceResponse;
+      if (walletData) {
+        setCurrentBalance(Number(walletData.balance || 0));
       }
 
       const transactionsResponse = await api.get(`/wallet/transactions/${user.id}`);
-      if (transactionsResponse) {
-        setTransactions(transactionsResponse.slice(0, 5));
+      const transactionsData = transactionsResponse?.data ?? transactionsResponse;
+      if (Array.isArray(transactionsData)) {
+        setTransactions(transactionsData.slice(0, 5));
+      } else {
+        setTransactions([]);
       }
     } catch (error) {
       console.error('Failed to refresh wallet data:', error);

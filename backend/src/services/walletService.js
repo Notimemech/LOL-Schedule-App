@@ -146,16 +146,24 @@ export const createVNPayUrl = (amount, ipAddr, userId, promotionId) => {
     vnp_Params['vnp_ReturnUrl'] = returnUrl;
     vnp_Params['vnp_IpAddr'] = ipAddr;
     vnp_Params['vnp_CreateDate'] = createDate;
-    vnp_Params['vnp_SecureHashType'] = 'SHA512';
 
-    vnp_Params = sortObject(vnp_Params);
-    const signData = qs.stringify(vnp_Params, { encode: false });
+    const signDataParams = sortObject(vnp_Params);
+    const signData = qs.stringify(signDataParams, { encode: false });
     const hmac = crypto.createHmac('sha512', secretKey);
     const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+
+    vnp_Params['vnp_SecureHashType'] = 'SHA512';
     vnp_Params['vnp_SecureHash'] = signed;
 
-    vnpUrl += '?' + qs.stringify(vnp_Params, { encode: false });
-    return vnpUrl;
+    vnpUrl += '?' + qs.stringify(sortObject(vnp_Params), { encode: false });
+    return {
+        paymentUrl: vnpUrl,
+        txnRef: orderId,
+    };
+};
+
+export const createVnpayPaymentRecord = async (userId, txnRef, amount) => {
+    return await walletRepository.createVnpayPayment(userId, txnRef, amount);
 };
 
 export const verifyVnpaySignature = (params) => {

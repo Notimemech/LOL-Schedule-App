@@ -93,7 +93,8 @@ export const createPaymentUrl = async (req, res, next) => {
             return next(new AppError('Số tiền không hợp lệ', 400));
         }
 
-        const paymentUrl = walletService.createVNPayUrl(amount, ipAddr, userId, promotionId);
+        const { paymentUrl, txnRef } = walletService.createVNPayUrl(amount, ipAddr, userId, promotionId);
+        await walletService.createVnpayPaymentRecord(userId, txnRef, amount);
         
         sendSuccess(res, 200, 'Payment URL created successfully', { paymentUrl });
     } catch (error) {
