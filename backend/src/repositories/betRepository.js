@@ -87,6 +87,22 @@ export const getBetsByUserId = async (userId) => {
     return rows;
 };
 
+export const getBetsByUserIdAndMatchId = async (userId, matchId) => {
+    const query = `
+        SELECT b.*, 
+               bm.market_type, 
+               bm.status as market_status, 
+               bm.result_option,
+               bm.closes_at
+        FROM bets b
+        JOIN betmarkets bm ON b.market_id = bm.id
+        WHERE b.user_id = $1 AND bm.match_id = $2
+        ORDER BY b.placed_at DESC;
+    `;
+    const { rows } = await pool.query(query, [userId, matchId]);
+    return rows;
+};
+
 export const getBetById = async (betId) => {
     const query = `SELECT * FROM bets WHERE id = $1`;
     const { rows } = await pool.query(query, [betId]);
@@ -113,4 +129,23 @@ export const updateBetPayout = async (betId, status, payoutAmount, client = pool
     `;
     const { rows } = await client.query(query, [status, payoutAmount, betId]);
     return rows[0];
+};
+
+export const getPendingBetsByMarketId = async (marketId, client = pool) => {
+    const query = `
+        SELECT * FROM bets 
+        WHERE market_id = $1 AND status = 'pending'
+        FOR UPDATE;
+    `;
+    const { rows } = await client.query(query, [marketId]);
+    return rows;
+};
+
+export const getExpiredOpenMarkets = async () => {
+    const query = `
+        SELECT * FROM betmarkets 
+        WHERE status = 'open' AND closes_at <= NOW();
+    `;
+    const { rows } = await pool.query(query);
+    return rows;
 };

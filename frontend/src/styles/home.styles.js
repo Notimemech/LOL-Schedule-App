@@ -17,7 +17,7 @@ export const homeStyles = StyleSheet.create({
     marginVertical: 12,
   },
   carouselContainer: {
-    height: 200,
+    height: 220,
     marginBottom: 10,
   },
   carouselDotContainer: {
@@ -393,7 +393,7 @@ export const homeBannerStyles = StyleSheet.create({
   },
   bannerImage: {
     width: "100%",
-    height: 200,
+    height: 220,
   },
   bannerInfo: {
     backgroundColor: COLORS.overlayHeavy,
@@ -409,7 +409,8 @@ export const homeBannerStyles = StyleSheet.create({
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
-    width: 160,
+    alignSelf: "flex-start",
+    paddingHorizontal: 24,
     height: 48,
     borderRadius: 4,
     shadowColor: COLORS.primary,

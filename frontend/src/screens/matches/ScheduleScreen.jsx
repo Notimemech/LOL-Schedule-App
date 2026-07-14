@@ -19,6 +19,8 @@ import { getMatches } from "../../services/matchService";
 import COLORS from "../../styles/colors";
 import { Ionicons } from "@expo/vector-icons";
 
+import MatchListItem from "../../components/matches/MatchListItem";
+
 export default function ScheduleScreen() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -59,12 +61,6 @@ export default function ScheduleScreen() {
     }
   };
 
-  const formatDate = (startDate) => {
-    const date = new Date(startDate);
-    return date.toLocaleString("vi-VN", {
-      timeZone: "Asia/Ho_Chi_Minh",
-    });
-  };
 
   const getUniqueMatchDates = () => {
     const dates = new Set();
@@ -104,7 +100,7 @@ export default function ScheduleScreen() {
     // 4. Search Query Filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
-      const matchesSearch = 
+      const matchesSearch =
         game.team1.name?.toLowerCase().includes(query) ||
         game.team1.code?.toLowerCase().includes(query) ||
         game.team2.name?.toLowerCase().includes(query) ||
@@ -258,60 +254,7 @@ export default function ScheduleScreen() {
       >
         {filteredGames.length > 0 ? (
           filteredGames.map((game) => (
-            <View key={game.matchId} style={styles.matchContainer}>
-              <View style={styles.matchHeader}>
-                <Text style={styles.leagueText}>{game.leagueName?.toUpperCase()}</Text>
-                <Text style={styles.tournamentText}>{game.tournamentName?.toUpperCase()}</Text>
-              </View>
-              <View style={styles.timeBadge}>
-                <Text style={styles.timeText}>{formatDate(game.startTime)}</Text>
-              </View>
-
-              <View style={styles.gameCard}>
-                <View style={styles.teamCard}>
-                  <Image
-                    source={{ uri: game.team1.logoUrl }}
-                    style={styles.teamLogo}
-                    resizeMode="contain"
-                  />
-                  <Text style={styles.teamCode}>{game.team1.code}</Text>
-                </View>
-
-                {game.state === "finished" ? (
-                  <View style={[styles.vsContainer, { borderColor: COLORS.success }]}>
-                    <Text style={[styles.vsText, { color: COLORS.success }]}>
-                      {game.team1Score} - {game.team2Score}
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.vsContainer}>
-                    <Text style={styles.vsText}>VS</Text>
-                  </View>
-                )}
-
-                <View style={styles.teamCard}>
-                  <Image
-                    source={{ uri: game.team2.logoUrl }}
-                    style={styles.teamLogo}
-                    resizeMode="contain"
-                  />
-                  <Text style={styles.teamCode}>{game.team2.code}</Text>
-                </View>
-              </View>
-
-              <Pressable
-                style={({ pressed }) => [
-                  styles.detailButton,
-                  pressed && styles.detailButtonPressed,
-                  game.state === "finished" && { borderColor: COLORS.border }
-                ]}
-                onPress={() => navigation.navigate('Detail', { match: game })}
-              >
-                <Text style={[styles.detailButtonText, game.state === "finished" && { color: COLORS.textMuted }]}>
-                  {game.state === "finished" ? "VIEW RESULTS" : "VIEW MATCH TERMINAL"}
-                </Text>
-              </Pressable>
-            </View>
+            <MatchListItem key={game.matchId} game={game} />
           ))
         ) : (
           <View style={{ paddingVertical: 50, alignItems: "center" }}>
@@ -324,3 +267,4 @@ export default function ScheduleScreen() {
     </SafeAreaView>
   );
 }
+

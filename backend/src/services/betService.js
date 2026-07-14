@@ -42,6 +42,18 @@ export const placeBet = async (userId, betData, ipAddress) => {
         throw new AppError('Bet amount must be greater than 0', 400);
     }
 
+    // Check market is still open
+    const market = await betRepository.getMarketById(market_id);
+    if (!market) {
+        throw new AppError('Market not found', 404);
+    }
+    if (market.status !== 'open') {
+        throw new AppError('This market is no longer accepting bets', 400);
+    }
+    if (new Date(market.closes_at) <= new Date()) {
+        throw new AppError('Betting has closed for this market', 400);
+    }
+
     const wallet = await walletRepository.getWalletByUserId(userId);
     if (!wallet || parseFloat(wallet.balance) < amount) {
         throw new AppError('Insufficient balance to place bet', 400);
@@ -94,6 +106,10 @@ export const placeBet = async (userId, betData, ipAddress) => {
 
 export const getUserBetHistory = async (userId) => {
     return await betRepository.getBetsByUserId(userId);
+};
+
+export const getUserBetsForMatch = async (userId, matchId) => {
+    return await betRepository.getBetsByUserIdAndMatchId(userId, matchId);
 };
 
 export const cancelBet = async (userId, betId) => {
@@ -198,4 +214,75 @@ export const settleBet = async (betId, outcome) => {
     } finally {
         client.release();
     }
+};
+
+/**
+ * Settle all pending bets for a market based on the result_option.
+ * Called when a market status changes to 'settled'.
+ * Wallet logic: balance += winnings (PAYOUT) for won bets; lost bets already had amount deducted at placement.
+ */
+export const settleAllBetsForMarket = async (marketId) => {
+    const market = await betRepository.getMarketById(marketId);
+    if (!market) {
+        throw new AppError('Market not found', 404);
+    }
+    if (!market.result_option) {
+        throw new AppError('Market result_option must be set before settling all bets', 400);
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        const pendingBets = await betRepository.getPendingBetsByMarketId(marketId, client);
+        
+        const results = [];
+        for (const bet of pendingBets) {
+            const isWon = bet.option_key === market.result_option;
+            
+            if (isWon) {
+                const payoutAmount = parseFloat(bet.potential_win);
+                const wallet = await walletRepository.getWalletByUserId(bet.user_id);
+                if (wallet) {
+                    await walletRepository.updateWalletBalance(wallet.id, payoutAmount, client);
+                    await walletRepository.createTransaction(
+                        wallet.id,
+                        payoutAmount,
+                        'PAYOUT',
+                        'success',
+                        bet.id,
+                        client
+                    );
+                }
+                const settled = await betRepository.updateBetPayout(bet.id, 'won', payoutAmount, client);
+                results.push(settled);
+            } else {
+                const settled = await betRepository.updateBetPayout(bet.id, 'lost', 0, client);
+                results.push(settled);
+            }
+        }
+
+        await client.query('COMMIT');
+        return { settled: results.length, bets: results };
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw new AppError('Failed to settle all bets: ' + error.message, 500);
+    } finally {
+        client.release();
+    }
+};
+
+/**
+ * Auto-close all markets whose closes_at has passed and status is still 'open'.
+ */
+export const autoCloseExpiredMarkets = async () => {
+    const expiredMarkets = await betRepository.getExpiredOpenMarkets();
+    
+    const results = [];
+    for (const market of expiredMarkets) {
+        const updated = await betRepository.updateMarketStatus(market.id, 'closed');
+        results.push(updated);
+    }
+    
+    return { closed: results.length, markets: results };
 };

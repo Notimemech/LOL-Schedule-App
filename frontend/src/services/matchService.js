@@ -30,6 +30,8 @@ export const getMatches = async () => {
         team2Score: match.team2_score,
         winnerSlug: match.winner_slug,
         state: match.state,
+        marketStatus: match.market_status,       // 'open' | 'closed' | 'settled' | null
+        marketClosesAt: match.market_closes_at,  // ISO timestamp
       }));
     }
     return [];

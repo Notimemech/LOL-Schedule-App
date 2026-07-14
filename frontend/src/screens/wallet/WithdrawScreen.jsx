@@ -9,406 +9,229 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Modal,
   DeviceEventEmitter,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { WebView } from "react-native-webview";
 import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/FontAwesome6";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import COLORS from "../../styles/colors";
 import api from "../../services/api";
+import ContentHeader from "../../components/common/ContentHeader";
+import { formatMoney } from "../../utils/format";
+import QuickAmountSelector from "../../components/ui/QuickAmountSelector";
+import SectionHeader from "../../components/ui/SectionHeader";
+import { walletStyles as styles } from "../../styles/wallet.styles";
+
+const QUICK_WITHDRAW = [50000, 100000, 200000, 500000, 1000000];
 
 const WithdrawScreen = () => {
   const navigation = useNavigation();
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
   const [currentBalance, setCurrentBalance] = useState(0);
-  const [showOtpModal, setShowOtpModal] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
-  const [verifying, setVerifying] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState(null);
 
   React.useEffect(() => {
-    const loadBalance = async () => {
-      try {
-        const rawUser = await AsyncStorage.getItem('userInfo');
-        if (!rawUser) return;
-        const user = JSON.parse(rawUser);
-        const response = await api.get(`/wallet/${user.id}`);
-        if (response) {
-          setCurrentBalance(Number(response.balance || 0));
-        }
-      } catch (error) {
-        console.error('Failed to load wallet balance:', error);
-      }
-    };
-
     loadBalance();
   }, []);
 
-  // Format số tiền (vd: 1000000 -> 1,000,000)
-  const formatNumber = (num) => {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const loadBalance = async () => {
+    try {
+      const rawUser = await AsyncStorage.getItem('userInfo');
+      if (!rawUser) return;
+      const user = JSON.parse(rawUser);
+      const response = await api.get(`/wallet/${user.id}`);
+      const walletData = response?.data ?? response;
+      if (walletData) setCurrentBalance(Number(walletData.balance || 0));
+    } catch (error) {
+      console.error('Failed to load wallet balance:', error);
+    }
   };
 
   const handleAmountChange = (text) => {
     const numericValue = text.replace(/\D/g, "");
-    setAmount(numericValue ? formatNumber(numericValue) : "");
+    setAmount(numericValue ? formatMoney(numericValue) : "");
   };
 
-  // Bước 1: Kiểm tra dữ liệu và mở form OTP
   const handleRequestWithdraw = async () => {
     const withdrawAmount = parseInt(amount.replace(/\D/g, ""), 10);
 
     if (!withdrawAmount || withdrawAmount < 50000) {
-      Alert.alert("Error", "The minimum withdrawal amount is 50,000 VNĐ");
+      Alert.alert("Error", "Minimum withdrawal amount is 50,000 VNĐ");
       return;
     }
-
     if (withdrawAmount > currentBalance) {
-      Alert.alert("Error", "Insufficient balance to complete the transaction");
+      Alert.alert("Error", "Insufficient balance to complete this transaction");
       return;
     }
 
     setLoading(true);
     try {
       const rawUser = await AsyncStorage.getItem('userInfo');
-      if (!rawUser) {
-        Alert.alert('Error', 'Please sign in first.');
-        setLoading(false);
-        return;
-      }
-
-      setLoading(false);
-      setShowOtpModal(true);
-      Alert.alert('Notification', 'Please enter the OTP to confirm your withdrawal.');
-    } catch (error) {
-      setLoading(false);
-      Alert.alert('Error', 'Unable to prepare withdrawal.');
-    }
-  };
-
-  // Bước 2: Xác nhận OTP và Thực hiện Rút tiền (Gọi DB)
-  const handleVerifyAndWithdraw = async () => {
-    if (otpCode.length < 6) {
-      Alert.alert("Error", "Please enter the complete 6-digit OTP code");
-      return;
-    }
-
-    setVerifying(true);
-    const withdrawAmount = parseInt(amount.replace(/\D/g, ""), 10);
-
-    try {
-      const rawUser = await AsyncStorage.getItem('userInfo');
-      if (!rawUser) {
-        Alert.alert('Error', 'Please sign in first.');
-        setVerifying(false);
-        return;
-      }
-
+      if (!rawUser) { Alert.alert('Error', 'Please sign in first.'); setLoading(false); return; }
       const user = JSON.parse(rawUser);
-      const response = await api.post('/wallet/withdraw', {
+
+      const response = await api.post('/wallet/withdraw-vnpay', {
         userId: user.id,
         amount: withdrawAmount,
-        otp: otpCode,
       });
 
-      setVerifying(false);
-      setShowOtpModal(false);
-      setOtpCode("");
-
-      const balanceResponse = await api.get(`/wallet/${user.id}`);
-      if (balanceResponse) {
-        setCurrentBalance(Number(balanceResponse.balance || 0));
+      const url = response?.paymentUrl || response?.data?.paymentUrl;
+      if (url) {
+        setPaymentUrl(url);
+      } else {
+        throw new Error('No payment URL returned from server.');
       }
-
-      DeviceEventEmitter.emit('wallet:transactions-updated');
-
-      Alert.alert("Success", `You have successfully withdrawn ${formatNumber(withdrawAmount)} VNĐ.`, [
-        { text: "Great", onPress: () => navigation.goBack() }
-      ]);
     } catch (error) {
-      setVerifying(false);
-      const message = error?.response?.data?.message || 'Transaction failed or incorrect OTP code.';
-      Alert.alert("Error", message);
+      Alert.alert('Error', error?.response?.data?.message || 'Unable to process withdrawal. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleWebViewMessage = async (event) => {
+    try {
+      const payload = JSON.parse(event.nativeEvent.data);
+      setPaymentUrl(null);
+
+      if (payload?.status === 'withdraw_success') {
+        await loadBalance();
+        DeviceEventEmitter.emit('wallet:transactions-updated');
+        Alert.alert("Success", `Successfully withdrawn ${formatMoney(payload.amount)} VNĐ from your wallet.`, [
+          { text: "OK", onPress: () => navigation.goBack() }
+        ]);
+      } else {
+        Alert.alert('Failed', 'Transaction was cancelled or failed. Please try again.');
+      }
+    } catch (error) {
+      console.warn('Unable to parse WebView message:', error);
+    }
+  };
+
+  const handleNavigationStateChange = (navState) => {
+    const { url } = navState;
+    if (url.includes("vnpay-withdraw-return")) {
+      if (url.includes("vnp_ResponseCode=00")) {
+        // Handled by postMessage from WebView HTML
+      } else {
+        setPaymentUrl(null);
+        Alert.alert("Failed", "Transaction was cancelled or an error occurred.");
+      }
+    }
+  };
+
+  // WebView screen for VNPay
+  if (paymentUrl) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
+        <View style={styles.webviewHeader}>
+          <TouchableOpacity onPress={() => setPaymentUrl(null)} style={{ padding: 10 }}>
+            <Ionicons name="close" size={28} color={COLORS.text} />
+          </TouchableOpacity>
+          <Text style={styles.webviewTitle}>Confirm Withdrawal</Text>
+          <View style={{ width: 48 }} />
+        </View>
+        <WebView
+          source={{ uri: paymentUrl }}
+          style={{ flex: 1 }}
+          onNavigationStateChange={handleNavigationStateChange}
+          onMessage={handleWebViewMessage}
+          startInLoadingState={true}
+          renderLoading={() => <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />}
+        />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={28} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Withdraw Money</Text>
-          <View style={{ width: 28 }} />
-        </View>
+        <ContentHeader title="WITHDRAW" showBack={true} />
 
         <View style={styles.content}>
-          {/* Card Số dư */}
+          {/* Balance Card */}
           <View style={styles.balanceCard}>
+            <Icon name="money-bill-transfer" size={28} color={COLORS.danger} style={{ marginBottom: 8 }} />
             <Text style={styles.balanceLabel}>Available for Withdrawal</Text>
-            <Text style={styles.balanceAmount}>{formatNumber(currentBalance)} VNĐ</Text>
+            <Text style={styles.balanceAmount}>{formatMoney(currentBalance)} VNĐ</Text>
           </View>
 
-          {/* Form nhập số tiền */}
-          <View style={styles.inputSection}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <Text style={styles.inputLabel}>Amount to Withdraw (VNĐ)</Text>
-              <TouchableOpacity onPress={() => setAmount(formatNumber(currentBalance))}>
-                <Text style={styles.withdrawAllText}>Withdraw All</Text>
+          {/* Amount Input */}
+          <View style={styles.inputGroup}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+              <Text style={styles.inputLabel}>AMOUNT TO WITHDRAW (VNĐ)</Text>
+              <TouchableOpacity onPress={() => setAmount(formatMoney(currentBalance))} style={styles.withdrawAllBtn}>
+                <Text style={styles.withdrawAllText}>WITHDRAW ALL</Text>
               </TouchableOpacity>
             </View>
-            <View style={styles.inputContainer}>
+            <View style={styles.inputWrapper}>
+              <Text style={styles.inputPrefixWithdraw}>₫</Text>
               <TextInput
-                style={styles.input}
+                style={styles.amountInput}
                 placeholder="0"
-                placeholderTextColor="#888"
+                placeholderTextColor={COLORS.inputPlaceholder}
                 keyboardType="numeric"
                 value={amount}
                 onChangeText={handleAmountChange}
                 maxLength={12}
               />
-              <Text style={styles.currency}>VNĐ</Text>
             </View>
-            <Text style={styles.noteText}>* Processing time for transactions is 5 - 15 minutes</Text>
+            {parseInt(amount.replace(/\D/g, "") || 0, 10) > currentBalance && (
+              <Text style={{ color: COLORS.danger, fontSize: 13, marginTop: 8, fontFamily: "Manrope" }}>
+                Amount exceeds your available balance
+              </Text>
+            )}
+          </View>
+
+          {/* Quick Select */}
+          <SectionHeader title="QUICK SELECT" />
+          <QuickAmountSelector 
+            amounts={QUICK_WITHDRAW}
+            selectedAmount={amount}
+            onSelect={(val) => setAmount(formatMoney(val))}
+            activeColor={COLORS.danger}
+            maxAmount={currentBalance}
+          />
+
+          {/* Info box */}
+          <View style={styles.infoBox}>
+            <Ionicons name="information-circle-outline" size={16} color={COLORS.secondary} />
+            <Text style={styles.infoText}>
+              Withdrawal will be processed through VNPay. You'll be redirected to confirm the transaction securely.
+            </Text>
           </View>
         </View>
 
-        {/* Nút Rút tiền */}
-        <View style={styles.footer}>
-          <TouchableOpacity 
-            style={[styles.submitBtn, loading && { opacity: 0.7 }]} 
+        {/* Submit Button */}
+        <View style={styles.bottomFixedBox}>
+          <TouchableOpacity
+            style={[
+              styles.withdrawButton, 
+              (loading || parseInt(amount.replace(/\D/g, "") || 0, 10) > currentBalance) && styles.payButtonDisabled
+            ]}
             onPress={handleRequestWithdraw}
-            disabled={loading}
+            disabled={loading || parseInt(amount.replace(/\D/g, "") || 0, 10) > currentBalance}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <>
-                <Icon name="building-columns" size={20} color="#fff" style={{ marginRight: 10 }} />
-                <Text style={styles.submitBtnText}>Request Withdrawal</Text>
+                <Icon name="building-columns" size={18} color="#fff" />
+                <Text style={styles.payButtonText}>WITHDRAW VIA VNPAY</Text>
               </>
             )}
           </TouchableOpacity>
         </View>
-
-        {/* MODAL NHẬP OTP */}
-        <Modal
-          visible={showOtpModal}
-          transparent={true}
-          animationType="slide"
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Verify OTP</Text>
-                <TouchableOpacity onPress={() => setShowOtpModal(false)}>
-                  <Ionicons name="close" size={24} color="#fff" />
-                </TouchableOpacity>
-              </View>
-
-              <Text style={styles.modalDesc}>
-                Please enter the 6-digit OTP code sent to your device to confirm the withdrawal of {amount} VNĐ.
-              </Text>
-
-              <TextInput
-                style={styles.otpInput}
-                placeholder="Nhập mã OTP (VD: 123456)"
-                placeholderTextColor="#666"
-                keyboardType="number-pad"
-                maxLength={6}
-                value={otpCode}
-                onChangeText={setOtpCode}
-                secureTextEntry={true} // Che mã OTP
-              />
-
-              <TouchableOpacity 
-                style={[styles.verifyBtn, verifying && { opacity: 0.7 }]} 
-                onPress={handleVerifyAndWithdraw}
-                disabled={verifying}
-              >
-                {verifying ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.verifyBtnText}>Verify & Withdraw</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
-
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#1a1a2e",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-  },
-  headerTitle: {
-    color: "#fff",
-    fontSize: 20,
-    fontFamily: "ManropeBold",
-  },
-  backBtn: {
-    padding: 5,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    marginTop: 10,
-  },
-  balanceCard: {
-    backgroundColor: "rgba(232, 65, 24, 0.1)", // Đỏ cam nhạt cho Rút tiền
-    padding: 20,
-    borderRadius: 16,
-    alignItems: "center",
-    marginBottom: 30,
-    borderWidth: 1,
-    borderColor: "rgba(232, 65, 24, 0.3)",
-  },
-  balanceLabel: {
-    color: "#aaa",
-    fontSize: 14,
-    fontFamily: "ManropeMedium",
-    marginBottom: 5,
-  },
-  balanceAmount: {
-    color: "#e84118", // Đỏ cam
-    fontSize: 28,
-    fontFamily: "SpaceGrotesk-Bold",
-  },
-  inputSection: {
-    marginBottom: 25,
-  },
-  inputLabel: {
-    color: "#fff",
-    fontSize: 16,
-    fontFamily: "ManropeMedium",
-    marginBottom: 10,
-  },
-  withdrawAllText: {
-    color: "#00a8ff",
-    fontSize: 14,
-    fontFamily: "ManropeBold",
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.2)",
-    paddingHorizontal: 15,
-  },
-  input: {
-    flex: 1,
-    color: "#fff",
-    fontSize: 24,
-    fontFamily: "SpaceGrotesk-Bold",
-    paddingVertical: 15,
-  },
-  currency: {
-    color: "#888",
-    fontSize: 16,
-    fontFamily: "ManropeBold",
-  },
-  noteText: {
-    color: "rgba(255,255,255,0.4)",
-    fontSize: 12,
-    marginTop: 10,
-    fontFamily: "ManropeRegular",
-  },
-  footer: {
-    paddingHorizontal: 20,
-    paddingBottom: 30,
-    paddingTop: 10,
-  },
-  submitBtn: {
-    backgroundColor: "#e84118", // Màu đỏ thể hiện việc trừ tiền
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 16,
-    borderRadius: 12,
-    elevation: 3,
-  },
-  submitBtnText: {
-    color: "#fff",
-    fontSize: 18,
-    fontFamily: "ManropeBold",
-  },
-  // Style cho Modal OTP
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "#1e1e36",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  modalTitle: {
-    color: "#fff",
-    fontSize: 20,
-    fontFamily: "ManropeBold",
-  },
-  modalDesc: {
-    color: "#aaa",
-    fontSize: 14,
-    lineHeight: 20,
-    fontFamily: "ManropeRegular",
-    marginBottom: 20,
-  },
-  otpInput: {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-    borderRadius: 10,
-    color: "#fff",
-    fontSize: 20,
-    padding: 15,
-    textAlign: "center",
-    letterSpacing: 5,
-    fontFamily: "SpaceGrotesk-Bold",
-    marginBottom: 20,
-  },
-  verifyBtn: {
-    backgroundColor: "#00a8ff",
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  verifyBtnText: {
-    color: "#fff",
-    fontSize: 16,
-    fontFamily: "ManropeBold",
-  }
-});
 
 export default WithdrawScreen;

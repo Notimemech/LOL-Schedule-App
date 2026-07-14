@@ -513,8 +513,8 @@ INSERT INTO Tournaments (league_id, name, start_date, end_date) VALUES
 
 -- =====================
 -- Teams (logo_url = trang chính thức của từng team)
--- LOL (LCK): 1=T1, 2=Gen.G, 3=HLE, 4=KT
--- Dota 2 (TI): 5=Falcons, 6=Xtreme, 7=Liquid, 8=Spirit
+-- LOL (LCK): 1=T1, 2=Gen.G, 3=HLE, 4=KT, 9=DRX, 10=Bilibili Gaming, 11=Edward Gaming, 12=Cloud9
+-- Dota 2 (TI): 5=Falcons, 6=Xtreme, 7=Liquid, 8=Spirit, 13=OG, 14=PSG.LGD, 15=tundra, 16=Nouns
 -- =====================
 INSERT INTO Teams (name, code, slug, logo_url) VALUES
     ('T1',                  'T1',   't1',             'https://static.lolesports.com/teams/1726801573959_539px-T1_2019_full_allmode.png'),
@@ -524,29 +524,63 @@ INSERT INTO Teams (name, code, slug, logo_url) VALUES
     ('Team Falcons',        'FLCN', 'falcons',        'https://static.gosugamers.net/49/8d/cb/42637ee79b18bdff6c9473c0cf17d837702a2b08bcfda3d0cb6349bb09.webp'),
     ('Xtreme Gaming',       'XG',   'xtreme-gaming',  'https://liquipedia.net/commons/images/thumb/7/72/Xtreme_Gaming_%28China%29_allmode.png/201px-Xtreme_Gaming_%28China%29_allmode.png'),
     ('Team Liquid',         'TL',   'team-liquid',    'https://static.gosugamers.net/62/61/31/c51502def1d90d781d97c85872fd9a67170a32c0022dac8b1119451c9b.webp'),
-    ('Team Spirit',         'TS',   'team-spirit',    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZXxjQ7sxr2hXUGkMBbuXNvcPEbKEG3LR3nTwioj76zQ&s=10');
+    ('Team Spirit',         'TS',   'team-spirit',    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQZXxjQ7sxr2hXUGkMBbuXNvcPEbKEG3LR3nTwioj76zQ&s=10'),
+    -- Thêm đội LOL
+    ('DRX',                 'DRX',  'drx',            'https://liquipedia.net/commons/images/thumb/e/e1/DRX_allmode.png/600px-DRX_allmode.png'),
+    ('Bilibili Gaming',     'BLG',  'bilibili-gaming','https://s-qwer.op.gg/images/lol/teams/632_1672191537262.png'),
+    ('Edward Gaming',       'EDG',  'edward-gaming',  'https://upload.wikimedia.org/wikipedia/commons/3/33/Edward_Gaming_logo.png'),
+    ('Cloud9',              'C9',   'cloud9',         'https://liquipedia.net/commons/images/thumb/d/d9/Cloud9_New_York_darkmode.png/291px-Cloud9_New_York_darkmode.png'),
+    -- Thêm đội Dota 2
+    ('OG',                  'OG',   'og',             'https://liquipedia.net/commons/images/thumb/7/7b/OG_2026_allmode.png/600px-OG_2026_allmode.png'),
+    ('PSG.LGD',             'LGD',  'psg-lgd',        'https://upload.wikimedia.org/wikipedia/en/e/ea/LGD_Gaming_logo.png'),
+    ('Tundra Esports',      'TNDR', 'tundra',         'https://liquipedia.net/commons/images/thumb/7/71/Tundra_Esports_2020_full_darkmode.png/600px-Tundra_Esports_2020_full_darkmode.png'),
+    ('Nouns Esports',       'NOUNS','nouns',          'https://liquipedia.net/commons/images/thumb/a/aa/Nouns_Esports_allmode.png/600px-Nouns_Esports_allmode.png');
 
 -- =====================
--- Matches
---   M1: T1 vs Gen.G   (LCK, Bo5) — đã kết thúc, T1 thắng 3-2
---   M2: HLE vs KT     (LCK, Bo3) — sắp diễn ra
---   M3: T1 vs HLE     (LCK, Bo3) — sắp diễn ra
---   M4: Falcons vs Xtreme (TI, Bo5) — đã kết thúc, Falcons thắng 3-2 (kết quả thật TI14)
---   M5: Liquid vs Spirit  (TI, Bo3) — sắp diễn ra
+-- Thêm leagues mới
+-- 3=LPL (LOL - China), 4=ESL One (Dota2)
+-- =====================
+INSERT INTO Leagues (name, slug, logo_url) VALUES
+    ('League of Legends Pro League', 'lpl', 'https://static.lolesports.com/leagues/lpl-color-on-black.png'),
+    ('ESL One Dota 2', 'esl-one-dota', 'https://static.gosugamers.net/esl-logo.webp');
+
+-- =====================
+-- Thêm tournaments
+-- 3=LPL 2026 Spring, 4=ESL One 2026
+-- =====================
+INSERT INTO Tournaments (league_id, name, start_date, end_date) VALUES
+    (3, 'LPL 2026 Spring Split',       '2026-01-10', '2026-04-20'),
+    (4, 'ESL One Dota 2 2026',         '2026-06-01', '2026-08-30');
+
+-- =====================
+-- Matches gốc
+-- M1-M3: LCK (LOL)
+-- M4-M5: TI (Dota2)
 -- =====================
 INSERT INTO Matches
     (match_type_id, tournament_id, block_name, team1_id, team2_id,
      team1_score, team2_score, best_of, winner_team_id, state, scheduled_at) VALUES
     (1, 1, 'Playoffs - Final',    1, 2, 3, 2, 5, 1,    'finished', '2025-08-31 17:00:00+09'),
-    (1, 1, 'Regular - Week 1',    3, 4, 0, 0, 3, NULL, 'upcoming', '2026-07-12 17:00:00+09'),
-    (1, 1, 'Regular - Week 1',    1, 3, 0, 0, 3, NULL, 'upcoming', '2026-07-13 17:00:00+09'),
+    (1, 1, 'Regular - Week 1',    3, 4, 0, 0, 3, NULL, 'upcoming', '2026-07-20 17:00:00+09'),
+    (1, 1, 'Regular - Week 1',    1, 3, 0, 0, 3, NULL, 'upcoming', '2026-07-21 17:00:00+09'),
     (2, 2, 'Playoffs - Grand Final', 5, 6, 3, 2, 5, 5, 'finished', '2025-09-14 18:00:00+02'),
-    (2, 2, 'Group Stage',         7, 8, 0, 0, 3, NULL, 'upcoming', '2026-07-15 18:00:00+02');
+    (2, 2, 'Group Stage',         7, 8, 0, 0, 3, NULL, 'upcoming', '2026-07-22 18:00:00+02'),
+    -- LCK thêm: DRX vs KT, Gen.G vs DRX, T1 vs Gen.G (upcoming), HLE vs Gen.G (finished)
+    (1, 1, 'Regular - Week 2',    9,  4, 0, 0, 3, NULL, 'upcoming', '2026-07-23 17:00:00+09'),
+    (1, 1, 'Regular - Week 2',    2,  9, 0, 0, 3, NULL, 'upcoming', '2026-07-24 17:00:00+09'),
+    (1, 1, 'Regular - Week 3',    1,  2, 0, 0, 3, NULL, 'upcoming', '2026-07-25 17:00:00+09'),
+    (1, 1, 'Regular - Week 3',    3,  2, 2, 1, 3, 3,   'finished', '2026-07-10 17:00:00+09'),
+    -- LPL: BLG vs EDG, Cloud9 vs BLG, EDG vs T1 (exhibition)
+    (1, 3, 'Regular - Week 1',   10, 11, 0, 0, 3, NULL, 'upcoming', '2026-07-19 14:00:00+08'),
+    (1, 3, 'Regular - Week 1',   12, 10, 1, 2, 3, 10,  'finished', '2026-07-11 14:00:00+08'),
+    (1, 3, 'Regular - Week 2',   11, 12, 0, 0, 3, NULL, 'upcoming', '2026-07-26 14:00:00+08'),
+    -- Dota2: OG vs PSG.LGD, Tundra vs Nouns, Spirit vs OG
+    (2, 4, 'Group Stage',        13, 14, 0, 0, 3, NULL, 'upcoming', '2026-07-20 16:00:00+02'),
+    (2, 4, 'Group Stage',        15, 16, 0, 0, 3, NULL, 'upcoming', '2026-07-21 16:00:00+02'),
+    (2, 4, 'Group Stage',         8, 13, 2, 0, 3, 8,   'finished', '2026-07-09 16:00:00+02');
 
 -- =====================
--- Games (chỉ tạo cho 2 trận đã kết thúc)
---   M1 (T1 3-2 Gen.G): ván 1,3,5 T1 thắng; ván 2,4 Gen.G thắng
---   M4 (Falcons 3-2 Xtreme): ván 1,3,5 Falcons; ván 2,4 Xtreme
+-- Games (chỉ cho những trận đã kết thúc)
 -- =====================
 INSERT INTO Games
     (match_id, game_number, team1_id, team2_id, team1_kill, team2_kill,
@@ -562,7 +596,132 @@ INSERT INTO Games
     (4, 2, 5, 6, 18, 25, 6, 6, 'finished'),
     (4, 3, 5, 6, 27, 14, 5, 5, 'finished'),
     (4, 4, 5, 6, 16, 23, 6, 6, 'finished'),
-    (4, 5, 5, 6, 29, 21, 5, 5, 'finished');
+    (4, 5, 5, 6, 29, 21, 5, 5, 'finished'),
+    -- Match 9: HLE (3) vs Gen.G (2) - 2-1
+    (9, 1, 3, 2, 22, 14, 3, 3, 'finished'),
+    (9, 2, 3, 2, 11, 18, 2, 2, 'finished'),
+    (9, 3, 3, 2, 25, 15, 3, 3, 'finished'),
+    -- Match 11: Cloud9 (12) vs BLG (10) - 1-2
+    (11, 1, 12, 10, 18, 22, 10, 10, 'finished'),
+    (11, 2, 12, 10, 21, 16, 12, 12, 'finished'),
+    (11, 3, 12, 10, 14, 24, 10, 10, 'finished'),
+    -- Match 15: Spirit (8) vs OG (13) - 2-0
+    (15, 1, 8, 13, 28, 17, 8, 8, 'finished'),
+    (15, 2, 8, 13, 24, 19, 8, 8, 'finished');
+
+-- =====================
+-- BetMarkets
+-- winner_team market cho MỌI trận + secondary markets cho một số trận
+-- =====================
+INSERT INTO BetMarkets
+    (match_id, market_type, options, total_pool, status, result_option, closes_at) VALUES
+    -- Các trận cũ
+    (1, 'winner_team', '{"selections":["t1","geng"]}'::jsonb,          100000.00, 'settled', 't1',       '2025-08-31 17:00:00+09'),
+    (2, 'winner_team', '{"selections":["hle","kt"]}'::jsonb,            50000.00, 'open',    NULL,       '2026-07-20 17:00:00+09'),
+    (3, 'winner_team', '{"selections":["t1","hle"]}'::jsonb,                0.00, 'open',    NULL,       '2026-07-21 17:00:00+09'),
+    (4, 'winner_team', '{"selections":["falcons","xtreme-gaming"]}'::jsonb, 200000.00, 'settled', 'falcons', '2025-09-14 18:00:00+02'),
+    (5, 'winner_team', '{"selections":["team-liquid","team-spirit"]}'::jsonb, 0.00, 'open',    NULL,       '2026-07-22 18:00:00+02'),
+    (2, 'first_blood', '{"selections":["hle","kt"]}'::jsonb,            10000.00, 'open',    NULL,       '2026-07-20 17:00:00+09'),
+    (2, 'total_kill',  '{"selections":["over_20.5","under_20.5"]}'::jsonb, 0.00, 'open',    NULL,       '2026-07-20 17:00:00+09'),
+    (2, 'most_kill',   '{"selections":["hle","kt"]}'::jsonb,                0.00, 'open',    NULL,       '2026-07-20 17:00:00+09'),
+    (1, 'first_blood', '{"selections":["t1","geng"]}'::jsonb,           15000.00, 'settled', 't1',       '2025-08-31 17:00:00+09'),
+    (1, 'total_kill',  '{"selections":["over_20.5","under_20.5"]}'::jsonb, 5000.00, 'settled', 'over_20.5', '2025-08-31 17:00:00+09'),
+    (1, 'most_kill',   '{"selections":["t1","geng"]}'::jsonb,           12000.00, 'settled', 't1',       '2025-08-31 17:00:00+09'),
+    -- Các trận mới
+    (6,  'winner_team', '{"selections":["drx","kt"]}'::jsonb,               0.00, 'open',    NULL,       '2026-07-23 17:00:00+09'),
+    (7,  'winner_team', '{"selections":["geng","drx"]}'::jsonb,              0.00, 'open',    NULL,       '2026-07-24 17:00:00+09'),
+    (8,  'winner_team', '{"selections":["t1","geng"]}'::jsonb,               0.00, 'open',    NULL,       '2026-07-25 17:00:00+09'),
+    (9,  'winner_team', '{"selections":["hle","geng"]}'::jsonb,          75000.00, 'settled', 'hle',      '2026-07-10 17:00:00+09'),
+    (9,  'first_blood', '{"selections":["hle","geng"]}'::jsonb,          10000.00, 'settled', 'hle',      '2026-07-10 17:00:00+09'),
+    (10, 'winner_team', '{"selections":["bilibili-gaming","edward-gaming"]}'::jsonb, 0.00, 'open', NULL,  '2026-07-19 14:00:00+08'),
+    (10, 'first_blood', '{"selections":["bilibili-gaming","edward-gaming"]}'::jsonb, 0.00, 'open', NULL,  '2026-07-19 14:00:00+08'),
+    (11, 'winner_team', '{"selections":["cloud9","bilibili-gaming"]}'::jsonb, 60000.00, 'settled', 'bilibili-gaming', '2026-07-11 14:00:00+08'),
+    (12, 'winner_team', '{"selections":["edward-gaming","cloud9"]}'::jsonb,   0.00, 'open',    NULL,       '2026-07-26 14:00:00+08'),
+    (13, 'winner_team', '{"selections":["og","psg-lgd"]}'::jsonb,             0.00, 'open',    NULL,       '2026-07-20 16:00:00+02'),
+    (13, 'first_blood', '{"selections":["og","psg-lgd"]}'::jsonb,             0.00, 'open',    NULL,       '2026-07-20 16:00:00+02'),
+    (14, 'winner_team', '{"selections":["tundra","nouns"]}'::jsonb,           0.00, 'open',    NULL,       '2026-07-21 16:00:00+02'),
+    (14, 'total_kill',  '{"selections":["over_25.5","under_25.5"]}'::jsonb,   0.00, 'open',    NULL,       '2026-07-21 16:00:00+02'),
+    (15, 'winner_team', '{"selections":["team-spirit","og"]}'::jsonb,     85000.00, 'settled', 'team-spirit', '2026-07-09 16:00:00+02');
+
+-- =====================
+-- Odds (trigger tự ghi OddsHistory)
+-- =====================
+INSERT INTO Odds (market_id, option_key, odd_value) VALUES
+    -- M1 winner
+    (1, 't1',            1.6500),
+    (1, 'geng',          2.2500),
+    -- M2 winner
+    (2, 'hle',           1.9000),
+    (2, 'kt',            1.9500),
+    -- M3 winner
+    (3, 't1',            1.4000),
+    (3, 'hle',           3.0000),
+    -- M4 winner
+    (4, 'falcons',       2.1000),
+    (4, 'xtreme-gaming', 1.7500),
+    -- M5 winner
+    (5, 'team-liquid',   1.8500),
+    (5, 'team-spirit',   1.9500),
+    -- M2 first blood
+    (6, 'hle',           1.8500),
+    (6, 'kt',            1.8500),
+    -- M2 total kill
+    (7, 'over_20.5',     1.9000),
+    (7, 'under_20.5',    1.8000),
+    -- M2 most kill
+    (8, 'hle',           1.9000),
+    (8, 'kt',            1.9000),
+    -- M1 first blood
+    (9, 't1',            1.8000),
+    (9, 'geng',          1.9000),
+    -- M1 total kill
+    (10, 'over_20.5',    1.8500),
+    (10, 'under_20.5',   1.8500),
+    -- M1 most kill
+    (11, 't1',           1.7500),
+    (11, 'geng',         1.9500),
+    -- M6 DRX vs KT winner
+    (12, 'drx',          2.1000),
+    (12, 'kt',           1.7500),
+    -- M7 GEN vs DRX winner
+    (13, 'geng',         1.5500),
+    (13, 'drx',          2.5000),
+    -- M8 T1 vs GEN winner
+    (14, 't1',           1.6000),
+    (14, 'geng',         2.3000),
+    -- M9 HLE vs GEN winner (settled)
+    (15, 'hle',          2.0000),
+    (15, 'geng',         1.8500),
+    -- M9 HLE vs GEN first blood (settled)
+    (16, 'hle',          1.9000),
+    (16, 'geng',         1.9000),
+    -- M10 BLG vs EDG winner
+    (17, 'bilibili-gaming', 1.8500),
+    (17, 'edward-gaming',   1.9500),
+    -- M10 BLG vs EDG first blood
+    (18, 'bilibili-gaming', 1.8500),
+    (18, 'edward-gaming',   1.8500),
+    -- M11 C9 vs BLG winner (settled)
+    (19, 'cloud9',          2.2000),
+    (19, 'bilibili-gaming', 1.7000),
+    -- M12 EDG vs C9 winner
+    (20, 'edward-gaming',   1.7500),
+    (20, 'cloud9',          2.1000),
+    -- M13 OG vs PSG.LGD winner
+    (21, 'og',              2.3000),
+    (21, 'psg-lgd',         1.6500),
+    -- M13 OG vs PSG.LGD first blood
+    (22, 'og',              2.0000),
+    (22, 'psg-lgd',         1.8000),
+    -- M14 Tundra vs Nouns winner
+    (23, 'tundra',          1.7000),
+    (23, 'nouns',           2.2000),
+    -- M14 Tundra vs Nouns total kill
+    (24, 'over_25.5',       1.9500),
+    (24, 'under_25.5',      1.8000),
+    -- M15 Spirit vs OG winner (settled)
+    (25, 'team-spirit',     1.7500),
+    (25, 'og',              2.1000);
 
 -- =====================
 -- Wallets (1=admin, 2=ledat, 3=minhquan)
@@ -572,53 +731,6 @@ INSERT INTO Wallets (user_id, balance) VALUES
     (1, 0.00),          -- admin
     (2, 515000.00),     -- ledat: 500k nạp -100k cược +165k thắng -50k cược
     (3, 800000.00);     -- minhquan: 1tr nạp -200k cược (thua)
-
--- =====================
--- BetMarkets (market "match winner" cho MỖI trận)
---   Trận đã xong -> status 'settled' + result_option = slug đội thắng
---   Trận sắp diễn ra -> status 'open'
--- IDs: 1..5 tương ứng M1..M5
--- =====================
-INSERT INTO BetMarkets
-    (match_id, market_type, options, total_pool, status, result_option, closes_at) VALUES
-    (1, 'winner_team', '{"selections":["t1","geng"]}'::jsonb,          100000.00, 'settled', 't1',       '2025-08-31 17:00:00+09'),
-    (2, 'winner_team', '{"selections":["hle","kt"]}'::jsonb,            50000.00, 'open',    NULL,       '2026-07-12 17:00:00+09'),
-    (3, 'winner_team', '{"selections":["t1","hle"]}'::jsonb,                0.00, 'open',    NULL,       '2026-07-13 17:00:00+09'),
-    (4, 'winner_team', '{"selections":["falcons","xtreme-gaming"]}'::jsonb, 200000.00, 'settled', 'falcons', '2025-09-14 18:00:00+02'),
-    (5, 'winner_team', '{"selections":["team-liquid","team-spirit"]}'::jsonb, 0.00, 'open',    NULL,       '2026-07-15 18:00:00+02'),
-    (2, 'first_blood', '{"selections":["hle","kt"]}'::jsonb,            10000.00, 'open',    NULL,       '2026-07-12 17:00:00+09'),
-    (2, 'total_kill',  '{"selections":["over_20.5","under_20.5"]}'::jsonb, 0.00,   'open',    NULL,       '2026-07-12 17:00:00+09'),
-    (2, 'most_kill',   '{"selections":["hle","kt"]}'::jsonb,                0.00, 'open',    NULL,       '2026-07-12 17:00:00+09'),
-    (1, 'first_blood', '{"selections":["t1","geng"]}'::jsonb,           15000.00, 'settled', 't1',       '2025-08-31 17:00:00+09'),
-    (1, 'total_kill',  '{"selections":["over_20.5","under_20.5"]}'::jsonb, 5000.00, 'settled', 'over_20.5', '2025-08-31 17:00:00+09'),
-    (1, 'most_kill',   '{"selections":["t1","geng"]}'::jsonb,           12000.00, 'settled', 't1',       '2025-08-31 17:00:00+09');
-
--- =====================
--- Odds (mỗi market 2 lựa chọn; trigger tự ghi OddsHistory)
--- =====================
-INSERT INTO Odds (market_id, option_key, odd_value) VALUES
-    (1, 't1',            1.6500),
-    (1, 'geng',          2.2500),
-    (2, 'hle',           1.9000),
-    (2, 'kt',            1.9500),
-    (3, 't1',            1.4000),
-    (3, 'hle',           3.0000),
-    (4, 'falcons',       2.1000),
-    (4, 'xtreme-gaming', 1.7500),
-    (5, 'team-liquid',   1.8500),
-    (5, 'team-spirit',   1.9500),
-    (6, 'hle',           1.8500),
-    (6, 'kt',            1.8500),
-    (7, 'over_20.5',     1.9000),
-    (7, 'under_20.5',    1.8000),
-    (8, 'hle',           1.9000),
-    (8, 'kt',            1.9000),
-    (9, 't1',            1.8000),
-    (9, 'geng',          1.9000),
-    (10, 'over_20.5',    1.8500),
-    (10, 'under_20.5',   1.8500),
-    (11, 't1',           1.7500),
-    (11, 'geng',         1.9500);
 
 -- =====================
 -- Bets
@@ -694,4 +806,4 @@ VALUES (2, 1); -- Simulate user ledat (id=2) having already claimed promotion 1
 
 COMMIT;
 
-select * from users
+select * from teams

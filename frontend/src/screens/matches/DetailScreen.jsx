@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,28 +8,38 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Alert
+  Alert,
+  StyleSheet
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ContentHeader from "../../components/common/ContentHeader";
 import COLORS from "../../styles/colors";
-import { getMatchMarketsAndOdds } from "../../services/bettingService";
+import { getMatchMarketsAndOdds, getUserBetsForMatch, autoCloseMarkets } from "../../services/bettingService";
 import { detailStyles as styles } from "../../styles/matches.styles";
+import MarketSection from "./MarketSection";
+import BetHistorySection from "./BetHistorySection";
 
 export default function DetailScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const match = route.params?.match;
-  
+
   const [markets, setMarkets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userBets, setUserBets] = useState([]);
+  const [loadingBets, setLoadingBets] = useState(false);
 
-  useEffect(() => {
-    if (match?.matchId) {
-      loadMarkets();
-    }
-  }, [match]);
+  useFocusEffect(
+    useCallback(() => {
+      if (match?.matchId) {
+        autoCloseMarkets(); // Trigger auto-close of expired markets on enter
+        loadMarkets();
+        loadUserBets();
+      }
+    }, [match?.matchId])
+  );
 
   const loadMarkets = async () => {
     try {
@@ -39,6 +49,18 @@ export default function DetailScreen() {
       console.log(error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const loadUserBets = async () => {
+    setLoadingBets(true);
+    try {
+      const bets = await getUserBetsForMatch(match.matchId);
+      setUserBets(bets);
+    } catch (error) {
+      console.log('Failed to load user bets:', error);
+    } finally {
+      setLoadingBets(false);
     }
   };
 
@@ -57,7 +79,10 @@ export default function DetailScreen() {
     navigation.navigate("PlaceBet", { match, markets });
   };
 
-  // Determine if match has started or already passed (disable betting)
+  // Determine if market is closed or settled (no more betting)
+  const allMarketsClosed = markets.length > 0 && markets.every(
+    m => m.status === 'closed' || m.status === 'settled' || m.status === 'cancelled'
+  );
   const hasStarted = (() => {
     try {
       if (!match || !match.startTime) return false;
@@ -68,13 +93,9 @@ export default function DetailScreen() {
     }
   })();
 
-  // Helper to format market type string nicely
-  const formatMarketName = (marketType) => {
-    return marketType.replace(/_/g, " ").toUpperCase();
-  };
+  const isFinished = match.state === "finished";
+  const bettingDisabled = markets.length === 0 || isFinished || allMarketsClosed || hasStarted;
 
-  const mainMarket = markets.find(m => m.market_type === 'winner_team');
-  const secondaryMarkets = markets.filter(m => m.market_type !== 'winner_team');
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -92,9 +113,9 @@ export default function DetailScreen() {
                 <Image source={{ uri: match.team1.logoUrl }} style={styles.logoLarge} resizeMode="contain" />
                 <Text style={styles.teamCode}>{match.team1.code}</Text>
               </View>
-              <View style={[styles.vsBox, match.state === "finished" && { borderColor: COLORS.success }]}>
-                <Text style={[styles.vsText, match.state === "finished" && { color: COLORS.success }]}>
-                  {match.state === "finished" ? `${match.team1Score} - ${match.team2Score}` : "VS"}
+              <View style={[styles.vsBox, isFinished && { borderColor: COLORS.success }]}>
+                <Text style={[styles.vsText, isFinished && { color: COLORS.success }]}>
+                  {isFinished ? `${match.team1Score} - ${match.team2Score}` : "VS"}
                 </Text>
               </View>
               <View style={styles.teamCol}>
@@ -109,98 +130,35 @@ export default function DetailScreen() {
           ) : (
             <>
               {/* MARKET SECTION */}
-              {mainMarket && (
-                <>
-                  <Text style={styles.sectionTitle}>MATCH WINNER</Text>
-                  <View style={styles.marketRow}>
-                    {mainMarket.odds.map(odd => {
-                      const teamCode = odd.option_key === match.team1.slug ? match.team1.code : match.team2.code;
-                      const isSettled = mainMarket.status === 'settled';
-                      const isWinner = isSettled && mainMarket.result_option === odd.option_key;
-                      const isLoser = isSettled && !isWinner;
+              <MarketSection match={match} markets={markets} />
 
-                      return (
-                        <View 
-                          key={odd.id} 
-                          style={[
-                            styles.oddBox,
-                            isWinner && { borderColor: COLORS.primary, backgroundColor: COLORS.glowSoft },
-                            isLoser && { opacity: 0.4, borderColor: COLORS.border }
-                          ]}
-                        >
-                          <Text style={[
-                            styles.oddTeamCode, 
-                            isWinner && { color: COLORS.primary },
-                            isLoser && { color: COLORS.textMuted }
-                          ]}>{teamCode}</Text>
-                          <Text style={[
-                            styles.oddValue, 
-                            isLoser && { color: COLORS.textMuted }
-                          ]}>{parseFloat(odd.odd_value).toFixed(2)}</Text>
-                        </View>
-                      )
-                    })}
-                  </View>
-                </>
-              )}
-
-              {secondaryMarkets.length > 0 && (
-                <>
-                  <Text style={[styles.sectionTitle, { marginTop: 16 }]}>SECONDARY MARKETS</Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-                    {secondaryMarkets.map(market => (
-                      <View key={market.id} style={{ width: '48%', backgroundColor: COLORS.card, borderRadius: 8, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border }}>
-                        <Text style={{ fontFamily: "SpaceGroteskBold", fontSize: 12, color: COLORS.textMuted, marginBottom: 8, textAlign: 'center' }}>
-                          {formatMarketName(market.market_type)}
-                        </Text>
-                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                          {market.odds.map(odd => {
-                            let label = odd.option_key;
-                            if (odd.option_key === match.team1.slug) label = match.team1.code;
-                            else if (odd.option_key === match.team2.slug) label = match.team2.code;
-                            else label = label.replace(/_/g, ' ').toUpperCase();
-
-                            const isSettled = market.status === 'settled';
-                            const isWinner = isSettled && market.result_option === odd.option_key;
-                            const isLoser = isSettled && !isWinner;
-
-                            return (
-                              <View key={odd.id} style={[{ alignItems: 'center' }, isLoser && { opacity: 0.4 }]}>
-                                <Text style={[
-                                  { fontFamily: "ManropeBold", fontSize: 10, color: COLORS.textMuted },
-                                  isWinner && { color: COLORS.primary }
-                                ]}>{label}</Text>
-                                <Text style={[
-                                  { fontFamily: "SpaceGroteskBold", fontSize: 14, color: COLORS.text },
-                                  isWinner && { color: COLORS.primary },
-                                  isLoser && { color: COLORS.textMuted }
-                                ]}>{parseFloat(odd.odd_value).toFixed(2)}</Text>
-                              </View>
-                            )
-                          })}
-                        </View>
-                      </View>
-                    ))}
-                  </View>
-                </>
-              )}
+              {/* USER BET HISTORY SECTION */}
+              <BetHistorySection bets={userBets} match={match} markets={markets} />
             </>
           )}
 
+        </ScrollView>
+        {/* PLACE BET BUTTON (Pinned to bottom) */}
+        <View style={styles.bottomFixedBox}>
           <TouchableOpacity
             style={[
-              styles.submitButton, 
-              (markets.length === 0 || match.state === "finished") && { opacity: 0.5 }
+              styles.submitButton,
+              bettingDisabled && { opacity: 0.5 }
             ]}
             onPress={handlePlaceABetPress}
-            disabled={markets.length === 0 || match.state === "finished"}
+            disabled={bettingDisabled}
           >
             <Text style={styles.submitButtonText}>
-              {match.state === "finished" ? "BETTING CLOSED" : "PLACE A BET"}
+              {isFinished
+                ? "MATCH FINISHED"
+                : allMarketsClosed
+                  ? "MARKET CLOSED"
+                  : hasStarted
+                    ? "LIVE NOW"
+                    : "PLACE A BET"}
             </Text>
           </TouchableOpacity>
-
-        </ScrollView>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

@@ -314,7 +314,13 @@ export const detailStyles = StyleSheet.create({
   },
   bodyContent: {
     padding: 16,
-    paddingBottom: 40,
+    paddingBottom: 100, // Make room for fixed button
+  },
+  bottomFixedBox: {
+    position: 'absolute',
+    bottom: 20,
+    left: 16,
+    right: 16,
   },
   matchHeaderBox: {
     backgroundColor: COLORS.surface,
@@ -384,6 +390,12 @@ export const detailStyles = StyleSheet.create({
     gap: 12,
     marginBottom: 30,
   },
+  marketGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginBottom: 18,
+  },
   oddBox: {
     flex: 1,
     backgroundColor: COLORS.surface,
@@ -400,16 +412,50 @@ export const detailStyles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
   },
+  oddBoxSecondary: {
+    padding: 8,
+    backgroundColor: COLORS.backgroundSecondary, // Darker inside the surface card
+    borderWidth: 0,
+  },
+  secondaryMarketCard: {
+    width: "48%",
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 12,
+    padding: 8,
+    marginBottom: 16,
+  },
+  secondaryMarketHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    gap: 4,
+  },
+  secondaryMarketTitle: {
+    color: COLORS.textMuted,
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 11,
+    textAlign: 'center',
+  },
   oddTeamCode: {
     color: COLORS.text,
     fontFamily: "SpaceGrotesk",
     fontSize: 14,
     marginBottom: 8,
   },
+  oddTeamCodeSecondary: {
+    fontSize: 12,
+    marginBottom: 4,
+  },
   oddValue: {
     color: COLORS.primary,
     fontFamily: "SpaceGroteskBold",
     fontSize: 22,
+  },
+  oddValueSecondary: {
+    fontSize: 16,
   },
   betSlipBox: {
     backgroundColor: COLORS.surface,
@@ -492,5 +538,93 @@ export const detailStyles = StyleSheet.create({
     fontFamily: "SpaceGroteskBold",
     fontSize: 16,
     letterSpacing: 2,
+  },
+  // Added from BetHistorySection refactor
+  betCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 16,
+    marginBottom: 12,
+  },
+  betHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.divider,
+    paddingBottom: 8,
+  },
+  betMarketLabel: {
+    color: COLORS.textSecondary,
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 12,
+  },
+  statusPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    backgroundColor: COLORS.glowSoft,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  statusPillText: {
+    color: COLORS.primary,
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 10,
+  },
+  betOutcomeLabel: {
+    color: COLORS.textMuted,
+    fontFamily: "SpaceGrotesk",
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  betOutcomeValue: {
+    color: COLORS.text,
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 16,
+  },
+  betMoneyLabel: {
+    color: COLORS.textMuted,
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 12,
+  },
+  summaryBox: {
+    backgroundColor: COLORS.cardElevated,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 16,
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  summaryTitle: {
+    color: COLORS.textMuted,
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 12,
+    letterSpacing: 1,
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  summaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.divider,
+    paddingBottom: 8,
+  },
+  summaryLabel: {
+    color: COLORS.textSecondary,
+    fontFamily: "SpaceGrotesk",
+    fontSize: 14,
+  },
+  summaryValue: {
+    color: COLORS.text,
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 14,
   },
 });

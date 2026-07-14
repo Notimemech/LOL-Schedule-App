@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   Alert,
   Image,
@@ -23,6 +23,7 @@ import { homeStyles as style } from "../../styles/home.styles";
 import { getMatches } from "../../services/matchService";
 import { getActivePromotion, getAllPromotions } from "../../services/promotionService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import MatchCard from "../../components/home/MatchCard";
 
 const { width } = Dimensions.get("window");
 
@@ -61,6 +62,22 @@ export default function HomeScreen() {
   ];
 
   const [carouselData, setCarouselData] = useState(carouselItems);
+  const flatListRef = useRef(null);
+
+  // Auto-play carousel
+  useEffect(() => {
+    let intervalId;
+    if (carouselData && carouselData.length > 0) {
+      intervalId = setInterval(() => {
+        setActiveSlide((prev) => {
+          const nextIndex = (prev + 1) % carouselData.length;
+          flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+          return nextIndex;
+        });
+      }, 3500);
+    }
+    return () => clearInterval(intervalId);
+  }, [carouselData]);
 
   // Trigger whenever the screen comes into focus
   useFocusEffect(
@@ -99,11 +116,13 @@ export default function HomeScreen() {
       if (allPromosResp && allPromosResp.success && allPromosResp.data) {
         const promoItems = allPromosResp.data
           .filter(p => !p.is_used)
-          .map(p => ({
+          .map((p, index) => ({
             id: `promo_${p.id}`,
             bannerInfo: p.title,
             buttonInfo: p.button_text,
             image: require("../../../assets/lol_background.jpg"),
+            isPromo: true,
+            promoIndex: index,
             onPress: () => navigation.navigate(p.button_link === "Deposit" ? "WalletScreen" : (p.button_link || "WalletScreen"), { promotion: p }),
           }));
         setCarouselData([...carouselItems, ...promoItems]);
@@ -117,11 +136,6 @@ export default function HomeScreen() {
     const slideSize = event.nativeEvent.layoutMeasurement.width;
     const index = event.nativeEvent.contentOffset.x / slideSize;
     setActiveSlide(Math.round(index));
-  };
-
-  const formatDate = (dateString) => {
-    const d = new Date(dateString);
-    return d.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
   };
 
   const getFilteredMatches = () => {
@@ -157,6 +171,8 @@ export default function HomeScreen() {
         buttonInfo={item.buttonInfo}
         image={item.image}
         onPress={item.onPress}
+        isPromo={item.isPromo}
+        promoIndex={item.promoIndex}
       />
     </View>
   );
@@ -255,71 +271,7 @@ export default function HomeScreen() {
             <View style={style.bannerList}>
               {filteredSearchMatches.length > 0 ? (
                 filteredSearchMatches.map(game => (
-                  <View key={game.matchId} style={style.featureCard}>
-                    <View style={style.featureHeader}>
-                      <Text style={style.featureLeague}>{game.leagueName?.toUpperCase()}</Text>
-                      {game.state === "happening" ? (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                          <Text style={[style.featureTime, { color: COLORS.danger, fontFamily: "SpaceGroteskBold" }]}>Live now</Text>
-                          <Ionicons name="radio-button-on" size={14} color={COLORS.danger} />
-                        </View>
-                      ) : (
-                        <Text style={style.featureTime}>{formatDate(game.startTime)}</Text>
-                      )}
-                    </View>
-                    <View style={style.featureTeamsRow}>
-                      <View style={style.featureTeam}>
-                        <Image source={{ uri: game.team1.logoUrl }} style={style.featureLogo} resizeMode="contain" />
-                        <Text style={style.featureCode}>{game.team1.code}</Text>
-                      </View>
-                      
-                      {game.state === "finished" ? (
-                        <Text style={[style.featureVs, { color: COLORS.success }]}>
-                          {game.team1Score} - {game.team2Score}
-                        </Text>
-                      ) : (
-                        <Text style={style.featureVs}>VS</Text>
-                      )}
-
-                      <View style={[style.featureTeam, { justifyContent: 'flex-end' }]}>
-                        <Text style={style.featureCode}>{game.team2.code}</Text>
-                        <Image source={{ uri: game.team2.logoUrl }} style={style.featureLogo} resizeMode="contain" />
-                      </View>
-                    </View>
-                    
-                    {/* Compact Odds Buttons Row */}
-                    {game.state !== "finished" ? (
-                      <View style={style.oddsRow}>
-                        <TouchableOpacity 
-                          style={style.oddBoxCompact} 
-                          onPress={() => navigation.navigate("Detail", { match: game })}
-                        >
-                          <Text style={style.oddBoxLabel}>{game.team1.code}</Text>
-                          <Text style={style.oddBoxValue}>x{(1.35 + (game.matchId % 3) * 0.25).toFixed(2)}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity 
-                          style={style.oddBoxCompact} 
-                          onPress={() => navigation.navigate("Detail", { match: game })}
-                        >
-                          <Text style={style.oddBoxLabel}>{game.team2.code}</Text>
-                          <Text style={style.oddBoxValue}>x{(2.10 - (game.matchId % 3) * 0.15).toFixed(2)}</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity 
-                          style={style.oddDetailBtn} 
-                          onPress={() => navigation.navigate("Detail", { match: game })}
-                        >
-                          <Ionicons name="chevron-forward-outline" size={16} color={COLORS.primary} />
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <TouchableOpacity 
-                        style={[style.featureBetButton, { borderColor: COLORS.border }]}
-                        onPress={() => navigation.navigate("Detail", { match: game })}
-                      >
-                        <Text style={[style.featureBetText, { color: COLORS.textMuted }]}>VIEW RESULTS</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
+                  <MatchCard key={game.matchId} game={game} />
                 ))
               ) : (
                 <View style={{ paddingVertical: 40, alignItems: "center" }}>
@@ -335,6 +287,7 @@ export default function HomeScreen() {
               {/* TOP CAROUSEL BANNER */}
               <View style={style.carouselContainer}>
                 <FlatList
+                  ref={flatListRef}
                   data={carouselData}
                   renderItem={renderCarouselItem}
                   keyExtractor={(item) => item.id}
@@ -406,71 +359,7 @@ export default function HomeScreen() {
               <View style={style.bannerList}>
                 {getFilteredMatches().length > 0 ? (
                   getFilteredMatches().map(game => (
-                    <View key={game.matchId} style={style.featureCard}>
-                      <View style={style.featureHeader}>
-                        <Text style={style.featureLeague}>{game.leagueName?.toUpperCase()}</Text>
-                        {game.state === "happening" ? (
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                            <Text style={[style.featureTime, { color: COLORS.danger, fontFamily: "SpaceGroteskBold" }]}>Live now</Text>
-                            <Ionicons name="radio-button-on" size={14} color={COLORS.danger} />
-                          </View>
-                        ) : (
-                          <Text style={style.featureTime}>{formatDate(game.startTime)}</Text>
-                        )}
-                      </View>
-                      <View style={style.featureTeamsRow}>
-                        <View style={style.featureTeam}>
-                          <Image source={{ uri: game.team1.logoUrl }} style={style.featureLogo} resizeMode="contain" />
-                          <Text style={style.featureCode}>{game.team1.code}</Text>
-                        </View>
-                        
-                        {game.state === "finished" ? (
-                          <Text style={[style.featureVs, { color: COLORS.success }]}>
-                            {game.team1Score} - {game.team2Score}
-                          </Text>
-                        ) : (
-                          <Text style={style.featureVs}>VS</Text>
-                        )}
-
-                        <View style={[style.featureTeam, { justifyContent: 'flex-end' }]}>
-                          <Text style={style.featureCode}>{game.team2.code}</Text>
-                          <Image source={{ uri: game.team2.logoUrl }} style={style.featureLogo} resizeMode="contain" />
-                        </View>
-                      </View>
-
-                      {/* Compact Odds Buttons Row */}
-                      {game.state !== "finished" ? (
-                        <View style={style.oddsRow}>
-                          <TouchableOpacity 
-                            style={style.oddBoxCompact} 
-                            onPress={() => navigation.navigate("Detail", { match: game })}
-                          >
-                            <Text style={style.oddBoxLabel}>{game.team1.code}</Text>
-                            <Text style={style.oddBoxValue}>x{(1.35 + (game.matchId % 3) * 0.25).toFixed(2)}</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity 
-                            style={style.oddBoxCompact} 
-                            onPress={() => navigation.navigate("Detail", { match: game })}
-                          >
-                            <Text style={style.oddBoxLabel}>{game.team2.code}</Text>
-                            <Text style={style.oddBoxValue}>x{(2.10 - (game.matchId % 3) * 0.15).toFixed(2)}</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity 
-                            style={style.oddDetailBtn} 
-                            onPress={() => navigation.navigate("Detail", { match: game })}
-                          >
-                            <Ionicons name="chevron-forward-outline" size={16} color={COLORS.primary} />
-                          </TouchableOpacity>
-                        </View>
-                      ) : (
-                        <TouchableOpacity 
-                          style={[style.featureBetButton, { borderColor: COLORS.border }]}
-                          onPress={() => navigation.navigate("Detail", { match: game })}
-                        >
-                          <Text style={[style.featureBetText, { color: COLORS.textMuted }]}>VIEW RESULTS</Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
+                    <MatchCard key={game.matchId} game={game} />
                   ))
                 ) : (
                   <View style={{ paddingVertical: 30, alignItems: "center" }}>

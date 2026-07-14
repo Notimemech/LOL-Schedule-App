@@ -17,10 +17,7 @@ import COLORS from "../../styles/colors";
 import { Ionicons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome6";
 import style from "../../styles/profile.styles";
-
-const formatVND = (amount) => {
-  return new Intl.NumberFormat('en-US').format(amount) + ' VND';
-};
+import { formatMoney } from "../../utils/format";
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
@@ -153,7 +150,7 @@ const ProfileScreen = () => {
                       { fontSize: 20, fontFamily: "ManropeBold", marginTop: 5 },
                     ]}
                   >
-                    BALANCE: {formatVND(balance)}
+                    BALANCE: {formatMoney(balance)} VNĐ
                   </Text>
                 </View>
               </View>
@@ -161,7 +158,7 @@ const ProfileScreen = () => {
         />
 
         {/* Lưới các chức năng chính (Grid Layout) */}
-        <View style={localStyles.gridContainer}>
+        <View style={style.gridContainer}>
           {mainActivities.map((act) => (
             <TouchableOpacity
               key={act.activityName}
@@ -169,14 +166,14 @@ const ProfileScreen = () => {
               onPress={() => handleActivityPress(act)}
               activeOpacity={0.6}
             >
-              <FloatBox style={localStyles.floatBoxWrapper}
+              <FloatBox style={style.floatBoxWrapper}
                 children={
-                  <View style={localStyles.itemContent}>
+                  <View style={style.itemContent}>
                     <Icon 
                       name={act.iconName} 
                       style={[style.text, { color: COLORS.primary, fontSize: 32, marginBottom: 10 }]} 
                     />
-                    <Text style={[style.text, { fontSize: 15, fontFamily: "ManropeBold" }]}>
+                    <Text style={[style.text, { fontSize: 14, fontFamily: "ManropeBold", textAlign: "center" }]}>
                       {act.activityName}
                     </Text>
                   </View>
@@ -186,143 +183,38 @@ const ProfileScreen = () => {
           ))}
         </View>
 
-        <View style={localStyles.sectionCard}>
-          <Text style={localStyles.sectionTitle}>Preferences</Text>
+        <View style={style.sectionCard}>
+          <Text style={style.sectionTitle}>Preferences</Text>
 
-          <View style={localStyles.settingRow}>
-            <View style={localStyles.settingLabelWrap}>
-              <Icon name="moon" size={18} color={COLORS.primary} />
-              <Text style={localStyles.settingText}>Dark mode</Text>
+          <TouchableOpacity style={style.settingRow} onPress={() => Alert.alert('Info', 'Edit Profile will be available soon.')}>
+            <View style={style.settingLabelWrap}>
+              <Icon name="user-pen" size={18} color={COLORS.primary} />
+              <Text style={style.settingText}>Edit profile</Text>
             </View>
-            <Switch
-              value={isDarkMode}
-              onValueChange={setIsDarkMode}
-              trackColor={{ false: '#767577', true: COLORS.primary }}
-              thumbColor="#fff"
-            />
-          </View>
+            <Icon name="chevron-right" size={16} color={COLORS.textMuted} />
+          </TouchableOpacity>
 
-          <View style={localStyles.settingRow}>
-            <View style={localStyles.settingLabelWrap}>
-              <Icon name="bell" size={18} color={COLORS.primary} />
-              <Text style={localStyles.settingText}>Match notifications</Text>
+          <TouchableOpacity style={style.settingRow} onPress={() => Alert.alert('Info', 'Themes will be available soon.')}>
+            <View style={style.settingLabelWrap}>
+              <Icon name="palette" size={18} color={COLORS.primary} />
+              <Text style={style.settingText}>Themes</Text>
             </View>
-            <Switch
-              value={isNotificationEnabled}
-              onValueChange={setIsNotificationEnabled}
-              trackColor={{ false: '#767577', true: COLORS.primary }}
-              thumbColor="#fff"
-            />
-          </View>
-
-          <TouchableOpacity style={localStyles.settingRow} onPress={() => Alert.alert('Info', 'Language options will be available soon.')}>
-            <View style={localStyles.settingLabelWrap}>
-              <Icon name="language" size={18} color={COLORS.primary} />
-              <Text style={localStyles.settingText}>Language</Text>
-            </View>
-            <Text style={localStyles.settingHint}>Tiếng Việt</Text>
+            <Icon name="chevron-right" size={16} color={COLORS.textMuted} />
           </TouchableOpacity>
         </View>
 
         <TouchableOpacity 
-          style={localStyles.logoutButton} 
+          style={style.logoutButton} 
           onPress={handleLogout}
           activeOpacity={0.8}
         >
           <Icon name="right-from-bracket" size={20} color="#fff" style={{ marginRight: 10 }} />
-          <Text style={localStyles.logoutText}>Logout</Text>
+          <Text style={style.logoutText}>Logout</Text>
         </TouchableOpacity>
 
       </ScrollView>
     </SafeAreaView>
   );
 };
-
-// CSS nội bộ bổ sung cho layout Grid và nút Đăng xuất
-const localStyles = StyleSheet.create({
-  gridContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginTop: 20,
-    paddingHorizontal: 2, // Đệm nhẹ tránh sát viền
-  },
-  gridItem: {
-    width: "48%", // Chia 2 cột
-    marginBottom: 15,
-  },
-  floatBoxWrapper: {
-    height: 110, // Cố định chiều cao cho hộp chức năng
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 15,
-  },
-  itemContent: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 10,
-  },
-  sectionCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginTop: 18,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  sectionTitle: {
-    color: COLORS.textSecondary,
-    fontSize: 13,
-    fontFamily: "ManropeBold",
-    marginBottom: 8,
-    marginLeft: 6,
-    textTransform: "uppercase",
-  },
-  settingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    paddingHorizontal: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  settingLabelWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  settingText: {
-    color: COLORS.text,
-    fontSize: 14,
-    fontFamily: "ManropeBold",
-    marginLeft: 10,
-  },
-  settingHint: {
-    color: COLORS.textMuted,
-    fontSize: 13,
-  },
-  logoutButton: {
-    backgroundColor: "#ff4757",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 16,
-    borderRadius: 12,
-    marginTop: 15,
-    marginBottom: 40,
-    elevation: 3,
-    shadowColor: "#ff4757",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-  },
-  logoutText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontFamily: "ManropeBold",
-  },
-});
 
 export default ProfileScreen;

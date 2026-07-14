@@ -166,6 +166,111 @@ export const createVnpayPaymentRecord = async (userId, txnRef, amount) => {
     return await walletRepository.createVnpayPayment(userId, txnRef, amount);
 };
 
+/**
+ * Tạo VNPay URL mô phỏng rút tiền (dùng payment flow nhưng với orderInfo withdrawal)
+ * Trong test env, dùng payment URL với order type withdraw để simulate xác nhận.
+ */
+export const createVNPayWithdrawUrl = (amount, ipAddr, userId) => {
+    const date = new Date();
+    const createDate = moment(date).format('YYYYMMDDHHmmss');
+    const timeStamp = moment(date).format('DDHHmmss');
+    const orderId = `W${userId}_${timeStamp}`; // prefix W để phân biệt withdrawal
+
+    const tmnCode = process.env.VNP_TMN_CODE;
+    const secretKey = process.env.VNP_HASH_SECRET;
+    let vnpUrl = process.env.VNP_URL;
+    const returnUrl = process.env.VNP_RETURN_URL.replace('vnpay-return', 'vnpay-withdraw-return');
+
+    let vnp_Params = {};
+    vnp_Params['vnp_Version'] = '2.1.0';
+    vnp_Params['vnp_Command'] = 'pay';
+    vnp_Params['vnp_TmnCode'] = tmnCode;
+    vnp_Params['vnp_Locale'] = 'vn';
+    vnp_Params['vnp_CurrCode'] = 'VND';
+    vnp_Params['vnp_TxnRef'] = orderId;
+    vnp_Params['vnp_OrderInfo'] = `Rut tien tu vi - GD: ${orderId}`;
+    vnp_Params['vnp_OrderType'] = 'other';
+    vnp_Params['vnp_Amount'] = amount * 100;
+    vnp_Params['vnp_ReturnUrl'] = returnUrl;
+    vnp_Params['vnp_IpAddr'] = ipAddr;
+    vnp_Params['vnp_CreateDate'] = createDate;
+
+    const signDataParams = sortObject(vnp_Params);
+    const signData = qs.stringify(signDataParams, { encode: false });
+    const hmac = crypto.createHmac('sha512', secretKey);
+    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+
+    vnp_Params['vnp_SecureHashType'] = 'SHA512';
+    vnp_Params['vnp_SecureHash'] = signed;
+    vnpUrl += '?' + qs.stringify(sortObject(vnp_Params), { encode: false });
+
+    return { paymentUrl: vnpUrl, txnRef: orderId };
+};
+
+/**
+ * Xử lý callback khi VNPay xác nhận rút tiền thành công:
+ * - Verify signature
+ * - Trừ số dư ví của user
+ * - Ghi transaction WITHDRAW
+ */
+export const handleVnpayWithdrawReturn = async (params) => {
+    let vnp_Params = { ...params };
+    const secureHash = vnp_Params['vnp_SecureHash'];
+    delete vnp_Params['vnp_SecureHash'];
+    delete vnp_Params['vnp_SecureHashType'];
+    vnp_Params = sortObject(vnp_Params);
+
+    const secretKey = process.env.VNP_HASH_SECRET;
+    const signData = qs.stringify(vnp_Params, { encode: false });
+    const hmac = crypto.createHmac('sha512', secretKey);
+    const signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
+
+    if (secureHash !== signed) {
+        return { status: 'invalid_signature' };
+    }
+
+    const responseCode = vnp_Params['vnp_ResponseCode'];
+    if (responseCode !== '00') {
+        return { status: 'failed', responseCode };
+    }
+
+    const txnRef = vnp_Params['vnp_TxnRef'];
+    const amount = parseInt(vnp_Params['vnp_Amount'], 10) / 100;
+
+    // txnRef format: W{userId}_{timestamp}
+    const userId = txnRef.replace(/^W/, '').split('_')[0];
+
+    const wallet = await walletRepository.getWalletByUserId(userId);
+    if (!wallet) {
+        return { status: 'wallet_not_found' };
+    }
+
+    if (parseFloat(wallet.balance) < amount) {
+        return { status: 'insufficient_balance' };
+    }
+
+    const client = await (await import('../config/db.config.js')).pool.connect();
+    try {
+        await client.query('BEGIN');
+        await walletRepository.updateWalletBalance(wallet.id, -amount, client);
+        await walletRepository.createTransaction(
+            wallet.id,
+            -amount,
+            'WITHDRAW',
+            'success',
+            null,
+            client
+        );
+        await client.query('COMMIT');
+        return { status: 'success', amount, userId };
+    } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
 export const verifyVnpaySignature = (params) => {
     const copiedParams = { ...params };
     const secureHash = copiedParams['vnp_SecureHash'];

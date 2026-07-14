@@ -103,6 +103,22 @@ export const getBetHistory = async (matchId) => {
   }
 };
 
+export const getUserBetsForMatch = async (matchId) => {
+  try {
+    const userId = await getCurrentUserId();
+    if (!userId) return [];
+
+    const response = await api.get(`/bets/user/${userId}/match/${matchId}`);
+    if (response.success && response.data) {
+      return response.data;
+    }
+    return [];
+  } catch (error) {
+    console.error('Failed to load user bets for match:', error);
+    return [];
+  }
+};
+
 export const getMatchMarketsAndOdds = async (matchId) => {
   try {
     const response = await api.get(`/bets/markets/${matchId}`);
@@ -113,5 +129,15 @@ export const getMatchMarketsAndOdds = async (matchId) => {
   } catch (error) {
     console.error('Failed to get match markets:', error);
     return [];
+  }
+};
+
+export const autoCloseMarkets = async () => {
+  try {
+    const response = await api.post('/bets/markets/auto-close');
+    return response;
+  } catch (error) {
+    console.error('Failed to auto-close markets:', error);
+    return null;
   }
 };

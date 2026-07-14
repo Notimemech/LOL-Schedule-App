@@ -63,6 +63,16 @@ export const getBetHistory = async (req, res, next) => {
     }
 };
 
+export const getUserBetsForMatch = async (req, res, next) => {
+    try {
+        const { userId, matchId } = req.params;
+        const bets = await betService.getUserBetsForMatch(userId, matchId);
+        sendSuccess(res, 200, 'User bets for match retrieved successfully', bets);
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const cancelBet = async (req, res, next) => {
     try {
         const { betId } = req.params;
@@ -83,6 +93,25 @@ export const settleBet = async (req, res, next) => {
         
         const bet = await betService.settleBet(betId, outcome);
         sendSuccess(res, 200, 'Bet settled successfully', bet);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const settleAllBetsForMarket = async (req, res, next) => {
+    try {
+        const { marketId } = req.params;
+        const result = await betService.settleAllBetsForMarket(marketId);
+        sendSuccess(res, 200, 'All bets settled for market', result);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const autoCloseMarkets = async (req, res, next) => {
+    try {
+        const result = await betService.autoCloseExpiredMarkets();
+        sendSuccess(res, 200, 'Expired markets auto-closed', result);
     } catch (error) {
         next(error);
     }

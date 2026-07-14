@@ -187,11 +187,14 @@ export const processDeposit = async (userId, originalAmount, txnRef, promotionId
 
             if (promoRes.rows.length > 0 && userPromoRes.rows.length === 0) {
                 const promo = promoRes.rows[0];
-                bonusAmount = (originalAmount * promo.bonus_percentage) / 100;
-                if (promo.max_bonus > 0 && bonusAmount > promo.max_bonus) {
-                    bonusAmount = promo.max_bonus;
+                const maxBonus = Number(promo.max_bonus);
+                const bonusPercentage = Number(promo.bonus_percentage);
+                
+                bonusAmount = (Number(originalAmount) * bonusPercentage) / 100;
+                if (maxBonus > 0 && bonusAmount > maxBonus) {
+                    bonusAmount = maxBonus;
                 }
-                totalAmount += bonusAmount;
+                totalAmount = Number(originalAmount) + bonusAmount;
 
                 // Ghi nhận đã dùng
                 await client.query(

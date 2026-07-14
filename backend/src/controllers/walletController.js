@@ -64,6 +64,77 @@ export const withdraw = async (req, res, next) => {
     }
 };
 
+// Rút tiền qua VNPay (sandbox simulation)
+export const withdrawVnpay = async (req, res, next) => {
+    try {
+        const { amount, userId: userIdFromBody } = req.body;
+        const userId = req.user?.id || userIdFromBody;
+
+        if (!userId) return next(new AppError('User ID is required', 400));
+        if (!amount || amount < 50000) return next(new AppError('Số tiền rút tối thiểu 50.000 VNĐ', 400));
+
+        // Kiểm tra số dư trước khi tạo URL
+        const wallet = await walletService.getBalance(userId);
+        if (parseFloat(wallet.balance) < amount) {
+            return next(new AppError('Số dư không đủ', 400));
+        }
+
+        const ipAddr = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+        const { paymentUrl, txnRef } = walletService.createVNPayWithdrawUrl(amount, ipAddr, userId);
+
+        sendSuccess(res, 200, 'Withdraw payment URL created', { paymentUrl, txnRef });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Callback khi VNPay trả về sau khi user xác nhận rút tiền
+export const vnpayWithdrawReturn = async (req, res, next) => {
+    try {
+        const result = await walletService.handleVnpayWithdrawReturn(req.query);
+
+        if (result.status === 'success') {
+            res.status(200).send(`
+                <html>
+                    <head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+                    <body style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#1a1a2e;color:white;font-family:sans-serif;text-align:center;">
+                        <div>
+                            <h2 style="color:#4cd137;">Rút tiền thành công!</h2>
+                            <p>Số tiền ${result.amount?.toLocaleString()} VNĐ đã được rút.</p>
+                            <p>Hệ thống đang chuyển hướng, vui lòng đợi...</p>
+                        </div>
+                        <script>
+                            if (window.ReactNativeWebView) {
+                                window.ReactNativeWebView.postMessage(JSON.stringify({status:'withdraw_success',amount:${result.amount}}));
+                            }
+                        </script>
+                    </body>
+                </html>
+            `);
+        } else {
+            res.status(200).send(`
+                <html>
+                    <head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+                    <body style="display:flex;justify-content:center;align-items:center;height:100vh;background-color:#1a1a2e;color:white;font-family:sans-serif;text-align:center;">
+                        <div>
+                            <h2 style="color:#ff4d67;">Rút tiền thất bại</h2>
+                            <p>Giao dịch đã bị huỷ hoặc xảy ra lỗi.</p>
+                        </div>
+                        <script>
+                            if (window.ReactNativeWebView) {
+                                window.ReactNativeWebView.postMessage(JSON.stringify({status:'withdraw_failed'}));
+                            }
+                        </script>
+                    </body>
+                </html>
+            `);
+        }
+    } catch (error) {
+        console.error('Lỗi vnpayWithdrawReturn:', error);
+        res.status(400).send('Lỗi xử lý rút tiền');
+    }
+};
+
 export const getTransactions = async (req, res, next) => {
     try {
         const { userId } = req.params;
