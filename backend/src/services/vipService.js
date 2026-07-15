@@ -13,7 +13,7 @@ export const buyVip = async (userId, tierId) => {
         // 1. Get tier info
         const tierResult = await client.query('SELECT * FROM VipTiers WHERE id = $1', [tierId]);
         if (tierResult.rows.length === 0) {
-            throw new Error('Gói VIP không tồn tại');
+            throw new Error('VIP tier does not exist');
         }
         const tier = tierResult.rows[0];
         const price = tier.price_per_month;
@@ -21,12 +21,12 @@ export const buyVip = async (userId, tierId) => {
         // 2. Check user wallet balance
         const walletResult = await client.query('SELECT id, balance FROM Wallets WHERE user_id = $1 FOR UPDATE', [userId]);
         if (walletResult.rows.length === 0) {
-            throw new Error('Ví không tồn tại');
+            throw new Error('Wallet does not exist');
         }
         const wallet = walletResult.rows[0];
         
         if (parseFloat(wallet.balance) < parseFloat(price)) {
-            throw new Error('Số dư không đủ để mua gói VIP này');
+            throw new Error('Insufficient balance to purchase this VIP tier');
         }
 
         // 3. Deduct balance
@@ -51,9 +51,10 @@ export const buyVip = async (userId, tierId) => {
         // 5. Add promotion
         const promoTitle = `Thưởng Nạp ${tier.name} ${tier.deposit_bonus_percent}%`;
         const promoRes = await client.query(
-            `INSERT INTO Promotions (title, subtitle, badge_text, button_text, button_link, is_active, bonus_percentage, max_bonus) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+            `INSERT INTO Promotions (user_id, title, subtitle, badge_text, button_text, button_link, is_active, bonus_percentage, max_bonus, expires_at) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
             [
+                userId,
                 promoTitle, 
                 `Quà tặng mua gói ${tier.name}. Thưởng ${tier.deposit_bonus_percent}% cho lần nạp tiếp theo.`, 
                 'VIP BONUS', 
@@ -61,7 +62,8 @@ export const buyVip = async (userId, tierId) => {
                 'Deposit', 
                 true, 
                 tier.deposit_bonus_percent, 
-                2000000
+                2000000,
+                expiresAt
             ]
         );
         const promoId = promoRes.rows[0].id;
@@ -72,7 +74,7 @@ export const buyVip = async (userId, tierId) => {
         );
 
         await client.query('COMMIT');
-        return { success: true, message: 'Mua VIP thành công!', vip_tier_id: tierId, expires_at: expiresAt };
+        return { success: true, message: 'VIP purchased successfully!', vip_tier_id: tierId, expires_at: expiresAt };
     } catch (e) {
         await client.query('ROLLBACK');
         throw e;
@@ -97,4 +99,13 @@ export const cancelAutoRenew = async (userId) => {
     );
     if (result.rows.length === 0) throw new Error('User not found');
     return { success: true, message: 'Auto-renewal has been cancelled.' };
+};
+
+export const removeVip = async (userId) => {
+    const result = await pool.query(
+        `UPDATE Users SET vip_tier_id = NULL, vip_expires_at = NULL, is_vip_auto_renew = false WHERE id = $1 RETURNING *`,
+        [userId]
+    );
+    if (result.rows.length === 0) throw new Error('User not found');
+    return { success: true, message: 'VIP has been removed.' };
 };

@@ -120,7 +120,11 @@ export default function PlaceBetScreen() {
     setIsSubmitting(true);
     try {
       const result = await placeBet(match.matchId, selectedMarketId, selectedOutcomeId, wagerAmount);
-      showAlert("Success", result.message, false, async () => {
+      let successMsg = result.message;
+      if (result.cashback > 0) {
+        successMsg += `\nVIP Bonus: You received ${formatMoney(result.cashback)} VND cashback!`;
+      }
+      showAlert("Success", successMsg, false, async () => {
         setWagerInput("");
         setSelectedOutcomeId(null);
         setSelectedMarketId(null);

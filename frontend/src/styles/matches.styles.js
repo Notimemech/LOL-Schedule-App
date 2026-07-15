@@ -318,9 +318,15 @@ export const detailStyles = StyleSheet.create({
   },
   bottomFixedBox: {
     position: 'absolute',
-    bottom: 20,
-    left: 16,
-    right: 16,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 34,
+    backgroundColor: COLORS.backgroundSecondary,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
   },
   matchHeaderBox: {
     backgroundColor: COLORS.surface,

@@ -1,16 +1,39 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import api from '../../services/api';
+import CustomAlert from '../../components/common/CustomAlert';
 
 const DepositScreen = ({ navigation }) => {
     const [amount, setAmount] = useState('');
     const [paymentUrl, setPaymentUrl] = useState(null);
     const [loading, setLoading] = useState(false);
 
+    const [alertConfig, setAlertConfig] = useState({
+        visible: false,
+        title: "",
+        message: "",
+        isError: false,
+        onConfirm: () => { },
+    });
+
+    const showAlert = (title, message, isError = false, onConfirm = null) => {
+        setAlertConfig({
+            visible: true,
+            title,
+            message,
+            isError,
+            onConfirm: onConfirm || (() => hideAlert()),
+        });
+    };
+
+    const hideAlert = () => {
+        setAlertConfig(prev => ({ ...prev, visible: false }));
+    };
+
     const handleDeposit = async () => {
         if (!amount || isNaN(amount)) {
-            Alert.alert('Error', 'Please enter a valid amount');
+            showAlert('Error', 'Please enter a valid amount', true);
             return;
         }
 
@@ -26,7 +49,7 @@ const DepositScreen = ({ navigation }) => {
                 setPaymentUrl(paymentUrl);
             }
         } catch (error) {
-            Alert.alert('Error', 'Cannot create VNPay order at the moment');
+            showAlert('Error', 'Cannot create VNPay order at the moment', true);
             console.error(error);
         } finally {
             setLoading(false);
@@ -42,10 +65,12 @@ const DepositScreen = ({ navigation }) => {
             const payload = JSON.parse(event.nativeEvent.data);
             setPaymentUrl(null);
             if (payload?.status === 'success') {
-                Alert.alert('Success', 'You have successfully deposited money into your wallet!');
-                navigation.goBack();
+                showAlert('Success', 'You have successfully deposited money into your wallet!', false, () => {
+                    hideAlert();
+                    navigation.goBack();
+                });
             } else {
-                Alert.alert('Failed', 'Transaction was cancelled or an error occurred.');
+                showAlert('Failed', 'Transaction was cancelled or an error occurred.', true);
             }
         } catch (error) {
             console.warn('Unable to parse WebView message:', error);
@@ -55,12 +80,21 @@ const DepositScreen = ({ navigation }) => {
     // Nếu đã có URL, hiển thị WebView chiếm toàn màn hình
     if (paymentUrl) {
         return (
-            <WebView
-                source={{ uri: paymentUrl }}
-                style={{ flex: 1 }}
-                onNavigationStateChange={handleNavigationStateChange}
-                onMessage={handleWebViewMessage}
-            />
+            <>
+                <WebView
+                    source={{ uri: paymentUrl }}
+                    style={{ flex: 1 }}
+                    onNavigationStateChange={handleNavigationStateChange}
+                    onMessage={handleWebViewMessage}
+                />
+                <CustomAlert
+                    visible={alertConfig.visible}
+                    title={alertConfig.title}
+                    message={alertConfig.message}
+                    isError={alertConfig.isError}
+                    onConfirm={alertConfig.onConfirm}
+                />
+            </>
         );
     }
 
@@ -87,6 +121,14 @@ const DepositScreen = ({ navigation }) => {
                     <Text style={styles.buttonText}>Pay with VNPay</Text>
                 )}
             </TouchableOpacity>
+
+            <CustomAlert
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                isError={alertConfig.isError}
+                onConfirm={alertConfig.onConfirm}
+            />
         </View>
     );
 };

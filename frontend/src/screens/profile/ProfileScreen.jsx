@@ -4,8 +4,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Alert,
-  Switch,
   DeviceEventEmitter,
   Animated,
 } from "react-native";
@@ -20,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome6";
 import style from "../../styles/profile.styles";
 import { formatMoney } from "../../utils/format";
+import CustomAlert from "../../components/common/CustomAlert";
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
@@ -46,33 +45,59 @@ const ProfileScreen = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [isNotificationEnabled, setIsNotificationEnabled] = useState(true);
 
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    isError: false,
+    onConfirm: () => { },
+    onCancel: null,
+    confirmText: 'OK',
+    cancelText: 'CANCEL'
+  });
+
+  const showAlert = (title, message, isError = false, onConfirm = null, onCancel = null, confirmText = 'OK', cancelText = 'CANCEL') => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      isError,
+      onConfirm: onConfirm || (() => hideAlert()),
+      onCancel,
+      confirmText,
+      cancelText
+    });
+  };
+
+  const hideAlert = () => {
+    setAlertConfig(prev => ({ ...prev, visible: false }));
+  };
+
   // Logic Đăng xuất
   const handleLogout = () => {
-    Alert.alert(
+    showAlert(
       "Logout",
       "Are you sure you want to logout from your account?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await AsyncStorage.removeItem("userInfo");
-              await AsyncStorage.removeItem("token");
-              await AsyncStorage.removeItem("accessToken");
+      false,
+      async () => {
+        try {
+          await AsyncStorage.removeItem("userInfo");
+          await AsyncStorage.removeItem("token");
+          await AsyncStorage.removeItem("accessToken");
 
-              navigation.reset({
-                index: 0,
-                routes: [{ name: "SignIn" }],
-              });
-            } catch (err) {
-              console.error("Logout failed:", err);
-              Alert.alert("Error", "Unable to log out right now.");
-            }
-          },
-        },
-      ]
+          hideAlert();
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "SignIn" }],
+          });
+        } catch (err) {
+          console.error("Logout failed:", err);
+          showAlert("Error", "Unable to log out right now.", true);
+        }
+      },
+      () => hideAlert(),
+      "LOGOUT",
+      "CANCEL"
     );
   };
 
@@ -260,7 +285,7 @@ const ProfileScreen = () => {
         <View style={style.sectionCard}>
           <Text style={style.sectionTitle}>Preferences</Text>
 
-          <TouchableOpacity style={style.settingRow} onPress={() => Alert.alert('Info', 'Edit Profile will be available soon.')}>
+          <TouchableOpacity style={style.settingRow} onPress={() => showAlert('Info', 'Edit Profile will be available soon.', false)}>
             <View style={style.settingLabelWrap}>
               <Icon name="user-pen" size={18} color={COLORS.primary} />
               <Text style={style.settingText}>Edit profile</Text>
@@ -297,6 +322,17 @@ const ProfileScreen = () => {
         </TouchableOpacity>
 
       </ScrollView>
+
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        isError={alertConfig.isError}
+        onConfirm={alertConfig.onConfirm}
+        onCancel={alertConfig.onCancel}
+        confirmText={alertConfig.confirmText}
+        cancelText={alertConfig.cancelText}
+      />
     </SafeAreaView>
   );
 };

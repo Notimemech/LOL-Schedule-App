@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   DeviceEventEmitter,
@@ -23,6 +22,7 @@ import ContentHeader from "../../components/common/ContentHeader";
 import { formatMoney } from "../../utils/format";
 import QuickAmountSelector from "../../components/ui/QuickAmountSelector";
 import SectionHeader from "../../components/ui/SectionHeader";
+import CustomAlert from "../../components/common/CustomAlert";
 import { walletStyles as styles } from "../../styles/wallet.styles";
 
 const QUICK_WITHDRAW = [50000, 100000, 200000, 500000, 1000000];
@@ -33,6 +33,28 @@ const WithdrawScreen = () => {
   const [loading, setLoading] = useState(false);
   const [currentBalance, setCurrentBalance] = useState(0);
   const [paymentUrl, setPaymentUrl] = useState(null);
+
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    isError: false,
+    onConfirm: () => { },
+  });
+
+  const showAlert = (title, message, isError = false, onConfirm = null) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      isError,
+      onConfirm: onConfirm || (() => hideAlert()),
+    });
+  };
+
+  const hideAlert = () => {
+    setAlertConfig(prev => ({ ...prev, visible: false }));
+  };
 
   React.useEffect(() => {
     loadBalance();
@@ -60,18 +82,18 @@ const WithdrawScreen = () => {
     const withdrawAmount = parseInt(amount.replace(/\D/g, ""), 10);
 
     if (!withdrawAmount || withdrawAmount < 50000) {
-      Alert.alert("Error", "Minimum withdrawal amount is 50,000 VNĐ");
+      showAlert("Error", "Minimum withdrawal amount is 50,000 VNĐ", true);
       return;
     }
     if (withdrawAmount > currentBalance) {
-      Alert.alert("Error", "Insufficient balance to complete this transaction");
+      showAlert("Error", "Insufficient balance to complete this transaction", true);
       return;
     }
 
     setLoading(true);
     try {
       const rawUser = await AsyncStorage.getItem('userInfo');
-      if (!rawUser) { Alert.alert('Error', 'Please sign in first.'); setLoading(false); return; }
+      if (!rawUser) { showAlert('Error', 'Please sign in first.', true); setLoading(false); return; }
       const user = JSON.parse(rawUser);
 
       const response = await api.post('/wallet/withdraw-vnpay', {
@@ -86,7 +108,7 @@ const WithdrawScreen = () => {
         throw new Error('No payment URL returned from server.');
       }
     } catch (error) {
-      Alert.alert('Error', error?.response?.data?.message || 'Unable to process withdrawal. Please try again.');
+      showAlert('Error', error?.response?.data?.message || 'Unable to process withdrawal. Please try again.', true);
     } finally {
       setLoading(false);
     }
@@ -100,11 +122,12 @@ const WithdrawScreen = () => {
       if (payload?.status === 'withdraw_success') {
         await loadBalance();
         DeviceEventEmitter.emit('wallet:transactions-updated');
-        Alert.alert("Success", `Successfully withdrawn ${formatMoney(payload.amount)} VNĐ from your wallet.`, [
-          { text: "OK", onPress: () => navigation.goBack() }
-        ]);
+        showAlert("Success", `Successfully withdrawn ${formatMoney(payload.amount)} VNĐ from your wallet.`, false, () => {
+          hideAlert();
+          navigation.goBack();
+        });
       } else {
-        Alert.alert('Failed', 'Transaction was cancelled or failed. Please try again.');
+        showAlert('Failed', 'Transaction was cancelled or failed. Please try again.', true);
       }
     } catch (error) {
       console.warn('Unable to parse WebView message:', error);
@@ -118,7 +141,7 @@ const WithdrawScreen = () => {
         // Handled by postMessage from WebView HTML
       } else {
         setPaymentUrl(null);
-        Alert.alert("Failed", "Transaction was cancelled or an error occurred.");
+        showAlert("Failed", "Transaction was cancelled or an error occurred.", true);
       }
     }
   };
@@ -141,6 +164,13 @@ const WithdrawScreen = () => {
           onMessage={handleWebViewMessage}
           startInLoadingState={true}
           renderLoading={() => <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />}
+        />
+        <CustomAlert
+          visible={alertConfig.visible}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          isError={alertConfig.isError}
+          onConfirm={alertConfig.onConfirm}
         />
       </SafeAreaView>
     );
@@ -229,6 +259,14 @@ const WithdrawScreen = () => {
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        isError={alertConfig.isError}
+        onConfirm={alertConfig.onConfirm}
+      />
     </SafeAreaView>
   );
 };

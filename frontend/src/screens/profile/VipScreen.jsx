@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from "expo-linear-gradient";
 import api from '../../services/api';
 import COLORS from '../../styles/colors';
+import CustomAlert from '../../components/common/CustomAlert';
 
 const VipScreen = ({ navigation }) => {
   const [tiers, setTiers] = useState([]);
@@ -13,6 +14,34 @@ const VipScreen = ({ navigation }) => {
   const [status, setStatus] = useState(null);
 
   const opacityAnim = useRef(new Animated.Value(0.4)).current;
+
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    isError: false,
+    onConfirm: () => { },
+    onCancel: null,
+    confirmText: 'OK',
+    cancelText: 'CANCEL'
+  });
+
+  const showAlert = (title, message, isError = false, onConfirm = null, onCancel = null, confirmText = 'OK', cancelText = 'CANCEL') => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      isError,
+      onConfirm: onConfirm || (() => hideAlert()),
+      onCancel,
+      confirmText,
+      cancelText
+    });
+  };
+
+  const hideAlert = () => {
+    setAlertConfig(prev => ({ ...prev, visible: false }));
+  };
   
   useEffect(() => {
     Animated.loop(
@@ -50,64 +79,63 @@ const VipScreen = ({ navigation }) => {
       setStatus(statusRes.data || null);
     } catch (e) {
       console.error(e);
-      Alert.alert('Error', 'Unable to load VIP data');
+      showAlert('Error', 'Unable to load VIP data', true);
     } finally {
       setLoading(false);
     }
   };
 
   const handleBuy = (tier) => {
-    Alert.alert(
+    showAlert(
       'Confirm Purchase',
       `Are you sure you want to subscribe to ${tier.name} for ${Number(tier.price_per_month).toLocaleString('en-US')} VND/month? The amount will be deducted from your wallet.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Subscribe', 
-          onPress: async () => {
-            try {
-              setLoading(true);
-              const raw = await AsyncStorage.getItem('userInfo');
-              if (!raw) return;
-              const userId = JSON.parse(raw).id;
-              const res = await api.post('/vip/buy', { userId, tierId: tier.id });
-              Alert.alert('Success', res.message);
-              fetchData();
-            } catch (e) {
-              Alert.alert('Error', e.response?.data?.message || 'Something went wrong while purchasing VIP');
-              setLoading(false);
-            }
-          } 
+      false,
+      async () => {
+        try {
+          setLoading(true);
+          const raw = await AsyncStorage.getItem('userInfo');
+          if (!raw) return;
+          const userId = JSON.parse(raw).id;
+          const res = await api.post('/vip/buy', { userId, tierId: tier.id });
+          showAlert('Success', res.message, false, () => {
+            hideAlert();
+            fetchData();
+          });
+        } catch (e) {
+          showAlert('Error', e.response?.data?.message || 'Something went wrong while purchasing VIP', true);
+          setLoading(false);
         }
-      ]
+      },
+      () => hideAlert(),
+      'SUBSCRIBE',
+      'CANCEL'
     );
   };
 
   const handleCancelRenew = () => {
-    Alert.alert(
+    showAlert(
       'Cancel Auto-Renewal',
       'Are you sure you want to cancel the auto-renewal of your VIP subscription?',
-      [
-        { text: 'No', style: 'cancel' },
-        { 
-          text: 'Yes, Cancel', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoading(true);
-              const raw = await AsyncStorage.getItem('userInfo');
-              if (!raw) return;
-              const userId = JSON.parse(raw).id;
-              const res = await api.post('/vip/cancel-renew', { userId });
-              Alert.alert('Success', res.message);
-              fetchData();
-            } catch (e) {
-              Alert.alert('Error', e.response?.data?.message || 'Something went wrong');
-              setLoading(false);
-            }
-          } 
+      false,
+      async () => {
+        try {
+          setLoading(true);
+          const raw = await AsyncStorage.getItem('userInfo');
+          if (!raw) return;
+          const userId = JSON.parse(raw).id;
+          const res = await api.post('/vip/cancel-renew', { userId });
+          showAlert('Success', res.message, false, () => {
+            hideAlert();
+            fetchData();
+          });
+        } catch (e) {
+          showAlert('Error', e.response?.data?.message || 'Something went wrong', true);
+          setLoading(false);
         }
-      ]
+      },
+      () => hideAlert(),
+      'YES, CANCEL',
+      'NO'
     );
   };
 
@@ -231,6 +259,17 @@ const VipScreen = ({ navigation }) => {
           </>
         )}
       </ScrollView>
+
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        isError={alertConfig.isError}
+        onConfirm={alertConfig.onConfirm}
+        onCancel={alertConfig.onCancel}
+        confirmText={alertConfig.confirmText}
+        cancelText={alertConfig.cancelText}
+      />
     </SafeAreaView>
   );
 };

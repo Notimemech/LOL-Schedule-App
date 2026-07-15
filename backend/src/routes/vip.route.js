@@ -6,3 +6,4 @@ vipRouter.get('/tiers', vipController.getVipTiers);
 vipRouter.post('/buy', vipController.buyVip);
 vipRouter.get('/status/:userId', vipController.getStatus);
 vipRouter.post('/cancel-renew', vipController.cancelAutoRenew);
+vipRouter.post('/remove', vipController.removeVip);

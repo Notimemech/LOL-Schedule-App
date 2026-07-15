@@ -99,14 +99,15 @@ export const placeBet = async (userId, betData, ipAddress) => {
             `SELECT u.vip_tier_id, u.vip_expires_at, v.bet_cashback_percent, v.min_bet_for_cashback 
              FROM Users u LEFT JOIN VipTiers v ON u.vip_tier_id = v.id WHERE u.id = $1`, [userId]
         );
+        let appliedCashback = 0;
         if (vipStatus.rows.length > 0 && vipStatus.rows[0].vip_tier_id) {
             const userVip = vipStatus.rows[0];
             if (new Date() <= new Date(userVip.vip_expires_at) && amount >= parseFloat(userVip.min_bet_for_cashback)) {
-                const cashbackAmount = amount * parseFloat(userVip.bet_cashback_percent) / 100;
-                await walletRepository.updateWalletBalance(wallet.id, cashbackAmount, client);
+                appliedCashback = amount * parseFloat(userVip.bet_cashback_percent) / 100;
+                await walletRepository.updateWalletBalance(wallet.id, appliedCashback, client);
                 await walletRepository.createTransaction(
                     wallet.id,
-                    cashbackAmount,
+                    appliedCashback,
                     'REFUND',
                     'success',
                     bet.id,
@@ -117,7 +118,7 @@ export const placeBet = async (userId, betData, ipAddress) => {
         // --- End VIP Cashback ---
 
         await client.query('COMMIT');
-        return bet;
+        return { ...bet, cashback_applied: appliedCashback };
     } catch (error) {
         await client.query('ROLLBACK');
         throw new AppError('Failed to place bet: ' + error.message, 500);

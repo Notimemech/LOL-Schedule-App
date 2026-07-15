@@ -18,6 +18,7 @@ export const getAllPromotions = async (userId) => {
         SELECT p.*, 
                EXISTS(SELECT 1 FROM UserPromotions up WHERE up.promotion_id = p.id AND up.user_id = $1) as is_used
         FROM Promotions p
+        WHERE p.user_id IS NULL OR p.user_id = $1
         ORDER BY p.is_active DESC, p.id DESC;
     `;
     const result = await pool.query(query, [userId || -1]);

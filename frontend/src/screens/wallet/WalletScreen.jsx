@@ -6,7 +6,6 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   Keyboard,
   TouchableWithoutFeedback,
   ScrollView,
@@ -24,6 +23,7 @@ import ContentHeader from "../../components/common/ContentHeader";
 import { formatMoney } from "../../utils/format";
 import QuickAmountSelector from "../../components/ui/QuickAmountSelector";
 import TransactionItem from "../../components/wallet/TransactionItem";
+import CustomAlert from "../../components/common/CustomAlert";
 import { walletStyles as styles } from "../../styles/wallet.styles";
 import SectionHeader from "../../components/ui/SectionHeader";
 
@@ -38,6 +38,28 @@ const WalletScreen = () => {
   const [loading, setLoading] = useState(false);
   const [currentBalance, setCurrentBalance] = useState(0);
   const [transactions, setTransactions] = useState([]);
+
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    isError: false,
+    onConfirm: () => { },
+  });
+
+  const showAlert = (title, message, isError = false, onConfirm = null) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      isError,
+      onConfirm: onConfirm || (() => hideAlert()),
+    });
+  };
+
+  const hideAlert = () => {
+    setAlertConfig(prev => ({ ...prev, visible: false }));
+  };
 
   useEffect(() => {
     loadWalletData();
@@ -78,13 +100,13 @@ const WalletScreen = () => {
   const handleDeposit = async () => {
     const depositAmount = parseInt(amount.replace(/\D/g, ""), 10);
     if (!depositAmount || depositAmount < 10000) {
-      Alert.alert("Error", "Please enter a valid amount (Minimum 10,000 VNĐ)");
+      showAlert("Error", "Please enter a valid amount (Minimum 10,000 VNĐ)", true);
       return;
     }
     setLoading(true);
     try {
       const rawUser = await AsyncStorage.getItem('userInfo');
-      if (!rawUser) { Alert.alert('Error', 'Please sign in first.'); setLoading(false); return; }
+      if (!rawUser) { showAlert('Error', 'Please sign in first.', true); setLoading(false); return; }
       const user = JSON.parse(rawUser);
       const payload = { amount: depositAmount, userId: user.id };
       if (promotion) payload.promotionId = promotion.id;
@@ -97,7 +119,7 @@ const WalletScreen = () => {
         throw new Error('No payment URL returned from server.');
       }
     } catch (error) {
-      Alert.alert("Error", "Cannot create VNPay order at the moment");
+      showAlert("Error", "Cannot create VNPay order at the moment", true);
       console.error(error);
     } finally {
       setLoading(false);
@@ -134,10 +156,10 @@ const WalletScreen = () => {
       if (payload?.status === 'success') {
         setPaymentUrl(null);
         await refreshWalletData();
-        Alert.alert('Success', 'You have successfully deposited money into your wallet!');
+        showAlert('Success', 'You have successfully deposited money into your wallet!', false);
       } else {
         setPaymentUrl(null);
-        Alert.alert('Failed', 'Transaction did not complete successfully. Please try again.');
+        showAlert('Failed', 'Transaction did not complete successfully. Please try again.', true);
       }
     } catch (error) {
       console.warn('Unable to parse WebView message:', error);
@@ -168,6 +190,13 @@ const WalletScreen = () => {
           onMessage={handleWebViewMessage}
           startInLoadingState={true}
           renderLoading={() => <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />}
+        />
+        <CustomAlert
+          visible={alertConfig.visible}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          isError={alertConfig.isError}
+          onConfirm={alertConfig.onConfirm}
         />
       </SafeAreaView>
     );
@@ -270,6 +299,14 @@ const WalletScreen = () => {
           </View>
         </View>
       </TouchableWithoutFeedback>
+      
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        isError={alertConfig.isError}
+        onConfirm={alertConfig.onConfirm}
+      />
     </SafeAreaView>
   );
 };

@@ -28,6 +28,30 @@ function PromoCard({ item, index, onPress }) {
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
   const isUsed = !!item.is_used;
+  const [timeLeft, setTimeLeft] = useState(null);
+
+  useEffect(() => {
+    if (!item.expires_at) return;
+    
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const expires = new Date(item.expires_at).getTime();
+      const diff = expires - now;
+      if (diff <= 0) {
+        setTimeLeft('Expired');
+      } else {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24)).toString().padStart(2, '0');
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)).toString().padStart(2, '0');
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
+        const secs = Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0');
+        setTimeLeft(`${days}:${hours}:${mins}:${secs}`);
+      }
+    };
+    
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [item.expires_at]);
 
   useEffect(() => {
     Animated.parallel([
@@ -98,7 +122,7 @@ function PromoCard({ item, index, onPress }) {
           ]}
         />
 
-        {/* Top row: badge + status */}
+        {/* Top row: badge + status + countdown */}
         <View style={styles.cardTopRow}>
           <LinearGradient
             colors={isUsed ? ["#374151", "#4b5563"] : accentColors}
@@ -111,12 +135,21 @@ function PromoCard({ item, index, onPress }) {
             </Text>
           </LinearGradient>
 
-          {isUsed && (
-            <View style={styles.usedChip}>
-              <Ionicons name="checkmark-circle" size={14} color="#6b7280" />
-              <Text style={styles.usedChipText}>Used</Text>
-            </View>
-          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {timeLeft && !isUsed && (
+              <View style={styles.countdownChip}>
+                <Ionicons name="time-outline" size={14} color="#facc15" />
+                <Text style={styles.countdownText}>{timeLeft}</Text>
+              </View>
+            )}
+            
+            {isUsed && (
+              <View style={styles.usedChip}>
+                <Ionicons name="checkmark-circle" size={14} color="#6b7280" />
+                <Text style={styles.usedChipText}>Used</Text>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Bonus highlight */}
@@ -153,26 +186,6 @@ function PromoCard({ item, index, onPress }) {
             </Text>
           </View>
         ) : null}
-
-        {/* Stats row */}
-        {(item.result_label_1 || item.result_val_1) && (
-          <View style={styles.statsRow}>
-            {[
-              [item.result_label_1, item.result_val_1],
-              [item.result_label_2, item.result_val_2],
-              [item.result_label_3, item.result_val_3],
-            ]
-              .filter(([l]) => l)
-              .map(([label, val], i) => (
-                <View key={i} style={styles.statItem}>
-                  <Text style={styles.statLabel}>{label}</Text>
-                  <Text style={[styles.statVal, { color: accentColors[0] }]}>
-                    {val}
-                  </Text>
-                </View>
-              ))}
-          </View>
-        )}
 
         {/* Max bonus info */}
         {maxBonus > 0 && !isUsed && (
@@ -556,6 +569,23 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: "SpaceGrotesk",
   },
+  countdownChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(250, 204, 21, 0.15)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "rgba(250, 204, 21, 0.3)",
+  },
+  countdownText: {
+    color: "#facc15",
+    fontSize: 11,
+    fontFamily: "SpaceGroteskBold",
+    fontVariant: ["tabular-nums"],
+  },
 
   bonusHighlight: {
     flexDirection: "row",
@@ -603,35 +633,6 @@ const styles = StyleSheet.create({
     fontFamily: "Manrope",
     fontStyle: "italic",
     lineHeight: 18,
-  },
-
-  statsRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: "rgba(255,255,255,0.04)",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 16,
-    gap: 8,
-    flexWrap: "wrap",
-  },
-  statItem: {
-    alignItems: "center",
-    flex: 1,
-    minWidth: 70,
-  },
-  statLabel: {
-    color: "#475569",
-    fontSize: 10,
-    fontFamily: "SpaceGrotesk",
-    letterSpacing: 0.5,
-    textAlign: "center",
-    marginBottom: 4,
-  },
-  statVal: {
-    fontSize: 13,
-    fontFamily: "SpaceGroteskBold",
-    textAlign: "center",
   },
 
   maxBonusRow: {

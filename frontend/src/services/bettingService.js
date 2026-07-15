@@ -33,6 +33,7 @@ export const placeBet = async (matchId, marketId, outcomeId, wagerAmount) => {
     return {
       success: true,
       bet: response.data,
+      cashback: response.data.cashback_applied || 0,
       message: 'Bet placed successfully!'
     };
   } catch (error) {

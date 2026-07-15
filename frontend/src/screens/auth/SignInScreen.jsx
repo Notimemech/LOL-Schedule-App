@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -14,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import authStyles from '../../styles/auth.styles';
 import { registerUser, loginUser } from '../../services/authService';
+import CustomAlert from '../../components/common/CustomAlert';
 
 const SignInScreen = () => {
   const navigation = useNavigation();
@@ -26,13 +26,35 @@ const SignInScreen = () => {
   const [loading, setLoading] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
 
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: "",
+    message: "",
+    isError: false,
+    onConfirm: () => { },
+  });
+
+  const showAlert = (title, message, isError = false, onConfirm = null) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      isError,
+      onConfirm: onConfirm || (() => hideAlert()),
+    });
+  };
+
+  const hideAlert = () => {
+    setAlertConfig(prev => ({ ...prev, visible: false }));
+  };
+
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleRegister = async () => {
     if (!form.username || !form.email || !form.password) {
-      Alert.alert('Missing information', 'Please fill in username, email and password.');
+      showAlert('Missing information', 'Please fill in username, email and password.', true);
       return;
     }
 
@@ -45,12 +67,12 @@ const SignInScreen = () => {
         phone: form.phone,
       });
 
-      Alert.alert('Success', response?.message || 'Account created successfully.');
+      showAlert('Success', response?.message || 'Account created successfully.', false);
       setIsLogin(true);
       setForm((prev) => ({ ...prev, password: '' }));
     } catch (error) {
       const message = error?.response?.data?.message || 'Registration failed.';
-      Alert.alert('Registration failed', message);
+      showAlert('Registration failed', message, true);
     } finally {
       setLoading(false);
     }
@@ -58,7 +80,7 @@ const SignInScreen = () => {
 
   const handleLogin = async () => {
     if (!form.email || !form.password) {
-      Alert.alert('Missing information', 'Please fill in email and password.');
+      showAlert('Missing information', 'Please fill in email and password.', true);
       return;
     }
 
@@ -75,11 +97,13 @@ const SignInScreen = () => {
         await AsyncStorage.setItem('userInfo', JSON.stringify(user));
       }
 
-      Alert.alert('Success', response?.message || 'Login successful.');
-      navigation.navigate('MainTabs');
+      showAlert('Success', response?.message || 'Login successful.', false, () => {
+        hideAlert();
+        navigation.navigate('MainTabs');
+      });
     } catch (error) {
       const message = error?.response?.data?.message || 'Login failed.';
-      Alert.alert('Login failed', message);
+      showAlert('Login failed', message, true);
     } finally {
       setLoading(false);
     }
@@ -164,6 +188,14 @@ const SignInScreen = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        isError={alertConfig.isError}
+        onConfirm={alertConfig.onConfirm}
+      />
     </SafeAreaView>
   );
 };

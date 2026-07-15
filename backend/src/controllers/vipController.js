@@ -43,3 +43,14 @@ export const cancelAutoRenew = async (req, res, next) => {
         next(error);
     }
 };
+
+export const removeVip = async (req, res, next) => {
+    try {
+        const { userId } = req.body;
+        if (!userId) return res.status(400).json({ success: false, message: 'Thiếu userId' });
+        const result = await vipService.removeVip(userId);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+};
