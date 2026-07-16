@@ -57,6 +57,25 @@ CREATE TABLE Roles (
 );
 
 -- =====================
+-- 0.5. VIP TIERS
+-- =====================
+CREATE TABLE VipTiers (
+    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name varchar(50) NOT NULL UNIQUE,
+    price_per_month decimal(15,2) NOT NULL,
+    deposit_bonus_percent decimal(5,2) NOT NULL,
+    bet_cashback_percent decimal(5,2) NOT NULL,
+    min_bet_for_cashback decimal(15,2) NOT NULL DEFAULT 0
+);
+
+INSERT INTO VipTiers (name, price_per_month, deposit_bonus_percent, bet_cashback_percent, min_bet_for_cashback) VALUES
+('VIP 1', 49000, 10, 1, 300000),
+('VIP 2', 129000, 15, 5, 300000),
+('VIP 3', 179000, 20, 5, 200000),
+('VIP 4', 179000, 20, 10, 300000),
+('VIP 5', 229000, 35, 15, 200000);
+
+-- =====================
 -- 1. USERS
 -- =====================
 CREATE TABLE Users (
@@ -66,6 +85,9 @@ CREATE TABLE Users (
     role_id     bigint       NOT NULL,
     phone       varchar(20),
     email       varchar(100) NOT NULL UNIQUE,
+    vip_tier_id bigint,
+    vip_expires_at timestamptz,
+    is_vip_auto_renew boolean DEFAULT true,
     is_active   boolean      NOT NULL DEFAULT TRUE,  -- soft-delete: set FALSE thay vì DELETE
     created_at  timestamptz  NOT NULL DEFAULT now(),
     updated_at  timestamptz  NOT NULL DEFAULT now(),
@@ -73,7 +95,12 @@ CREATE TABLE Users (
     CONSTRAINT fk_user_role
         FOREIGN KEY (role_id)
         REFERENCES Roles(id)
-        ON DELETE RESTRICT              -- không cho xoá role đang có user
+        ON DELETE RESTRICT,              -- không cho xoá role đang có user
+        
+    CONSTRAINT fk_user_vip
+        FOREIGN KEY (vip_tier_id)
+        REFERENCES VipTiers(id)
+        ON DELETE SET NULL
 );
 
 CREATE INDEX idx_users_role ON Users(role_id);
@@ -799,6 +826,20 @@ CREATE TABLE IF NOT EXISTS UserPromotions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     used_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, promotion_id)
+);
+
+-- =====================
+-- Notifications
+-- =====================
+CREATE TABLE IF NOT EXISTS Notifications (
+    id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id bigint NOT NULL,
+    title varchar(255) NOT NULL,
+    message text NOT NULL,
+    is_read boolean DEFAULT false,
+    created_at timestamptz DEFAULT now(),
+
+    CONSTRAINT fk_notification_user FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
 );
 
 COMMIT;
