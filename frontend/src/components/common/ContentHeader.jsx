@@ -10,7 +10,7 @@ const formatVND = (amount) => {
   return new Intl.NumberFormat("en-US").format(amount) + " VND";
 };
 
-const ContentHeader = ({ title, showBack = false, refreshTrigger = 0 }) => {
+const ContentHeader = ({ title, showBack = false, refreshTrigger = 0, rightComponent }) => {
   const navigation = useNavigation();
   const { colors: COLORS } = useTheme();
   const styles = useThemedStyles(makeContentHeaderStyles);
@@ -53,17 +53,21 @@ const ContentHeader = ({ title, showBack = false, refreshTrigger = 0 }) => {
         </Text>
       </View>
       <View style={styles.rightPart}>
-        <View style={styles.wallet}>
-          <Text style={styles.walletInfo}>{formatVND(walletBalance)}</Text>
-          <TouchableOpacity
-            style={styles.walletAdd}
-            onPress={() => navigation.navigate("WalletScreen")}
-            accessibilityLabel="Deposit funds"
-            accessibilityRole="button"
-          >
-            <Ionicons name="add" size={16} color={COLORS.primary} />
-          </TouchableOpacity>
-        </View>
+        {rightComponent !== undefined ? (
+          rightComponent
+        ) : (
+          <View style={styles.wallet}>
+            <Text style={styles.walletInfo}>{formatVND(walletBalance)}</Text>
+            <TouchableOpacity
+              style={styles.walletAdd}
+              onPress={() => navigation.navigate("WalletScreen")}
+              accessibilityLabel="Deposit funds"
+              accessibilityRole="button"
+            >
+              <Ionicons name="add" size={16} color={COLORS.primary} />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     </View>
   );

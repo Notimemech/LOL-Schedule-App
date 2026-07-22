@@ -5,8 +5,11 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
+  ScrollView,
   ActivityIndicator,
   KeyboardAvoidingView,
+  Keyboard,
   Platform,
   DeviceEventEmitter,
 } from "react-native";
@@ -75,9 +78,13 @@ const WithdrawScreen = () => {
     }
   };
 
+  const MAX_WITHDRAW = 10_000_000;
+
   const handleAmountChange = (text) => {
-    const numericValue = text.replace(/\D/g, "");
-    setAmount(numericValue ? formatMoney(numericValue) : "");
+    const numericOnly = text.replace(/\D/g, "");
+    const numericValue = parseInt(numericOnly || "0", 10);
+    if (numericValue > MAX_WITHDRAW) return; // cap at 10,000,000 VNĐ
+    setAmount(numericOnly ? formatMoney(numericOnly) : "");
   };
 
   const handleRequestWithdraw = async () => {
@@ -85,6 +92,10 @@ const WithdrawScreen = () => {
 
     if (!withdrawAmount || withdrawAmount < 50000) {
       showAlert("Error", "Minimum withdrawal amount is 50,000 VNĐ", true);
+      return;
+    }
+    if (withdrawAmount > MAX_WITHDRAW) {
+      showAlert("Error", "Maximum withdrawal amount is 10,000,000 VNĐ", true);
       return;
     }
     if (withdrawAmount > currentBalance) {
@@ -184,67 +195,70 @@ const WithdrawScreen = () => {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
-        <ContentHeader title="WITHDRAW" showBack={true} />
+        {/* Tapping outside input dismisses the keyboard */}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={{ flex: 1 }}>
+            <ContentHeader title="WITHDRAW" showBack={true} />
 
-        <View style={styles.content}>
-          {/* Balance Card */}
-          <View style={styles.balanceCard}>
-            <Icon name="money-bill-transfer" size={28} color={COLORS.danger} style={{ marginBottom: 8 }} />
-            <Text style={styles.balanceLabel}>Available for Withdrawal</Text>
-            <Text style={styles.balanceAmount}>{formatMoney(currentBalance)} VNĐ</Text>
-          </View>
+            <ScrollView
+              style={styles.content}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ paddingBottom: 24 }}
+            >
+              {/* Balance Card */}
+              <View style={styles.balanceCard}>
+                <Icon name="money-bill-transfer" size={28} color={COLORS.danger} style={{ marginBottom: 8 }} />
+                <Text style={styles.balanceLabel}>Available for Withdrawal</Text>
+                <Text style={styles.balanceAmount}>{formatMoney(currentBalance)} VNĐ</Text>
+              </View>
 
-          {/* Amount Input */}
-          <View style={styles.inputGroup}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <Text style={styles.inputLabel}>AMOUNT TO WITHDRAW (VNĐ)</Text>
-              <TouchableOpacity onPress={() => setAmount(formatMoney(currentBalance))} style={styles.withdrawAllBtn}>
-                <Text style={styles.withdrawAllText}>WITHDRAW ALL</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.inputWrapper}>
-              <Text style={styles.inputPrefixWithdraw}>₫</Text>
-              <TextInput
-                style={styles.amountInput}
-                placeholder="0"
-                placeholderTextColor={COLORS.inputPlaceholder}
-                keyboardType="numeric"
-                value={amount}
-                onChangeText={handleAmountChange}
-                maxLength={12}
+              {/* Amount Input */}
+              <View style={styles.inputGroup}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <Text style={styles.inputLabel}>AMOUNT TO WITHDRAW (VNĐ)</Text>
+                  <TouchableOpacity onPress={() => setAmount(formatMoney(currentBalance))} style={styles.withdrawAllBtn}>
+                    <Text style={styles.withdrawAllText}>WITHDRAW ALL</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.inputWrapper}>
+                  <Text style={styles.inputPrefixWithdraw}>₫</Text>
+                  <TextInput
+                    style={styles.amountInput}
+                    placeholder="0"
+                    placeholderTextColor={COLORS.inputPlaceholder}
+                    keyboardType="numeric"
+                    value={amount}
+                    onChangeText={handleAmountChange}
+                  // maxLength intentionally removed — enforced in handleAmountChange on raw digits
+                  />
+                </View>
+                {parseInt(amount.replace(/\D/g, "") || 0, 10) > currentBalance && (
+                  <Text style={{ color: COLORS.danger, fontSize: 13, marginTop: 8, fontFamily: "Manrope" }}>
+                    Amount exceeds your available balance
+                  </Text>
+                )}
+              </View>
+
+              {/* Quick Select */}
+              <SectionHeader title="QUICK SELECT" />
+              <QuickAmountSelector
+                amounts={QUICK_WITHDRAW}
+                selectedAmount={amount}
+                onSelect={(val) => setAmount(formatMoney(val))}
+                activeColor={COLORS.danger}
+                maxAmount={currentBalance}
               />
-            </View>
-            {parseInt(amount.replace(/\D/g, "") || 0, 10) > currentBalance && (
-              <Text style={{ color: COLORS.danger, fontSize: 13, marginTop: 8, fontFamily: "Manrope" }}>
-                Amount exceeds your available balance
-              </Text>
-            )}
+
+            </ScrollView>
           </View>
+        </TouchableWithoutFeedback>
 
-          {/* Quick Select */}
-          <SectionHeader title="QUICK SELECT" />
-          <QuickAmountSelector 
-            amounts={QUICK_WITHDRAW}
-            selectedAmount={amount}
-            onSelect={(val) => setAmount(formatMoney(val))}
-            activeColor={COLORS.danger}
-            maxAmount={currentBalance}
-          />
-
-          {/* Info box */}
-          <View style={styles.infoBox}>
-            <Ionicons name="information-circle-outline" size={16} color={COLORS.secondary} />
-            <Text style={styles.infoText}>
-              Withdrawal will be processed through VNPay. You'll be redirected to confirm the transaction securely.
-            </Text>
-          </View>
-        </View>
-
-        {/* Submit Button */}
+        {/* Submit Button — outside ScrollView so it stays fixed at bottom */}
         <View style={styles.bottomFixedBox}>
           <TouchableOpacity
             style={[
-              styles.withdrawButton, 
+              styles.withdrawButton,
               (loading || parseInt(amount.replace(/\D/g, "") || 0, 10) > currentBalance) && styles.payButtonDisabled
             ]}
             onPress={handleRequestWithdraw}

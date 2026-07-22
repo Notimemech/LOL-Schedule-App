@@ -73,7 +73,7 @@ const ProfileScreen = () => {
     title: "",
     message: "",
     isError: false,
-    onConfirm: () => {},
+    onConfirm: () => { },
     onCancel: null,
     confirmText: "OK",
     cancelText: "CANCEL",
@@ -201,14 +201,14 @@ const ProfileScreen = () => {
 
   // ── Data ─────────────────────────────────────────────────────────
   const quickActions = [
-    { icon: "wallet", iconColor: COLORS.primary, label: "Top Up", route: "WalletScreen" },
+    { icon: "gift", iconColor: COLORS.primary, label: "Promotions", route: "Promotions" },
     { icon: "money-bill-transfer", iconColor: COLORS.secondary, label: "Withdraw", route: "WithdrawScreen" },
     { icon: "clock-rotate-left", iconColor: COLORS.accent || COLORS.primary, label: "History", route: "HistoryScreen" },
     { icon: "crown", iconColor: "#F59E0B", label: "VIP", route: "VipScreen" },
   ];
 
   const preferenceItems = [
-    { icon: "user-pen", iconColor: COLORS.primary, label: "Edit Profile", onPress: () => showAlert("Info", "Edit Profile coming soon.") },
+    { icon: "user-pen", iconColor: COLORS.primary, label: "Edit Profile", onPress: () => navigation.navigate("EditProfile") },
     { icon: "palette", iconColor: COLORS.secondary, label: "Themes", onPress: () => navigation.navigate("ThemeSettingScreen") },
     { icon: "headset", iconColor: COLORS.primary, label: "Help Center", onPress: () => navigation.navigate("HelpCenter") },
     ...(vipStatus?.vip_tier_id
@@ -244,7 +244,7 @@ const ProfileScreen = () => {
             <View style={style.avatarInfo}>
               <TouchableOpacity
                 style={style.usernameLine}
-                onPress={() => showAlert("Info", "Edit Profile coming soon.")}
+                onPress={() => navigation.navigate("EditProfile")}
                 activeOpacity={0.7}
               >
                 <Text style={style.usernameText}>{username}</Text>

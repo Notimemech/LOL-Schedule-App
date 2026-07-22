@@ -4,22 +4,21 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme, useThemedStyles } from "../../hooks/useTheme";
 import CenterTabButton from "./CenterTabButton";
+import { useNotifications } from "../../context/NotificationContext";
 
 // [activeIcon, inactiveIcon] per route.
 const ICONS = {
   Home: ["home", "home-outline"],
   Explore: ["trophy", "trophy-outline"],
-  Promotions: ["gift", "gift-outline"],
+  Notifications: ["notifications", "notifications-outline"],
   Profile: ["person-circle-outline", "person-outline"],
 };
 
-// Custom tab bar so the pill width/position is fully under our control.
-// React Navigation's built-in tabBarStyle ignores horizontal sizing on the
-// floating bar, so we render our own centered pill instead.
 const FloatingTabBar = ({ state, descriptors, navigation }) => {
   const { colors: COLORS } = useTheme();
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
+  const { unreadCount } = useNotifications();
 
   return (
     <View
@@ -56,6 +55,8 @@ const FloatingTabBar = ({ state, descriptors, navigation }) => {
             "ellipse-outline",
           ];
 
+          const showBadge = route.name === "Notifications" && unreadCount > 0;
+
           return (
             <Pressable
               key={route.key}
@@ -65,11 +66,15 @@ const FloatingTabBar = ({ state, descriptors, navigation }) => {
               accessibilityState={{ selected: focused }}
               accessibilityLabel={route.name}
             >
-              <Ionicons
-                name={focused ? activeIcon : inactiveIcon}
-                size={28}
-                color={focused ? COLORS.tabActive : COLORS.tabInactive}
-              />
+              <View style={styles.iconWrap}>
+                <Ionicons
+                  name={focused ? activeIcon : inactiveIcon}
+                  size={28}
+                  color={focused ? COLORS.tabActive : COLORS.tabInactive}
+                />
+                {/* Red dot badge */}
+                {showBadge && <View style={styles.badge} />}
+              </View>
             </Pressable>
           );
         })}
@@ -78,34 +83,49 @@ const FloatingTabBar = ({ state, descriptors, navigation }) => {
   );
 };
 
-const makeStyles = (COLORS) => StyleSheet.create({
-  wrapper: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    alignItems: "center",
-  },
-  pill: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "90%",
-    height: 70,
-    borderRadius: 32,
-    backgroundColor: COLORS.tabBackground,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    shadowColor: COLORS.overlayHeavy,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 12,
-  },
-  item: {
-    flex: 1,
-    height: 64,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});
+const makeStyles = (COLORS) =>
+  StyleSheet.create({
+    wrapper: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      alignItems: "center",
+    },
+    pill: {
+      flexDirection: "row",
+      alignItems: "center",
+      width: "90%",
+      height: 70,
+      borderRadius: 32,
+      backgroundColor: COLORS.tabBackground,
+      borderWidth: 1,
+      borderColor: COLORS.primary,
+      shadowColor: COLORS.overlayHeavy,
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.4,
+      shadowRadius: 12,
+      elevation: 12,
+    },
+    item: {
+      flex: 1,
+      height: 64,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    iconWrap: {
+      position: "relative",
+    },
+    badge: {
+      position: "absolute",
+      top: -2,
+      right: -4,
+      width: 9,
+      height: 9,
+      borderRadius: 5,
+      backgroundColor: "#EF4444",
+      borderWidth: 1.5,
+      borderColor: "#000",
+    },
+  });
 
 export default FloatingTabBar;

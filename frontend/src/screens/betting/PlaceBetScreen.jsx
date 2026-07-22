@@ -45,6 +45,9 @@ export default function PlaceBetScreen() {
     message: "",
     isError: false,
     onConfirm: () => { },
+    onCancel: undefined,
+    confirmText: "OK",
+    cancelText: "CANCEL"
   });
 
   const showAlert = (title, message, isError = false, onConfirm = null) => {
@@ -54,6 +57,22 @@ export default function PlaceBetScreen() {
       message,
       isError,
       onConfirm: onConfirm || (() => hideAlert()),
+      onCancel: undefined,
+      confirmText: "OK",
+      cancelText: "CANCEL"
+    });
+  };
+
+  const showConfirm = (title, message, onConfirm) => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      isError: false,
+      onConfirm: () => { hideAlert(); onConfirm(); },
+      onCancel: hideAlert,
+      confirmText: "CONFIRM",
+      cancelText: "CANCEL"
     });
   };
 
@@ -142,21 +161,27 @@ export default function PlaceBetScreen() {
     }
   };
 
-  const handleCancelBet = async (betId) => {
-    try {
-      const result = await cancelBet(betId);
-      showAlert("Success", result.message, false, async () => {
-        setBalanceRefreshKey(prev => prev + 1);
-        await loadData();
-        hideAlert();
-      });
-    } catch (error) {
-      showAlert("Error", error.message, true);
-    }
+  const handleCancelBet = (bet) => {
+    showConfirm(
+      "Cancel Bet",
+      `Are you sure you want to cancel this bet?\n\nYou will receive a 50% refund, minus any VIP cashback you received for this bet.`,
+      async () => {
+        try {
+          const result = await cancelBet(bet.id);
+          showAlert("Success", result.message, false, async () => {
+            setBalanceRefreshKey(prev => prev + 1);
+            await loadData();
+            hideAlert();
+          });
+        } catch (error) {
+          showAlert("Error", error.message, true);
+        }
+      }
+    );
   };
 
   const updateWager = (amount) => {
-    const newAmount = Math.max(0, wagerAmount + amount);
+    const newAmount = Math.max(0, Math.min(MAX_STAKE_VND, wagerAmount + amount));
     setWagerInput(newAmount === 0 ? "" : newAmount.toString());
   };
 
@@ -297,7 +322,8 @@ export default function PlaceBetScreen() {
                     if (!text) {
                       setWagerInput("");
                     } else {
-                      const parsed = parseWagerInput(text);
+                      let parsed = parseWagerInput(text);
+                      if (parsed > MAX_STAKE_VND) parsed = MAX_STAKE_VND;
                       setWagerInput(parsed > 0 ? parsed.toString() : "");
                     }
                   }}
@@ -306,7 +332,11 @@ export default function PlaceBetScreen() {
                 <Text style={styles.currencySuffix}>VND</Text>
               </View>
 
-              <TouchableOpacity style={styles.circleButton} onPress={() => updateWager(10000)}>
+              <TouchableOpacity 
+                style={[styles.circleButton, wagerAmount >= MAX_STAKE_VND && { opacity: 0.5 }]} 
+                onPress={() => updateWager(10000)}
+                disabled={wagerAmount >= MAX_STAKE_VND}
+              >
                 <Ionicons name="add" size={24} color={COLORS.text} />
               </TouchableOpacity>
             </View>
@@ -364,6 +394,9 @@ export default function PlaceBetScreen() {
         message={alertConfig.message}
         isError={alertConfig.isError}
         onConfirm={alertConfig.onConfirm}
+        onCancel={alertConfig.onCancel}
+        confirmText={alertConfig.confirmText}
+        cancelText={alertConfig.cancelText}
       />
     </SafeAreaView>
   );

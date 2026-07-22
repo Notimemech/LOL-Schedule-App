@@ -956,6 +956,7 @@ CREATE TABLE IF NOT EXISTS Notifications (
     user_id bigint NOT NULL,
     title varchar(255) NOT NULL,
     message text NOT NULL,
+    type varchar(50) DEFAULT 'system',  -- 'deposit','withdraw','bet','bet_cancel','promotion','follow_team','follow_match','vip'
     is_read boolean DEFAULT false,
     created_at timestamptz DEFAULT now(),
 

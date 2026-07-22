@@ -1,6 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
+import { DeviceEventEmitter } from 'react-native';
 
 // Backend host resolution, in priority order:
 // 1. EXPO_PUBLIC_API_URL (set in frontend/.env) — explicit override, use when
@@ -49,6 +50,13 @@ api.interceptors.request.use(
 // Response Interceptor
 api.interceptors.response.use(
   (response) => {
+    // If it's a mutation (POST, PUT, DELETE) and NOT a notification poll, trigger sync
+    const method = response.config?.method?.toUpperCase();
+    const url = response.config?.url || '';
+    if (['POST', 'PUT', 'DELETE'].includes(method) && !url.includes('unread-count')) {
+      DeviceEventEmitter.emit('notification:sync');
+    }
+
     // Return only the data payload for cleaner service calls
     return response.data;
   },

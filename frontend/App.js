@@ -1,4 +1,4 @@
-import { StatusBar } from "react-native";
+import { StatusBar, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer } from "@react-navigation/native";
@@ -10,6 +10,7 @@ import DetailScreen from "./src/screens/matches/DetailScreen";
 import GameDetailScreen from "./src/screens/matches/GameDetailScreen";
 import PlaceBetScreen from "./src/screens/betting/PlaceBetScreen";
 import PromotionsScreen from "./src/screens/promotions/PromotionsScreen";
+import NotificationsScreen from "./src/screens/notification/NotificationsScreen";
 import WalletScreen from "./src/screens/wallet/WalletScreen";
 import WithdrawScreen from "./src/screens/wallet/WithdrawScreen";
 import DepositScreen from "./src/screens/wallet/DepositScreen";
@@ -19,11 +20,14 @@ import ThemeSettingScreen from "./src/screens/profile/ThemeSettingScreen";
 import SignInScreen from "./src/screens/auth/SignInScreen";
 import VipScreen from "./src/screens/profile/VipScreen";
 import HelpCenterScreen from "./src/screens/help/HelpCenterScreen";
+import EditProfileScreen from "./src/screens/profile/EditProfileScreen";
 import TeamScreen from "./src/screens/team/TeamScreen";
 import StandingsScreen from "./src/screens/standings/StandingsScreen";
 import ExploreScreen from "./src/screens/explore/ExploreScreen";
 import FloatingTabBar from "./src/components/ui/FloatingTabBar";
+import ToastHost from "./src/components/common/ToastNotification";
 import { ThemeProvider } from "./src/context/ThemeContext";
+import { NotificationProvider } from "./src/context/NotificationContext";
 import { useTheme } from "./src/hooks/useTheme";
 
 const BottomTab = createBottomTabNavigator();
@@ -39,7 +43,7 @@ function TabNavigator() {
       <BottomTab.Screen name="Explore" component={ExploreScreen} />
       {/* Schedule sits in the center as a raised, glowing action button */}
       <BottomTab.Screen name="ScheduleStack" component={ScheduleNavigation} />
-      <BottomTab.Screen name="Promotions" component={PromotionsScreen} />
+      <BottomTab.Screen name="Notifications" component={NotificationsScreen} />
       <BottomTab.Screen name="Profile" component={ProfileScreen} />
     </BottomTab.Navigator>
   );
@@ -51,27 +55,34 @@ function AppNavigator({ initialRouteName }) {
     <>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
       <NavigationContainer>
-        <RootStack.Navigator initialRouteName={initialRouteName} screenOptions={{ headerShown: false }}>
-          <RootStack.Screen name="SignIn" component={SignInScreen} />
-          <RootStack.Screen name="MainTabs" component={TabNavigator} />
-          <RootStack.Screen name="Detail" component={DetailScreen} />
-          <RootStack.Screen name="GameDetail" component={GameDetailScreen} />
-          <RootStack.Screen name="PlaceBet" component={PlaceBetScreen} />
+        <View style={{ flex: 1 }}>
+          <RootStack.Navigator initialRouteName={initialRouteName} screenOptions={{ headerShown: false }}>
+            <RootStack.Screen name="SignIn" component={SignInScreen} />
+            <RootStack.Screen name="MainTabs" component={TabNavigator} />
+            <RootStack.Screen name="Detail" component={DetailScreen} />
+            <RootStack.Screen name="GameDetail" component={GameDetailScreen} />
+            <RootStack.Screen name="PlaceBet" component={PlaceBetScreen} />
 
-          {/* Companion Hub */}
-          <RootStack.Screen name="Team" component={TeamScreen} />
-          <RootStack.Screen name="Standings" component={StandingsScreen} />
+            {/* Companion Hub */}
+            <RootStack.Screen name="Team" component={TeamScreen} />
+            <RootStack.Screen name="Standings" component={StandingsScreen} />
 
-          {/* Wallet & profile screens */}
-          <RootStack.Screen name="WalletScreen" component={WalletScreen} />
-          <RootStack.Screen name="Deposit" component={DepositScreen} />
-          <RootStack.Screen name="WithdrawScreen" component={WithdrawScreen} />
-          <RootStack.Screen name="HistoryScreen" component={HistoryScreen} />
-          <RootStack.Screen name="SettingScreen" component={SettingScreen} />
-          <RootStack.Screen name="ThemeSettingScreen" component={ThemeSettingScreen} />
-          <RootStack.Screen name="VipScreen" component={VipScreen} />
-          <RootStack.Screen name="HelpCenter" component={HelpCenterScreen} />
-        </RootStack.Navigator>
+            {/* Wallet & profile screens */}
+            <RootStack.Screen name="WalletScreen" component={WalletScreen} />
+            <RootStack.Screen name="Deposit" component={DepositScreen} />
+            <RootStack.Screen name="WithdrawScreen" component={WithdrawScreen} />
+            <RootStack.Screen name="HistoryScreen" component={HistoryScreen} />
+            <RootStack.Screen name="SettingScreen" component={SettingScreen} />
+            <RootStack.Screen name="ThemeSettingScreen" component={ThemeSettingScreen} />
+            <RootStack.Screen name="VipScreen" component={VipScreen} />
+            <RootStack.Screen name="HelpCenter" component={HelpCenterScreen} />
+            <RootStack.Screen name="EditProfile" component={EditProfileScreen} />
+            <RootStack.Screen name="Promotions" component={PromotionsScreen} />
+          </RootStack.Navigator>
+
+          {/* Toast overlay — renders on top of every screen */}
+          <ToastHost />
+        </View>
       </NavigationContainer>
     </>
   );
@@ -92,7 +103,9 @@ export default function App({ initialRouteName = "SignIn" }) {
 
   return (
     <ThemeProvider>
-      <AppNavigator initialRouteName={initialRouteName} />
+      <NotificationProvider>
+        <AppNavigator initialRouteName={initialRouteName} />
+      </NotificationProvider>
     </ThemeProvider>
   );
 }

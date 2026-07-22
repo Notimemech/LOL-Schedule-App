@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   TouchableWithoutFeedback,
   ScrollView,
   DeviceEventEmitter,
@@ -105,6 +107,10 @@ const WalletScreen = () => {
       showAlert("Error", "Please enter a valid amount (Minimum 10,000 VNĐ)", true);
       return;
     }
+    if (depositAmount > MAX_DEPOSIT) {
+      showAlert("Error", "Maximum deposit amount is 50,000,000 VNĐ", true);
+      return;
+    }
     setLoading(true);
     try {
       const rawUser = await AsyncStorage.getItem('userInfo');
@@ -168,10 +174,14 @@ const WalletScreen = () => {
     }
   };
 
+  const MAX_DEPOSIT = 50_000_000;
+
   const formatNumber = (num) => num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   const handleAmountChange = (text) => {
-    const numericValue = text.replace(/\D/g, "");
-    setAmount(numericValue ? formatMoney(numericValue) : "");
+    const numericOnly = text.replace(/\D/g, "");
+    const numericValue = parseInt(numericOnly || "0", 10);
+    if (numericValue > MAX_DEPOSIT) return; // cap at 50,000,000 VNĐ
+    setAmount(numericOnly ? formatMoney(numericOnly) : "");
   };
 
   // WebView screen
@@ -206,8 +216,12 @@ const WalletScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+          <View style={{ flex: 1 }}>
           <ContentHeader title="TOP UP" showBack={true} />
 
           <ScrollView
@@ -248,7 +262,7 @@ const WalletScreen = () => {
                   keyboardType="numeric"
                   value={amount}
                   onChangeText={handleAmountChange}
-                  maxLength={12}
+                  // maxLength removed — enforced in handleAmountChange on raw numeric value
                 />
               </View>
             </View>
@@ -300,7 +314,8 @@ const WalletScreen = () => {
             </TouchableOpacity>
           </View>
         </View>
-      </TouchableWithoutFeedback>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
       
       <CustomAlert
         visible={alertConfig.visible}

@@ -39,7 +39,7 @@ const HistoryBlock = ({ bet, onCancel }) => {
       </View>
 
       {isAccepted && onCancel && (
-        <TouchableOpacity style={styles.cancelButton} onPress={() => onCancel(bet.id)}>
+        <TouchableOpacity style={styles.cancelButton} onPress={() => onCancel(bet)}>
           <Text style={styles.cancelButtonText}>CANCEL BET</Text>
         </TouchableOpacity>
       )}
