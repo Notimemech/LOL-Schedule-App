@@ -151,15 +151,7 @@ const WithdrawScreen = () => {
   };
 
   const handleNavigationStateChange = (navState) => {
-    const { url } = navState;
-    if (url.includes("vnpay-withdraw-return")) {
-      if (url.includes("vnp_ResponseCode=00")) {
-        // Handled by postMessage from WebView HTML
-      } else {
-        setPaymentUrl(null);
-        showAlert("Failed", "Transaction was cancelled or an error occurred.", true);
-      }
-    }
+    // Intercept logic removed. Handled by onMessage.
   };
 
   // WebView screen for VNPay
