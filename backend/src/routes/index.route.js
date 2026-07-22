@@ -12,6 +12,7 @@ import { promotionRouter } from './promotion.route.js';
 import { vipRouter } from './vip.route.js';
 import { notificationRouter } from './notification.route.js';
 import { helpRouter } from './help.route.js';
+import { friendRouter } from './friend.route.js';
 import { aiRouter } from './ai.route.js';
 
 export const router = express.Router();
@@ -37,4 +38,5 @@ router.use('/promotions', promotionRouter);
 router.use('/vip', vipRouter);
 router.use('/notifications', notificationRouter);
 router.use('/help', helpRouter);
+router.use('/friends', friendRouter);
 router.use('/ai', aiRouter);

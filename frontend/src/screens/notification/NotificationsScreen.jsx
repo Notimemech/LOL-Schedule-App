@@ -12,8 +12,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme, useThemedStyles } from '../../hooks/useTheme';
+import { useTabBarScrollHandler } from '../../hooks/useTabBarAutoHide';
 import { useNotifications } from '../../context/NotificationContext';
 import ContentHeader from '../../components/common/ContentHeader';
+import TabBarSpacer from '../../components/ui/TabBarSpacer';
 
 // ─── Type → icon + color + label ──────────────────────────────────
 const TYPE_META = {
@@ -95,6 +97,7 @@ const NotificationsScreen = () => {
   const navigation = useNavigation();
   const { colors: COLORS } = useTheme();
   const s = useThemedStyles(makeStyles);
+  const tabBarScroll = useTabBarScrollHandler();
 
   const { notifications, unreadCount, hasMore, loading, loadPage, refresh, markRead, markAllRead } =
     useNotifications();
@@ -154,7 +157,7 @@ const NotificationsScreen = () => {
   return (
     <SafeAreaView style={s.container}>
       {/* Shared Header */}
-      <ContentHeader title="NOTIFICATIONS" showBack={true} rightComponent={rightComponent} />
+      <ContentHeader title="NOTIFICATIONS" showBack={false} rightComponent={rightComponent} />
 
       {/* List */}
       <FlatList
@@ -165,13 +168,18 @@ const NotificationsScreen = () => {
         refreshing={loading && notifications.length === 0}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.3}
+        onScroll={tabBarScroll}
+        scrollEventThrottle={16}
         ListEmptyComponent={!loading ? <EmptyState s={s} COLORS={COLORS} /> : null}
         ListFooterComponent={
-          loading && notifications.length > 0 ? (
-            <ActivityIndicator color={COLORS.primary} style={{ padding: 20 }} />
-          ) : null
+          <View>
+            {loading && notifications.length > 0 && (
+              <ActivityIndicator color={COLORS.primary} style={{ padding: 20 }} />
+            )}
+            <TabBarSpacer />
+          </View>
         }
-        contentContainerStyle={notifications.length === 0 ? { flex: 1 } : { paddingBottom: 100 }}
+        contentContainerStyle={notifications.length === 0 ? { flex: 1 } : null}
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>

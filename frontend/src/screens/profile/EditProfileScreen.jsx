@@ -91,8 +91,8 @@ const EditProfileScreen = () => {
           setUserId(id);
           const user = await getUserById(id);
           if (!mounted) return;
-          setFullName(user.full_name || user.username || '');
-          setPhoneNumber(user.phone || user.phone_number || '');
+          setFullName(user.username || '');
+          setPhoneNumber(user.phone || '');
           setEmail(user.email || '');
         } catch (_) {
           // Fail silently — user can still fill in manually
@@ -107,25 +107,37 @@ const EditProfileScreen = () => {
   // ── Update ────────────────────────────────────────────────────
   const handleUpdate = async () => {
     if (!fullName.trim()) {
-      showAlert('Validation', 'Full name is required.', true);
+      showAlert('Validation', 'Username is required.', true);
+      return;
+    }
+
+    // Usernames double as login identifiers and friend handles (username#TAG).
+    if (/\s/.test(fullName.trim())) {
+      showAlert('Validation', 'Username cannot contain spaces.', true);
       return;
     }
 
     setLoading(true);
     try {
+      // The display name IS the `username` column — there is no full_name in DB.
       const payload = {
-        full_name: fullName.trim(),
+        username: fullName.trim(),
         phone: phoneNumber.trim() || undefined,
       };
-      await updateUserProfile(userId, payload);
+      const updated = await updateUserProfile(userId, payload);
 
-      // Sync cached name in AsyncStorage
+      // Sync the cache from what the server actually saved.
       const raw = await AsyncStorage.getItem('userInfo');
       if (raw) {
         const parsed = JSON.parse(raw);
         await AsyncStorage.setItem(
           'userInfo',
-          JSON.stringify({ ...parsed, username: fullName.trim() }),
+          JSON.stringify({
+            ...parsed,
+            username: updated?.username ?? fullName.trim(),
+            phone: updated?.phone ?? parsed.phone,
+            tag: updated?.tag ?? parsed.tag,
+          }),
         );
       }
 
@@ -202,19 +214,20 @@ const EditProfileScreen = () => {
             </View>
           </View>
 
-          {/* Full name */}
-          <Field label="Full name" style={s}>
+          {/* Username (login identifier + friend handle) */}
+          <Field label="Username" style={s}>
             <TextInput
               style={[s.inputBox, s.inputText]}
               value={fullName}
               onChangeText={setFullName}
-              placeholder="Enter your full name"
+              placeholder="Enter username (no spaces)"
               placeholderTextColor={s.inputPlaceholder.color}
               returnKeyType="next"
-              autoCapitalize="words"
+              autoCapitalize="none"
+              autoCorrect={false}
               onSubmitEditing={() => emailRef.current?.focus()}
               blurOnSubmit={false}
-              accessibilityLabel="Full name"
+              accessibilityLabel="Username"
             />
           </Field>
 

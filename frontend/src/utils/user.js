@@ -14,3 +14,14 @@ export const getStoredUserId = async () => {
     return null;
   }
 };
+
+export const getStoredUser = async () => {
+  try {
+    const raw =
+      (await AsyncStorage.getItem("userData")) ||
+      (await AsyncStorage.getItem("userInfo"));
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+};

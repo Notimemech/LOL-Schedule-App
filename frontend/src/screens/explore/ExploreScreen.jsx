@@ -14,7 +14,9 @@ import { Ionicons } from "@expo/vector-icons";
 import ContentHeader from "../../components/common/ContentHeader";
 import EmptyState from "../../components/ui/EmptyState";
 import Skeleton from "../../components/ui/Skeleton";
+import TabBarSpacer from "../../components/ui/TabBarSpacer";
 import { useTheme, useThemedStyles } from "../../hooks/useTheme";
+import { useTabBarScrollHandler } from "../../hooks/useTabBarAutoHide";
 import { makeExploreStyles } from "../../styles/explore.styles";
 import { getExploreTournaments, getExploreTeams } from "../../services/teamService";
 
@@ -35,6 +37,7 @@ export default function ExploreScreen() {
   const navigation = useNavigation();
   const { colors: COLORS } = useTheme();
   const styles = useThemedStyles(makeExploreStyles);
+  const tabBarScroll = useTabBarScrollHandler();
 
   const [viewMode, setViewMode] = useState("tournaments");
   const [gameFilter, setGameFilter] = useState(null);
@@ -245,9 +248,11 @@ export default function ExploreScreen() {
           renderSectionHeader={sectionHeader}
           contentContainerStyle={styles.bodyContent}
           ListEmptyComponent={renderEmpty("people-outline", emptyMsg)}
-          ListFooterComponent={<View style={{ height: 110 }} />}
+          ListFooterComponent={<TabBarSpacer />}
           stickySectionHeadersEnabled={false}
           showsVerticalScrollIndicator={false}
+          onScroll={tabBarScroll}
+          scrollEventThrottle={16}
           refreshControl={refreshControl}
         />
       );
@@ -262,9 +267,11 @@ export default function ExploreScreen() {
         renderSectionHeader={sectionHeader}
         contentContainerStyle={styles.bodyContent}
         ListEmptyComponent={renderEmpty("search-outline", emptyMsg)}
-        ListFooterComponent={<View style={{ height: 110 }} />}
+        ListFooterComponent={<TabBarSpacer />}
         stickySectionHeadersEnabled={false}
         showsVerticalScrollIndicator={false}
+        onScroll={tabBarScroll}
+        scrollEventThrottle={16}
         refreshControl={refreshControl}
       />
     );

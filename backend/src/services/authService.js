@@ -10,6 +10,12 @@ export const register = async (userData) => {
         throw new AppError('Username, password and email are required', 400);
     }
 
+    // Usernames double as login identifiers and friend handles (username#TAG),
+    // so whitespace is not allowed.
+    if (/\s/.test(username)) {
+        throw new AppError('Username cannot contain spaces', 400);
+    }
+
     if (password.length < 6) {
         throw new AppError('Password must be at least 6 characters', 400);
     }
@@ -17,6 +23,11 @@ export const register = async (userData) => {
     const existingUser = await userRepository.findUserByEmail(email);
     if (existingUser) {
         throw new AppError('Email is already registered', 400);
+    }
+
+    const existingUsername = await userRepository.findUserByUsername(username);
+    if (existingUsername) {
+        throw new AppError('Username is already taken', 400);
     }
 
     const role = await userRepository.getDefaultRole();
@@ -36,19 +47,22 @@ export const register = async (userData) => {
     return newUser;
 };
 
-export const login = async (email, password) => {
-    if (!email || !password) {
-        throw new AppError('Email and password are required', 400);
+export const login = async (identifier, password) => {
+    if (!identifier || !password) {
+        throw new AppError('Email/username and password are required', 400);
     }
 
-    const user = await userRepository.findUserByEmail(email);
+    // Identifier is an email when it contains '@', otherwise a username.
+    const user = identifier.includes('@')
+        ? await userRepository.findUserByEmail(identifier)
+        : await userRepository.findUserByUsername(identifier);
     if (!user) {
-        throw new AppError('Invalid email or password', 401);
+        throw new AppError('Invalid credentials', 401);
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-        throw new AppError('Invalid email or password', 401);
+        throw new AppError('Invalid credentials', 401);
     }
 
     // In a real app, generate a JWT token here

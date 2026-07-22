@@ -14,7 +14,6 @@ import PromotionsScreen from "./src/screens/promotions/PromotionsScreen";
 import NotificationsScreen from "./src/screens/notification/NotificationsScreen";
 import WalletScreen from "./src/screens/wallet/WalletScreen";
 import WithdrawScreen from "./src/screens/wallet/WithdrawScreen";
-import DepositScreen from "./src/screens/wallet/DepositScreen";
 import HistoryScreen from "./src/screens/profile/HistoryScreen";
 import SettingScreen from "./src/screens/profile/SettingScreen";
 import ThemeSettingScreen from "./src/screens/profile/ThemeSettingScreen";
@@ -28,6 +27,8 @@ import ExploreScreen from "./src/screens/explore/ExploreScreen";
 import FloatingTabBar from "./src/components/ui/FloatingTabBar";
 import ToastHost from "./src/components/common/ToastNotification";
 import AIChatScreen from "./src/screens/ai/AIChatScreen";
+import FriendsScreen from "./src/screens/friends/FriendsScreen";
+import FriendH2HScreen from "./src/screens/friends/FriendH2HScreen";
 import { ThemeProvider } from "./src/context/ThemeContext";
 import { NotificationProvider } from "./src/context/NotificationContext";
 import { useTheme } from "./src/hooks/useTheme";
@@ -46,7 +47,6 @@ function TabNavigator() {
       {/* Schedule sits in the center as a raised action button */}
       <BottomTab.Screen name="ScheduleStack" component={ScheduleNavigation} />
       <BottomTab.Screen name="Notifications" component={NotificationsScreen} />
-      <BottomTab.Screen name="AIChat" component={AIChatScreen} />
       <BottomTab.Screen name="Profile" component={ProfileScreen} />
     </BottomTab.Navigator>
   );
@@ -72,13 +72,18 @@ function AppNavigator({ initialRouteName }) {
 
             {/* Wallet & profile screens */}
             <RootStack.Screen name="WalletScreen" component={WalletScreen} />
-            <RootStack.Screen name="Deposit" component={DepositScreen} />
             <RootStack.Screen name="WithdrawScreen" component={WithdrawScreen} />
             <RootStack.Screen name="HistoryScreen" component={HistoryScreen} />
             <RootStack.Screen name="SettingScreen" component={SettingScreen} />
             <RootStack.Screen name="ThemeSettingScreen" component={ThemeSettingScreen} />
             <RootStack.Screen name="VipScreen" component={VipScreen} />
             <RootStack.Screen name="HelpCenter" component={HelpCenterScreen} />
+            {/* AI assistant opens as a full-screen stack page (no tab bar) */}
+            <RootStack.Screen name="AIChat" component={AIChatScreen} />
+
+            {/* Friends & friendly wagers */}
+            <RootStack.Screen name="Friends" component={FriendsScreen} />
+            <RootStack.Screen name="FriendH2H" component={FriendH2HScreen} />
             <RootStack.Screen name="EditProfile" component={EditProfileScreen} />
             <RootStack.Screen name="Promotions" component={PromotionsScreen} />
           </RootStack.Navigator>

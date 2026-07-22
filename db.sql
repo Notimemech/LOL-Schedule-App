@@ -81,6 +81,7 @@ INSERT INTO VipTiers (name, price_per_month, deposit_bonus_percent, bet_cashback
 CREATE TABLE Users (
     id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     username    varchar(50)  NOT NULL UNIQUE,
+    tag         varchar(6)   NOT NULL CHECK (tag ~ '^[A-Z0-9]{1,6}$'),  -- hiển thị username#TAG (Friends)
     password    varchar(255) NOT NULL,           -- lưu hash (bcrypt/argon2), không lưu plaintext
     role_id     bigint       NOT NULL,
     phone       varchar(20),
@@ -557,6 +558,62 @@ CREATE TABLE SupportTickets (
 
 CREATE INDEX idx_support_tickets_user   ON SupportTickets(user_id);
 CREATE INDEX idx_support_tickets_status ON SupportTickets(status);
+
+CREATE UNIQUE INDEX uq_users_username_tag ON Users (username, tag);
+
+-- Tag mặc định sinh ngẫu nhiên để mọi đường INSERT user đều hợp lệ
+CREATE OR REPLACE FUNCTION fn_random_tag() RETURNS varchar AS $$
+    SELECT string_agg(
+        substr('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', (floor(random() * 36))::int + 1, 1),
+        ''
+    )
+    FROM generate_series(1, 6)
+$$ LANGUAGE sql VOLATILE;
+
+ALTER TABLE Users ALTER COLUMN tag SET DEFAULT fn_random_tag();
+
+-- =====================
+-- 14. FRIENDSHIPS (lời mời + kết bạn giữa 2 user)
+-- =====================
+CREATE TABLE Friendships (
+    id           bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    requester_id bigint NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+    addressee_id bigint NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+    status       text   NOT NULL DEFAULT 'pending',   -- pending | accepted
+    created_at   timestamptz NOT NULL DEFAULT now(),
+
+    CONSTRAINT chk_friend_not_self CHECK (requester_id <> addressee_id)
+);
+
+-- Chặn trùng lời mời theo cả 2 chiều
+CREATE UNIQUE INDEX uq_friendships_pair
+    ON Friendships (LEAST(requester_id, addressee_id), GREATEST(requester_id, addressee_id));
+CREATE INDEX idx_friendships_addressee ON Friendships(addressee_id, status);
+
+-- =====================
+-- 15. FRIEND BETS (kèo danh dự giữa 2 người bạn — không đụng ví)
+-- =====================
+CREATE TABLE FriendBets (
+    id               bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    match_id         bigint NOT NULL REFERENCES Matches(id) ON DELETE RESTRICT,
+    name             text   NOT NULL,
+    stake_label      text   NOT NULL,                 -- "50k", "1 ly trà sữa"...
+    creator_id       bigint NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+    opponent_id      bigint NOT NULL REFERENCES Users(id) ON DELETE CASCADE,
+    creator_team_id  bigint NOT NULL REFERENCES Teams(id),
+    opponent_team_id bigint NOT NULL REFERENCES Teams(id),
+    status           text   NOT NULL DEFAULT 'active', -- active | settled | void
+    winner_user_id   bigint REFERENCES Users(id),      -- NULL khi active/void
+    created_at       timestamptz NOT NULL DEFAULT now(),
+    settled_at       timestamptz,
+
+    CONSTRAINT chk_friendbet_not_self CHECK (creator_id <> opponent_id)
+);
+
+CREATE INDEX idx_friendbets_pair
+    ON FriendBets (LEAST(creator_id, opponent_id), GREATEST(creator_id, opponent_id));
+CREATE INDEX idx_friendbets_match  ON FriendBets(match_id);
+CREATE INDEX idx_friendbets_status ON FriendBets(status);
 
 -- =====================
 -- TRIGGER: tự động cập nhật updated_at

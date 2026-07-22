@@ -1,5 +1,6 @@
 import { pool } from "../config/db.config.js";
 import bcrypt from "bcrypt";
+import AppError from "../utils/appError.js";
 
 export const getAllUser = async () => {
   const query = "SELECT * FROM users";
@@ -8,7 +9,7 @@ export const getAllUser = async () => {
 };
 
 export const getOneUser = async (id) => {
-  const query = `SELECT username, role_id, phone, email, is_active FROM users WHERE id = $1`;
+  const query = `SELECT id, username, tag, role_id, phone, email, is_active FROM users WHERE id = $1`;
   const rs = await pool.query(query, [id]);
 
   if (rs.rowCount === 0) {
@@ -43,10 +44,28 @@ export const updateUser = async (id, body) => {
     (key) => allowedFields.includes(key) && body[key] !== undefined,
   );
 
+  if (fields.length === 0) {
+    throw new AppError("No updatable fields provided", 400);
+  }
+
+  if (body.username !== undefined) {
+    // Usernames double as login identifiers and friend handles.
+    if (!String(body.username).trim() || /\s/.test(body.username)) {
+      throw new AppError("Username cannot be empty or contain spaces", 400);
+    }
+    const dup = await pool.query(
+      `SELECT id FROM users WHERE LOWER(username) = LOWER($1) AND id <> $2`,
+      [body.username, id],
+    );
+    if (dup.rowCount > 0) {
+      throw new AppError("Username is already taken", 409);
+    }
+  }
+
   const setClause = fields.map((key, i) => `${key} = $${i + 1}`).join(", ");
   const value = fields.map((key) => body[key]);
 
-  const query = `UPDATE users SET ${setClause} WHERE id = $${fields.length + 1} RETURNING username, role_id, phone, email, is_active`;
+  const query = `UPDATE users SET ${setClause} WHERE id = $${fields.length + 1} RETURNING id, username, tag, role_id, phone, email, is_active`;
 
   const rs = await pool.query(query, [...value, id]);
 

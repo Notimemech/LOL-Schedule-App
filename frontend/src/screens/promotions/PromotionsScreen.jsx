@@ -307,9 +307,19 @@ export default function PromotionsScreen() {
           style={styles.headerGradient}
         >
           <View style={styles.headerTop}>
-            <View>
-              <Text style={styles.headerEyebrow}>BetGG Exclusive</Text>
-              <Text style={styles.headerTitle}>PROMOTIONS</Text>
+            <View style={styles.headerLeft}>
+              <TouchableOpacity
+                style={styles.backBtn}
+                onPress={() => navigation.goBack()}
+                accessibilityRole="button"
+                accessibilityLabel="Go back"
+              >
+                <Ionicons name="arrow-back" size={22} color={COLORS.text} />
+              </TouchableOpacity>
+              <View>
+                <Text style={styles.headerEyebrow}>BetGG Exclusive</Text>
+                <Text style={styles.headerTitle}>PROMOTIONS</Text>
+              </View>
             </View>
             <View style={styles.headerIcon}>
               <Ionicons name="gift" size={28} color={COLORS.primary} />
@@ -398,6 +408,21 @@ const makeStyles = (COLORS) => StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
+  },
+  headerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   headerEyebrow: {
     color: COLORS.primary,

@@ -61,6 +61,12 @@ const SignInScreen = () => {
       return;
     }
 
+    // Usernames double as login identifiers and friend handles (username#TAG).
+    if (/\s/.test(form.username)) {
+      showAlert('Invalid username', 'Username cannot contain spaces.', true);
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await registerUser({
@@ -83,14 +89,15 @@ const SignInScreen = () => {
 
   const handleLogin = async () => {
     if (!form.email || !form.password) {
-      showAlert('Missing information', 'Please fill in email and password.', true);
+      showAlert('Missing information', 'Please fill in email/username and password.', true);
       return;
     }
 
     try {
       setLoading(true);
+      // `identifier` accepts an email or a username.
       const response = await loginUser({
-        email: form.email,
+        identifier: form.email.trim(),
         password: form.password,
       });
 
@@ -130,18 +137,19 @@ const SignInScreen = () => {
                 <Text style={authStyles.inputLabel}>Username</Text>
                 <TextInput
                   style={authStyles.input}
-                  placeholder="Enter username"
+                  placeholder="Enter username (no spaces)"
                   placeholderTextColor={COLORS.inputPlaceholder}
+                  autoCapitalize="none"
                   value={form.username}
                   onChangeText={(value) => handleChange('username', value)}
                 />
               </>
             )}
 
-            <Text style={authStyles.inputLabel}>Email</Text>
+            <Text style={authStyles.inputLabel}>{isLogin ? 'Email or username' : 'Email'}</Text>
             <TextInput
               style={authStyles.input}
-              placeholder="Enter email"
+              placeholder={isLogin ? 'Enter email or username' : 'Enter email'}
               placeholderTextColor={COLORS.inputPlaceholder}
               keyboardType="email-address"
               autoCapitalize="none"

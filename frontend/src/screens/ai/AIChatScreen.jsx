@@ -86,7 +86,7 @@ export default function AIChatScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <ContentHeader title="AI ASSISTANT ⚡" showBack={false} />
+      <ContentHeader title="AI ASSISTANT ⚡" showBack={true} />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}

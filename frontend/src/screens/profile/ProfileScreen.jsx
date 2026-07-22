@@ -19,7 +19,9 @@ import { Ionicons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome6";
 import { formatMoney } from "../../utils/format";
 import CustomAlert from "../../components/common/CustomAlert";
+import TabBarSpacer from "../../components/ui/TabBarSpacer";
 import FollowingSection from "./FollowingSection";
+import { useTabBarScrollHandler } from "../../hooks/useTabBarAutoHide";
 
 // ─── Setting Row ──────────────────────────────────────────────────
 const SettingRow = ({ icon, iconColor, label, onPress, style, COLORS }) => (
@@ -61,6 +63,7 @@ const ProfileScreen = () => {
   const navigation = useNavigation();
   const { colors: COLORS } = useTheme();
   const style = useThemedStyles(makeProfileStyles);
+  const tabBarScroll = useTabBarScrollHandler();
 
   const [username, setUsername] = useState("User");
   const [balance, setBalance] = useState(0);
@@ -124,10 +127,34 @@ const ProfileScreen = () => {
   // ── Load profile ─────────────────────────────────────────────────
   const loadProfile = async () => {
     try {
+      // Cached name renders instantly; the DB value below overrides it.
       const raw = await AsyncStorage.getItem("userInfo");
-      if (raw) {
-        const parsed = JSON.parse(raw);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed) {
         setUsername(parsed.username || parsed.name || parsed.email || "User");
+      }
+      const userId = parsed?.id;
+
+      // DB is the source of truth for the display name — refresh the cache too.
+      if (userId) {
+        try {
+          const { getUserById } = await import("../../services/userService");
+          const dbUser = await getUserById(userId);
+          if (dbUser?.username) {
+            setUsername(dbUser.username);
+            await AsyncStorage.setItem(
+              "userInfo",
+              JSON.stringify({
+                ...parsed,
+                username: dbUser.username,
+                phone: dbUser.phone,
+                tag: dbUser.tag,
+              })
+            );
+          }
+        } catch (_) {
+          // Offline — keep the cached name
+        }
       }
 
       const { getWalletBalance } = await import(
@@ -138,10 +165,7 @@ const ProfileScreen = () => {
 
       const api = (await import("../../services/api")).default;
       try {
-        const rawUser = await AsyncStorage.getItem("userInfo");
-        if (rawUser) {
-          const parsed = JSON.parse(rawUser);
-          const userId = parsed.id;
+        if (userId) {
           const statusRes = await api.get(`/vip/status/${userId}`);
           if (statusRes && statusRes.data) setVipStatus(statusRes.data);
         }
@@ -208,12 +232,9 @@ const ProfileScreen = () => {
   ];
 
   const preferenceItems = [
-    { icon: "user-pen", iconColor: COLORS.primary, label: "Edit Profile", onPress: () => navigation.navigate("EditProfile") },
+    { icon: "user-group", iconColor: COLORS.primary, label: "Friends", onPress: () => navigation.navigate("Friends") },
     { icon: "palette", iconColor: COLORS.secondary, label: "Themes", onPress: () => navigation.navigate("ThemeSettingScreen") },
     { icon: "headset", iconColor: COLORS.primary, label: "Help Center", onPress: () => navigation.navigate("HelpCenter") },
-    ...(vipStatus?.vip_tier_id
-      ? [{ icon: "crown", iconColor: "#F59E0B", label: "VIP Management", onPress: () => navigation.navigate("VipScreen") }]
-      : []),
   ];
 
   // ── Render ────────────────────────────────────────────────────────
@@ -223,6 +244,8 @@ const ProfileScreen = () => {
         style={style.body}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={style.scrollContent}
+        onScroll={tabBarScroll}
+        scrollEventThrottle={16}
       >
         {/* ── Header Banner ── */}
         <LinearGradient
@@ -348,6 +371,8 @@ const ProfileScreen = () => {
 
         {/* App version */}
         <Text style={style.versionLabel}>LOL Schedule · v1.0.0</Text>
+
+        <TabBarSpacer />
       </ScrollView>
 
       <CustomAlert

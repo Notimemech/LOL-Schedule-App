@@ -26,6 +26,7 @@ import GameBreakdownSection from "./GameBreakdownSection";
 import HeadToHeadSection from "./HeadToHeadSection";
 import EmptyState from "../../components/ui/EmptyState";
 import LiveBadge from "../../components/ui/LiveBadge";
+import CreateFriendBetModal from "./CreateFriendBetModal";
 import { predictMatchAI, summarizeMatchAI } from "../../services/aiService";
 
 export default function DetailScreen() {
@@ -44,6 +45,7 @@ export default function DetailScreen() {
   const [userId, setUserId] = useState(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
+  const [challengeVisible, setChallengeVisible] = useState(false);
 
   // AI States
   const [aiPrediction, setAiPrediction] = useState(null);
@@ -258,6 +260,19 @@ export default function DetailScreen() {
                 </Text>
               </TouchableOpacity>
             ) : null}
+
+            {/* Friend wager — only before the match starts */}
+            {userId && !hasStarted && !isFinished ? (
+              <TouchableOpacity
+                style={styles.challengeBtn}
+                onPress={() => setChallengeVisible(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Challenge a friend on this match"
+              >
+                <Ionicons name="people" size={16} color={COLORS.secondary} />
+                <Text style={styles.challengeBtnText}>CHALLENGE A FRIEND</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
 
           {/* AI ANALYSIS TRIGGER BUTTON */}
@@ -380,6 +395,13 @@ export default function DetailScreen() {
 
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <CreateFriendBetModal
+        visible={challengeVisible}
+        match={match}
+        userId={userId}
+        onClose={() => setChallengeVisible(false)}
+      />
     </SafeAreaView>
   );
 }

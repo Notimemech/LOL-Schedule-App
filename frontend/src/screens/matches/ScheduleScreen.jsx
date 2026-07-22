@@ -20,9 +20,11 @@ import { getMatchesPage, getFollowedMatchIds } from "../../services/matchService
 import { getFollowedTeams } from "../../services/teamService";
 import { getStoredUserId } from "../../utils/user";
 import { isMatchFollowed } from "../../utils/matchPriority";
+import { useTabBarScrollHandler } from "../../hooks/useTabBarAutoHide";
 import MatchListItem from "../../components/matches/MatchListItem";
 import { MatchCardSkeleton } from "../../components/ui/Skeleton";
 import EmptyState from "../../components/ui/EmptyState";
+import TabBarSpacer from "../../components/ui/TabBarSpacer";
 
 // Server-side pagination: each scroll to the end fetches the next PAGE_SIZE
 // matches from the API (filters included), so the client never holds more
@@ -175,10 +177,13 @@ export default function ScheduleScreen() {
   // interaction) — only honor it after a real scroll happened.
   const userScrolledRef = useRef(false);
 
+  const tabBarScroll = useTabBarScrollHandler();
+
   const handleScroll = (event) => {
     if (event.nativeEvent.contentOffset.y > 0) {
       userScrolledRef.current = true;
     }
+    tabBarScroll(event);
   };
 
   const loadMore = () => {
@@ -188,14 +193,16 @@ export default function ScheduleScreen() {
     fetchPage();
   };
 
-  const renderListFooter = () => {
-    if (!loadingMore) return null;
-    return (
-      <View style={{ paddingVertical: 16 }}>
-        <ActivityIndicator color={COLORS.primary} />
-      </View>
-    );
-  };
+  const renderListFooter = () => (
+    <View>
+      {loadingMore && (
+        <View style={{ paddingVertical: 16 }}>
+          <ActivityIndicator color={COLORS.primary} />
+        </View>
+      )}
+      <TabBarSpacer />
+    </View>
+  );
 
   const renderListEmpty = () => {
     if (isLoading) {

@@ -18,7 +18,9 @@ import HomeBanner from "./HomeBanner";
 import MatchCard from "../../components/home/MatchCard";
 import { MatchCardSkeleton } from "../../components/ui/Skeleton";
 import EmptyState from "../../components/ui/EmptyState";
+import TabBarSpacer from "../../components/ui/TabBarSpacer";
 import { useTheme, useThemedStyles } from "../../hooks/useTheme";
+import { useTabBarScrollHandler } from "../../hooks/useTabBarAutoHide";
 import { makeHomeStyles } from "../../styles/home.styles";
 import { getMatches, getFollowedMatchIds } from "../../services/matchService";
 import { getActivePromotion, getAllPromotions } from "../../services/promotionService";
@@ -40,6 +42,7 @@ export default function HomeScreen() {
   const navigation = useNavigation();
   const { colors: COLORS } = useTheme();
   const style = useThemedStyles(makeHomeStyles);
+  const tabBarScroll = useTabBarScrollHandler();
 
   const [allGames, setAllGames] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -351,7 +354,7 @@ export default function HomeScreen() {
 
   const renderListFooter = () => {
     // Search shows the full result list; the preview CTA only makes sense per tab.
-    if (searchQuery || isLoading || loadError) return <View style={{ height: 110 }} />;
+    if (searchQuery || isLoading || loadError) return <TabBarSpacer />;
     return (
       <View>
         <TouchableOpacity
@@ -364,7 +367,7 @@ export default function HomeScreen() {
           <Text style={style.viewAllText}>VIEW ALL</Text>
           <Ionicons name="arrow-forward-outline" size={14} color={COLORS.primary} />
         </TouchableOpacity>
-        <View style={{ height: 110 }} />
+        <TabBarSpacer />
       </View>
     );
   };
@@ -505,6 +508,8 @@ export default function HomeScreen() {
         ListHeaderComponent={renderListHeader}
         ListEmptyComponent={renderListEmpty}
         ListFooterComponent={renderListFooter}
+        onScroll={tabBarScroll}
+        scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

@@ -70,7 +70,9 @@ const WithdrawScreen = () => {
       const rawUser = await AsyncStorage.getItem('userInfo');
       if (!rawUser) return;
       const user = JSON.parse(rawUser);
-      const response = await api.get(`/wallet/${user.id}`);
+      const userId = user?.id || user?.userId || user?.user_id || user?.user?.id;
+      if (!userId) return;
+      const response = await api.get(`/wallet/${userId}`);
       const walletData = response?.data ?? response;
       if (walletData) setCurrentBalance(Number(walletData.balance || 0));
     } catch (error) {
@@ -108,9 +110,10 @@ const WithdrawScreen = () => {
       const rawUser = await AsyncStorage.getItem('userInfo');
       if (!rawUser) { showAlert('Error', 'Please sign in first.', true); setLoading(false); return; }
       const user = JSON.parse(rawUser);
+      const userId = user?.id || user?.userId || user?.user_id || user?.user?.id;
 
       const response = await api.post('/wallet/withdraw-vnpay', {
-        userId: user.id,
+        userId: userId,
         amount: withdrawAmount,
       });
 
@@ -259,10 +262,10 @@ const WithdrawScreen = () => {
           <TouchableOpacity
             style={[
               styles.withdrawButton,
-              (loading || parseInt(amount.replace(/\D/g, "") || 0, 10) > currentBalance) && styles.payButtonDisabled
+              loading && styles.payButtonDisabled
             ]}
             onPress={handleRequestWithdraw}
-            disabled={loading || parseInt(amount.replace(/\D/g, "") || 0, 10) > currentBalance}
+            disabled={loading}
           >
             {loading ? (
               <ActivityIndicator color={COLORS.staticWhite} />

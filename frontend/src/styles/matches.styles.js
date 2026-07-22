@@ -10,7 +10,7 @@ export const makeScheduleStyles = (COLORS) => StyleSheet.create({
   },
   bodyContent: {
     padding: 16,
-    paddingBottom: 120,
+    // Bottom clearance comes from TabBarSpacer in the list footer.
   },
   filterContainer: {
     flexDirection: "row",
@@ -375,6 +375,25 @@ export const makeDetailStyles = (COLORS) => StyleSheet.create({
   },
   followMatchBtnTextActive: {
     color: COLORS.buttonPrimaryText,
+  },
+  challengeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: COLORS.secondary,
+    backgroundColor: COLORS.backgroundTertiary,
+  },
+  challengeBtnText: {
+    color: COLORS.secondary,
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 12,
+    letterSpacing: 1.5,
   },
   teamHint: {
     color: COLORS.textMuted,
