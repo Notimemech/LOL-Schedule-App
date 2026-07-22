@@ -122,18 +122,13 @@ export default function PlaceBetScreen() {
 
     setIsSubmitting(true);
     try {
-<<<<<<< Updated upstream
-      const result = await placeBet(match.matchId, selectedMarketId, selectedOutcomeId, wagerAmount);
+      const mId = match.matchId || match.id;
+      const result = await placeBet(mId, selectedMarketId, selectedOutcomeId, wagerAmount);
       let successMsg = result.message;
       if (result.cashback > 0) {
         successMsg += `\nVIP Bonus: You received ${formatMoney(result.cashback)} VND cashback!`;
       }
       showAlert("Success", successMsg, false, async () => {
-=======
-      const mId = match.matchId || match.id;
-      const result = await placeBet(mId, selectedMarketId, selectedOutcomeId, wagerAmount);
-      showAlert("Success", result.message, false, () => {
->>>>>>> Stashed changes
         setWagerInput("");
         setSelectedOutcomeId(null);
         setSelectedMarketId(null);
