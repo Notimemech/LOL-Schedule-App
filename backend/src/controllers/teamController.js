@@ -63,6 +63,15 @@ export const getTeamProfile = async (req, res, next) => {
     }
 };
 
+export const getTeamsExplore = async (req, res, next) => {
+    try {
+        const rs = await companionService.getTeamsWithGameType();
+        sendSuccess(res, 200, 'Teams retrieved successfully', rs);
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const getHeadToHead = async (req, res, next) => {
     const { team1Id, team2Id } = req.params;
     try {

@@ -12,9 +12,9 @@ export const getTeamRecentMatches = async (teamId, limit = 10) => {
     const query = `
         SELECT m.id, m.team1_id, m.team2_id, m.team1_score, m.team2_score,
                m.winner_team_id, m.scheduled_at, m.state,
-               t1.code AS team1_code, t1.slug AS team1_slug, t1.logo_url AS team1_logo,
-               t2.code AS team2_code, t2.slug AS team2_slug, t2.logo_url AS team2_logo,
-               tr.name AS tournament_name, l.name AS league_name
+               t1.name AS team1_name, t1.code AS team1_code, t1.slug AS team1_slug, t1.logo_url AS team1_logo,
+               t2.name AS team2_name, t2.code AS team2_code, t2.slug AS team2_slug, t2.logo_url AS team2_logo,
+               tr.id AS tournament_id, tr.name AS tournament_name, l.name AS league_name
         FROM matches m
         JOIN teams t1 ON m.team1_id = t1.id
         JOIN teams t2 ON m.team2_id = t2.id
@@ -30,10 +30,10 @@ export const getTeamRecentMatches = async (teamId, limit = 10) => {
 
 export const getTeamUpcomingMatches = async (teamId, limit = 5) => {
     const query = `
-        SELECT m.id, m.team1_id, m.team2_id, m.scheduled_at, m.state,
-               t1.code AS team1_code, t1.slug AS team1_slug, t1.logo_url AS team1_logo,
-               t2.code AS team2_code, t2.slug AS team2_slug, t2.logo_url AS team2_logo,
-               tr.name AS tournament_name, l.name AS league_name
+        SELECT m.id, m.team1_id, m.team2_id, m.team1_score, m.team2_score, m.scheduled_at, m.state,
+               t1.name AS team1_name, t1.code AS team1_code, t1.slug AS team1_slug, t1.logo_url AS team1_logo,
+               t2.name AS team2_name, t2.code AS team2_code, t2.slug AS team2_slug, t2.logo_url AS team2_logo,
+               tr.id AS tournament_id, tr.name AS tournament_name, l.name AS league_name
         FROM matches m
         JOIN teams t1 ON m.team1_id = t1.id
         JOIN teams t2 ON m.team2_id = t2.id
@@ -109,9 +109,13 @@ export const getHeadToHeadRecentMeetings = async (team1Id, team2Id, limit = 5) =
 
 export const getTournamentsWithTeams = async () => {
     // Participating teams are derived from the matches of each tournament.
+    // game_type comes from any match in the tournament (tournaments are single-game).
     const query = `
         SELECT tr.id, tr.name, tr.start_date, tr.end_date,
                l.name AS league_name,
+               (SELECT mt.match_type FROM matches m2
+                JOIN matchtypes mt ON m2.match_type_id = mt.id
+                WHERE m2.tournament_id = tr.id LIMIT 1) AS game_type,
                COALESCE(
                    json_agg(DISTINCT jsonb_build_object(
                        'id', t.id,
@@ -128,6 +132,20 @@ export const getTournamentsWithTeams = async () => {
         LEFT JOIN teams t ON t.id = m.team1_id OR t.id = m.team2_id
         GROUP BY tr.id, tr.name, tr.start_date, tr.end_date, l.name
         ORDER BY tr.start_date DESC NULLS LAST, tr.id DESC;
+    `;
+    const { rows } = await pool.query(query);
+    return rows;
+};
+
+// Teams tagged with their game type (LOL / Dota 2), derived from matches.
+export const getTeamsWithGameType = async () => {
+    const query = `
+        SELECT t.id, t.name, t.code, t.slug, t.logo_url,
+               (SELECT mt.match_type FROM matches m
+                JOIN matchtypes mt ON m.match_type_id = mt.id
+                WHERE m.team1_id = t.id OR m.team2_id = t.id LIMIT 1) AS game_type
+        FROM teams t
+        ORDER BY t.name ASC;
     `;
     const { rows } = await pool.query(query);
     return rows;

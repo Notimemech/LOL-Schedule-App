@@ -83,6 +83,33 @@ export default function TeamScreen() {
     }
   };
 
+  // Map a team-profile match row into the shape DetailScreen expects, so
+  // tapping a past/upcoming match opens that match's detail page.
+  const toMatchParam = (m) => ({
+    matchId: m.id,
+    leagueName: m.league_name,
+    tournamentName: m.tournament_name,
+    tournamentId: m.tournament_id,
+    startTime: m.scheduled_at,
+    state: m.state,
+    team1Score: m.team1_score,
+    team2Score: m.team2_score,
+    team1: {
+      id: m.team1_id,
+      name: m.team1_name || m.team1_code,
+      code: m.team1_code,
+      slug: m.team1_slug,
+      logoUrl: m.team1_logo,
+    },
+    team2: {
+      id: m.team2_id,
+      name: m.team2_name || m.team2_code,
+      code: m.team2_code,
+      slug: m.team2_slug,
+      logoUrl: m.team2_logo,
+    },
+  });
+
   const renderMatchRow = ({ item: m }) => {
     const teamId = profile?.team?.id;
     const isFinished = m.state === "finished";
@@ -90,9 +117,10 @@ export default function TeamScreen() {
     return (
       <TouchableOpacity
         style={styles.matchRow}
-        onPress={() => navigation.goBack()}
-        disabled
-        activeOpacity={1}
+        onPress={() => navigation.push("Detail", { match: toMatchParam(m) })}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={`View ${m.team1_code} vs ${m.team2_code} match details`}
       >
         <View style={styles.matchTeams}>
           <Image source={{ uri: m.team1_logo }} style={styles.matchLogo} resizeMode="contain" />

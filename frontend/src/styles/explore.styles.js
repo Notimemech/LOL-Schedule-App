@@ -28,6 +28,80 @@ export const makeExploreStyles = (COLORS) => StyleSheet.create({
     fontFamily: "SpaceGrotesk",
     fontSize: 13,
   },
+
+  // ===== Filter chip rows =====
+  chipRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 8,
+    paddingHorizontal: 16,
+    marginTop: 10,
+  },
+  chip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+  },
+  chipActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.glowSoft,
+  },
+  chipText: {
+    color: COLORS.textMuted,
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 12,
+    letterSpacing: 0.5,
+  },
+  chipTextActive: {
+    color: COLORS.primary,
+  },
+  gameChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+  },
+  gameChipActive: {
+    borderColor: COLORS.secondary,
+    backgroundColor: COLORS.glowSecondary,
+  },
+  gameChipText: {
+    color: COLORS.textMuted,
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 11,
+    letterSpacing: 1,
+  },
+  gameChipTextActive: {
+    color: COLORS.secondary,
+  },
+
+  // ===== Team rows (Teams view) =====
+  teamRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.primary,
+    borderRadius: 6,
+    padding: 12,
+    marginBottom: 8,
+  },
+  teamRowLogo: {
+    width: 34,
+    height: 34,
+  },
   yearHeader: {
     flexDirection: "row",
     alignItems: "center",

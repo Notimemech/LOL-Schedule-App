@@ -49,3 +49,9 @@ export const getExploreTournaments = async () => {
   const response = await api.get('/tournaments/explore');
   return response.success && response.data ? response.data : [];
 };
+
+// All teams tagged with their game type (LOL / Dota 2).
+export const getExploreTeams = async () => {
+  const response = await api.get('/teams/explore');
+  return response.success && response.data ? response.data : [];
+};

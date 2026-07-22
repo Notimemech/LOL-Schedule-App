@@ -88,6 +88,10 @@ export const getTournamentsWithTeams = async () => {
     return await companionRepository.getTournamentsWithTeams();
 };
 
+export const getTeamsWithGameType = async () => {
+    return await companionRepository.getTeamsWithGameType();
+};
+
 export const followTeam = async (userId, teamId) => {
     if (!userId) {
         throw new AppError('userId is required', 400);

@@ -6,6 +6,7 @@ export const teamRouter = express.Router();
 teamRouter.get('/', teamController.getAllTeams);
 
 // Companion Hub routes — must be registered BEFORE the '/:slug' catch-all.
+teamRouter.get('/explore', teamController.getTeamsExplore);
 teamRouter.get('/h2h/:team1Id/:team2Id', teamController.getHeadToHead);
 teamRouter.get('/followed/:userId', teamController.getFollowedTeams);
 teamRouter.get('/:slug/profile', teamController.getTeamProfile);
