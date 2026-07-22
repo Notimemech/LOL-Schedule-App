@@ -1,9 +1,26 @@
 import { pool } from '../config/db.config.js';
 
-export const getNotifications = async (userId) => {
-    const result = await pool.query('SELECT * FROM Notifications WHERE user_id = $1 ORDER BY created_at DESC', [userId]);
+// ── Read ──────────────────────────────────────────────────────────
+
+/** Paginated notifications for a user (newest first). */
+export const getNotifications = async (userId, { limit = 10, offset = 0 } = {}) => {
+    const result = await pool.query(
+        'SELECT * FROM Notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
+        [userId, limit, offset]
+    );
     return result.rows;
 };
+
+/** Count of unread notifications. */
+export const getUnreadCount = async (userId) => {
+    const result = await pool.query(
+        'SELECT COUNT(*) AS count FROM Notifications WHERE user_id = $1 AND is_read = false',
+        [userId]
+    );
+    return parseInt(result.rows[0].count, 10);
+};
+
+// ── Mark read ─────────────────────────────────────────────────────
 
 export const markAsRead = async (userId, notificationId) => {
     const result = await pool.query(
@@ -13,20 +30,38 @@ export const markAsRead = async (userId, notificationId) => {
     return result.rows[0];
 };
 
-export const createNotification = async (client, userId, title, message) => {
-    const query = 'INSERT INTO Notifications (user_id, title, message) VALUES ($1, $2, $3) RETURNING *';
-    const values = [userId, title, message];
+export const markAllRead = async (userId) => {
+    await pool.query(
+        'UPDATE Notifications SET is_read = true WHERE user_id = $1 AND is_read = false',
+        [userId]
+    );
+    return { success: true };
+};
+
+// ── Create ────────────────────────────────────────────────────────
+
+/**
+ * Insert a notification row.
+ * @param {object|null} client  - pg client for transactions, or null to use pool
+ * @param {string|number} userId
+ * @param {string} title
+ * @param {string} message
+ * @param {string} [type='system']  - deposit|withdraw|bet|bet_cancel|promotion|follow_team|follow_match|vip|system
+ */
+export const createNotification = async (client, userId, title, message, type = 'system') => {
+    const query = 'INSERT INTO Notifications (user_id, title, message, type) VALUES ($1, $2, $3, $4) RETURNING *';
+    const values = [userId, title, message, type];
     if (client) {
         return (await client.query(query, values)).rows[0];
-    } else {
-        return (await pool.query(query, values)).rows[0];
     }
+    return (await pool.query(query, values)).rows[0];
 };
+
+// ── Bailout (kept for compatibility) ─────────────────────────────
 
 export const checkAndTriggerBailout = async (userId, walletBalance, client) => {
     if (parseFloat(walletBalance) > 10000) return;
 
-    // Check if user got bailout in last 7 days
     const query = `
         SELECT p.id 
         FROM UserPromotions up
@@ -37,12 +72,12 @@ export const checkAndTriggerBailout = async (userId, walletBalance, client) => {
     const res = await client.query(query, [userId]);
     if (res.rows.length > 0) return;
 
-    const promoTitle = 'Quà Cứu Thua: +20% Nạp Tiền';
-    const promoSub = 'Khuyến mãi đặc biệt chỉ trong 2 giờ: Tặng 20% nạp tiền để giúp bạn lội ngược dòng!';
+    const promoTitle = 'Bailout Gift: +20% Deposit Bonus';
+    const promoSub = 'Special promotion for 2 hours only: Get a 20% deposit bonus to help you bounce back!';
     const promoRes = await client.query(
         `INSERT INTO Promotions (title, subtitle, badge_text, button_text, button_link, is_active, bonus_percentage, max_bonus)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-        [promoTitle, promoSub, 'BAILOUT', 'NẠP NGAY', 'Deposit', true, 20, 1000000]
+        [promoTitle, promoSub, 'BAILOUT', 'DEPOSIT NOW', 'Deposit', true, 20, 1000000]
     );
     const promoId = promoRes.rows[0].id;
 
@@ -52,7 +87,7 @@ export const checkAndTriggerBailout = async (userId, walletBalance, client) => {
     );
 
     await client.query(
-        `INSERT INTO Notifications (user_id, title, message) VALUES ($1, $2, $3)`,
-        [userId, '🎁 Quà Cứu Thua Đặc Biệt!', 'Đừng nản chí! Tặng bạn voucher +20% nạp tiền (giới hạn 2 tiếng).']
+        `INSERT INTO Notifications (user_id, title, message, type) VALUES ($1, $2, $3, $4)`,
+        [userId, '🎁 Special Bailout Gift!', 'Don\'t give up! We\'ve given you a +20% deposit bonus voucher (valid for 2 hours).', 'promotion']
     );
 };

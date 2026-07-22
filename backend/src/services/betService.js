@@ -1,6 +1,7 @@
 import { pool } from '../config/db.config.js';
 import * as betRepository from '../repositories/betRepository.js';
 import * as walletRepository from '../repositories/walletRepository.js';
+import * as notificationService from './notificationService.js';
 import AppError from '../utils/appError.js';
 
 export const createMarket = async (marketData) => {
@@ -118,6 +119,47 @@ export const placeBet = async (userId, betData, ipAddress) => {
         // --- End VIP Cashback ---
 
         await client.query('COMMIT');
+
+        // Notification
+        let betMessage = `Bet ${amount.toLocaleString('vi-VN')} VNĐ on the outcome.`;
+        try {
+            const matchQuery = `
+                SELECT m.scheduled_at, t1.code as code1, t2.code as code2
+                FROM Matches m
+                JOIN Teams t1 ON m.team1_id = t1.id
+                JOIN Teams t2 ON m.team2_id = t2.id
+                WHERE m.id = $1
+            `;
+            const matchRes = await pool.query(matchQuery, [market.match_id]);
+            if (matchRes.rows.length > 0) {
+                const mi = matchRes.rows[0];
+                const dateStr = new Date(mi.scheduled_at).toLocaleDateString('vi-VN', { month: '2-digit', day: '2-digit' });
+                // Make a readable market/option name
+                let readableOption = option_key;
+                if (market.market_type === 'winner_team') {
+                    readableOption = option_key === 'team1' ? mi.code1 : mi.code2;
+                }
+                
+                let marketName = market.market_type;
+                switch (market.market_type) {
+                    case 'winner_team': marketName = 'Match Winner'; break;
+                    case 'first_blood': marketName = 'First Blood'; break;
+                    case 'total_kill': marketName = 'Total Kills'; break;
+                    case 'average_kill': marketName = 'Avg Kills'; break;
+                    case 'most_kill': marketName = 'Most Kills'; break;
+                }
+
+                betMessage = `Bet ${amount.toLocaleString('vi-VN')} VNĐ on ${readableOption} (${marketName}) in ${mi.code1} vs ${mi.code2} (${dateStr}).`;
+            }
+        } catch(e) {}
+
+        notificationService.createNotification(
+            null, userId,
+            '🎯 Bet Placed Successfully',
+            betMessage,
+            'bet'
+        ).catch(() => {});
+
         return { ...bet, cashback_applied: appliedCashback };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -163,13 +205,37 @@ export const cancelBet = async (userId, betId) => {
     try {
         await client.query('BEGIN');
 
-        // Refund the amount to the user's wallet
-        await walletRepository.updateWalletBalance(wallet.id, bet.amount, client);
+        // 1. Reclaim the VIP cashback if they received any for this bet
+        const cashbackQuery = await client.query(
+            `SELECT amount FROM WalletTransactions 
+             WHERE wallet_id = $1 AND reference_id = $2 AND type = 'REFUND' AND amount > 0`,
+            [wallet.id, bet.id]
+        );
+        let cashbackReceived = 0;
+        if (cashbackQuery.rows.length > 0) {
+            cashbackReceived = parseFloat(cashbackQuery.rows[0].amount);
+        }
+
+        if (cashbackReceived > 0) {
+            await walletRepository.updateWalletBalance(wallet.id, -cashbackReceived, client);
+            await walletRepository.createTransaction(
+                wallet.id,
+                -cashbackReceived,
+                'WITHDRAW', // using WITHDRAW for deductions
+                'success',
+                bet.id,
+                client
+            );
+        }
+
+        // 2. Refund 50% of the bet amount to the user's wallet
+        const refundAmount = bet.amount * 0.5;
+        await walletRepository.updateWalletBalance(wallet.id, refundAmount, client);
 
         // Record the refund transaction
         await walletRepository.createTransaction(
             wallet.id,
-            bet.amount,
+            refundAmount,
             'REFUND',
             'success',
             bet.id,
@@ -180,7 +246,16 @@ export const cancelBet = async (userId, betId) => {
         const cancelledBet = await betRepository.updateBetStatus(bet.id, 'cancelled', client);
 
         await client.query('COMMIT');
-        return cancelledBet;
+
+        // Notification
+        notificationService.createNotification(
+            null, userId,
+            '↩️ Bet Cancelled',
+            `Refunded ${refundAmount.toLocaleString('vi-VN')} VNĐ (50%) to wallet.`,
+            'bet_cancel'
+        ).catch(() => {});
+
+        return { message: 'Bet cancelled successfully' };
     } catch (error) {
         await client.query('ROLLBACK');
         throw new AppError('Failed to cancel bet: ' + error.message, 500);

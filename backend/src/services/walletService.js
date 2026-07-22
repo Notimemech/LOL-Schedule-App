@@ -1,5 +1,6 @@
 import { pool } from '../config/db.config.js';
 import * as walletRepository from '../repositories/walletRepository.js';
+import * as notificationService from './notificationService.js';
 import AppError from '../utils/appError.js';
 
 import crypto from 'crypto';
@@ -40,6 +41,15 @@ export const deposit = async (userId, amount) => {
         );
 
         await client.query('COMMIT');
+
+        // Notification
+        notificationService.createNotification(
+            null, userId,
+            '💰 Deposit Successful',
+            `Wallet balance increased by ${amount.toLocaleString('vi-VN')} VNĐ.`,
+            'deposit'
+        ).catch(() => {});
+
         return { wallet: updatedWallet, transaction };
     } catch (error) {
         await client.query('ROLLBACK');
@@ -80,6 +90,15 @@ export const withdraw = async (userId, amount) => {
         );
 
         await client.query('COMMIT');
+
+        // Notification
+        notificationService.createNotification(
+            null, userId,
+            '🏦 Withdrawal Successful',
+            `Withdrew ${amount.toLocaleString('vi-VN')} VNĐ from wallet.`,
+            'withdraw'
+        ).catch(() => {});
+
         return { wallet: updatedWallet, transaction };
     } catch (error) {
         await client.query('ROLLBACK');

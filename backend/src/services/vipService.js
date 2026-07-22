@@ -1,4 +1,5 @@
 import { pool } from '../config/db.config.js';
+import * as notificationService from './notificationService.js';
 
 export const getVipTiers = async () => {
     const result = await pool.query('SELECT * FROM VipTiers ORDER BY id ASC');
@@ -49,16 +50,16 @@ export const buyVip = async (userId, tierId) => {
         );
 
         // 5. Add promotion
-        const promoTitle = `Thưởng Nạp ${tier.name} ${tier.deposit_bonus_percent}%`;
+        const promoTitle = `${tier.name} Deposit Bonus ${tier.deposit_bonus_percent}%`;
         const promoRes = await client.query(
             `INSERT INTO Promotions (user_id, title, subtitle, badge_text, button_text, button_link, is_active, bonus_percentage, max_bonus, expires_at) 
              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`,
             [
                 userId,
                 promoTitle, 
-                `Quà tặng mua gói ${tier.name}. Thưởng ${tier.deposit_bonus_percent}% cho lần nạp tiếp theo.`, 
+                `Gift for purchasing ${tier.name}. Get a ${tier.deposit_bonus_percent}% bonus on your next deposit.`, 
                 'VIP BONUS', 
-                'NẠP NGAY', 
+                'DEPOSIT NOW', 
                 'Deposit', 
                 true, 
                 tier.deposit_bonus_percent, 
@@ -74,6 +75,15 @@ export const buyVip = async (userId, tierId) => {
         );
 
         await client.query('COMMIT');
+
+        // Notification
+        notificationService.createNotification(
+            null, userId,
+            '👑 VIP Activated',
+            `You upgraded to ${tier.name}. Valid for 30 days.`,
+            'vip'
+        ).catch(() => {});
+
         return { success: true, message: 'VIP purchased successfully!', vip_tier_id: tierId, expires_at: expiresAt };
     } catch (e) {
         await client.query('ROLLBACK');

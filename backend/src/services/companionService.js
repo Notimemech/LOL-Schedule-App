@@ -1,4 +1,5 @@
 import * as companionRepository from '../repositories/companionRepository.js';
+import * as notificationService from './notificationService.js';
 import AppError from '../utils/appError.js';
 
 // Compute W/L form and current streak from newest-first finished matches.
@@ -96,7 +97,23 @@ export const followTeam = async (userId, teamId) => {
     if (!userId) {
         throw new AppError('userId is required', 400);
     }
-    return await companionRepository.followTeam(userId, teamId);
+    const result = await companionRepository.followTeam(userId, teamId);
+
+    // Get team name for notification
+    try {
+        const teamRes = await (await import('../config/db.config.js')).pool.query(
+            'SELECT name FROM Teams WHERE id = $1', [teamId]
+        );
+        const teamName = teamRes.rows[0]?.name || 'team';
+        notificationService.createNotification(
+            null, userId,
+            '👀 Following Team',
+            `You are now following ${teamName}.`,
+            'follow_team'
+        ).catch(() => {});
+    } catch (_) {}
+
+    return result;
 };
 
 export const unfollowTeam = async (userId, teamId) => {
@@ -114,7 +131,17 @@ export const followMatch = async (userId, matchId) => {
     if (!userId) {
         throw new AppError('userId is required', 400);
     }
-    return await companionRepository.followMatch(userId, matchId);
+    const result = await companionRepository.followMatch(userId, matchId);
+
+    // Notification
+    notificationService.createNotification(
+        null, userId,
+        '📍 Following Match',
+        `You will be notified when the match is about to start.`,
+        'follow_match'
+    ).catch(() => {});
+
+    return result;
 };
 
 export const unfollowMatch = async (userId, matchId) => {
