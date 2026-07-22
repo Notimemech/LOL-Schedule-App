@@ -9,6 +9,7 @@ import CenterTabButton from "./CenterTabButton";
 const ICONS = {
   Home: ["home", "home-outline"],
   Explore: ["trophy", "trophy-outline"],
+  AIChat: ["sparkles", "sparkles-outline"],
   Promotions: ["gift", "gift-outline"],
   Profile: ["person-circle-outline", "person-outline"],
 };
@@ -98,11 +99,11 @@ const makeStyles = (COLORS) => StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 12,
-    elevation: 12,
+    elevation: 8,
+    paddingHorizontal: 8,
   },
   item: {
     flex: 1,
-    height: 64,
     alignItems: "center",
     justifyContent: "center",
   },

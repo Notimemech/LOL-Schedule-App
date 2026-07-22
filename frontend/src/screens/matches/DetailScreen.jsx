@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  StyleSheet
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
@@ -25,6 +26,7 @@ import GameBreakdownSection from "./GameBreakdownSection";
 import HeadToHeadSection from "./HeadToHeadSection";
 import EmptyState from "../../components/ui/EmptyState";
 import LiveBadge from "../../components/ui/LiveBadge";
+import { predictMatchAI, summarizeMatchAI } from "../../services/aiService";
 
 export default function DetailScreen() {
   const route = useRoute();
@@ -43,20 +45,30 @@ export default function DetailScreen() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
 
+  // AI States
+  const [aiPrediction, setAiPrediction] = useState(null);
+  const [loadingPrediction, setLoadingPrediction] = useState(false);
+  const [aiSummary, setAiSummary] = useState(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [showAiAnalysis, setShowAiAnalysis] = useState(false);
+
+  const matchId = match?.matchId || match?.id;
+
   useFocusEffect(
     useCallback(() => {
-      if (match?.matchId) {
-        autoCloseMarkets(); // Trigger auto-close of expired markets on enter
+      if (matchId) {
+        autoCloseMarkets();
         loadAll();
       }
-    }, [match?.matchId])
+    }, [matchId])
   );
 
   const loadAll = async () => {
     setLoadError(false);
+    setIsLoading(true);
     try {
-      const data = await getMatchMarketsAndOdds(match.matchId);
-      setMarkets(data);
+      const data = await getMatchMarketsAndOdds(matchId);
+      setMarkets(data || []);
     } catch (error) {
       console.log("Failed to load markets:", error);
       setLoadError(true);
@@ -64,12 +76,10 @@ export default function DetailScreen() {
       setIsLoading(false);
     }
 
-    // Companion content — each loads independently and fails silently
-    // so betting UI never breaks because of side content.
-    getAllBetsForMatch(match.matchId)
+    getAllBetsForMatch(matchId)
       .then(setUserBets)
       .catch(() => { });
-    getMatchGames(match.matchId)
+    getMatchGames(matchId)
       .then(setGames)
       .catch(() => { });
     if (match?.team1?.id && match?.team2?.id) {
@@ -81,29 +91,27 @@ export default function DetailScreen() {
   };
 
   const loadFollowState = async () => {
-    // Follow state is companion content — fails silently like the rest.
     try {
       const uid = await getStoredUserId();
       setUserId(uid);
       if (!uid) return;
       const followedIds = await getFollowedMatchIds(uid);
-      setIsFollowing(followedIds.includes(Number(match.matchId)));
+      setIsFollowing(followedIds.includes(Number(matchId)));
     } catch (error) {
-      // keep default (not following)
+      // keep default
     }
   };
 
   const toggleFollow = async () => {
     if (!userId || followBusy) return;
     setFollowBusy(true);
-    // Optimistic UI, reverted on failure (same pattern as TeamScreen).
     const next = !isFollowing;
     setIsFollowing(next);
     try {
       if (next) {
-        await followMatch(match.matchId, userId);
+        await followMatch(matchId, userId);
       } else {
-        await unfollowMatch(match.matchId, userId);
+        await unfollowMatch(matchId, userId);
       }
     } catch (error) {
       setIsFollowing(!next);
@@ -113,20 +121,42 @@ export default function DetailScreen() {
     }
   };
 
+  const fetchAIPrediction = async () => {
+    if (aiPrediction || loadingPrediction) return;
+    setLoadingPrediction(true);
+    try {
+      const result = await predictMatchAI(matchId);
+      setAiPrediction(result?.prediction || result);
+    } catch (e) {
+      console.error("AI Predict Error:", e);
+    } finally {
+      setLoadingPrediction(false);
+    }
+  };
+
+  const fetchAISummary = async () => {
+    if (aiSummary || loadingSummary) return;
+    setLoadingSummary(true);
+    try {
+      const summaryText = await summarizeMatchAI(matchId);
+      setAiSummary(summaryText);
+    } catch (e) {
+      console.error("AI Summary Error:", e);
+    } finally {
+      setLoadingSummary(false);
+    }
+  };
+
   if (!match) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
-        <ContentHeader title="ERROR" />
+        <ContentHeader title="ERROR" showBack={true} />
         <View style={styles.centerBox}>
-          <Text style={styles.errorText}>No match data found.</Text>
+          <Text style={styles.errorText}>No match data provided.</Text>
         </View>
       </SafeAreaView>
     );
   }
-
-  const handlePlaceABetPress = () => {
-    navigation.navigate("PlaceBet", { match, markets });
-  };
 
   const openTeam = (team) => {
     if (team?.slug) {
@@ -134,7 +164,6 @@ export default function DetailScreen() {
     }
   };
 
-  // Determine if market is closed or settled (no more betting)
   const allMarketsClosed = markets.length > 0 && markets.every(
     m => m.status === 'closed' || m.status === 'settled' || m.status === 'cancelled'
   );
@@ -152,26 +181,33 @@ export default function DetailScreen() {
   const isLive = match.state === "happening";
   const bettingDisabled = markets.length === 0 || isFinished || allMarketsClosed || hasStarted;
 
+  const handlePlaceABetPress = () => {
+    navigation.navigate("PlaceBet", { match, markets, aiPrediction });
+  };
+
+  const team1Code = match.team1?.code || match.team1_code || "T1";
+  const team2Code = match.team2?.code || match.team2_code || "T2";
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ContentHeader title="MATCH TERMINAL" showBack={true} />
+
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.bodyContent} showsVerticalScrollIndicator={false}>
-          {/* MATCH HEADER */}
+
+          {/* MATCH HEADER CARD */}
           <View style={styles.matchHeaderBox}>
             <View style={styles.leagueRow}>
-              <Text style={styles.leagueText}>{match.leagueName?.toUpperCase()}</Text>
+              <Text style={styles.leagueText}>{match.leagueName?.toUpperCase() || match.league_name?.toUpperCase()}</Text>
               {isLive && <LiveBadge />}
               {userId ? (
                 <TouchableOpacity
                   style={[styles.followMatchBtn, isFollowing && styles.followMatchBtnActive]}
                   onPress={toggleFollow}
                   disabled={followBusy}
-                  accessibilityRole="button"
-                  accessibilityLabel={isFollowing ? "Unfollow match" : "Follow match"}
                 >
                   <Ionicons
                     name={isFollowing ? "star" : "star-outline"}
@@ -184,33 +220,31 @@ export default function DetailScreen() {
                 </TouchableOpacity>
               ) : null}
             </View>
+
             <View style={styles.teamsRow}>
               <TouchableOpacity
                 style={styles.teamCol}
                 onPress={() => openTeam(match.team1)}
-                accessibilityRole="button"
-                accessibilityLabel={`View ${match.team1.name} profile`}
               >
-                <Image source={{ uri: match.team1.logoUrl }} style={styles.logoLarge} resizeMode="contain" />
-                <Text style={styles.teamCode}>{match.team1.code}</Text>
+                <Image source={{ uri: match.team1?.logoUrl || match.team1_logo }} style={styles.logoLarge} resizeMode="contain" />
+                <Text style={styles.teamCode}>{team1Code}</Text>
                 <Text style={styles.teamHint}>VIEW TEAM</Text>
               </TouchableOpacity>
               <View style={[styles.vsBox, isFinished && { borderColor: COLORS.success }]}>
                 <Text style={[styles.vsText, isFinished && { color: COLORS.success }]}>
-                  {isFinished ? `${match.team1Score} - ${match.team2Score}` : "VS"}
+                  {isFinished ? `${match.team1Score || match.team1_score || 0} - ${match.team2Score || match.team2_score || 0}` : "VS"}
                 </Text>
               </View>
               <TouchableOpacity
                 style={styles.teamCol}
                 onPress={() => openTeam(match.team2)}
-                accessibilityRole="button"
-                accessibilityLabel={`View ${match.team2.name} profile`}
               >
-                <Image source={{ uri: match.team2.logoUrl }} style={styles.logoLarge} resizeMode="contain" />
-                <Text style={styles.teamCode}>{match.team2.code}</Text>
+                <Image source={{ uri: match.team2?.logoUrl || match.team2_logo }} style={styles.logoLarge} resizeMode="contain" />
+                <Text style={styles.teamCode}>{team2Code}</Text>
                 <Text style={styles.teamHint}>VIEW TEAM</Text>
               </TouchableOpacity>
             </View>
+
             {match.tournamentId ? (
               <TouchableOpacity
                 style={styles.standingsLink}
@@ -218,8 +252,6 @@ export default function DetailScreen() {
                   tournamentId: match.tournamentId,
                   tournamentName: match.tournamentName,
                 })}
-                accessibilityRole="button"
-                accessibilityLabel="View tournament standings"
               >
                 <Text style={styles.standingsLinkText}>
                   {match.tournamentName?.toUpperCase()} · STANDINGS ▸
@@ -227,6 +259,89 @@ export default function DetailScreen() {
               </TouchableOpacity>
             ) : null}
           </View>
+
+          {/* AI ANALYSIS TRIGGER BUTTON */}
+          <TouchableOpacity
+            style={localStyles.aiToggleBtn}
+            onPress={() => {
+              const nextState = !showAiAnalysis;
+              setShowAiAnalysis(nextState);
+              if (nextState) {
+                fetchAIPrediction();
+                if (isFinished) fetchAISummary();
+              }
+            }}
+          >
+            <Ionicons name="sparkles" size={16} color={COLORS.primary} style={{ marginRight: 6 }} />
+            <Text style={localStyles.aiToggleText}>
+              {showAiAnalysis ? "ẨN PHÂN TÍCH AI ⚡" : "XEM DỰ ĐOÁN & PHÂN TÍCH BẰNG AI ⚡"}
+            </Text>
+            <Ionicons name={showAiAnalysis ? "chevron-up" : "chevron-down"} size={16} color={COLORS.primary} />
+          </TouchableOpacity>
+
+          {/* AI ANALYSIS CARD */}
+          {showAiAnalysis && (
+            <View style={localStyles.aiCard}>
+              <View style={localStyles.aiCardHeader}>
+                <Ionicons name="sparkles" size={18} color={COLORS.primary} />
+                <Text style={localStyles.aiCardTitle}>DỰ ĐOÁN & PHÂN TÍCH AI ESPORT</Text>
+              </View>
+
+              {loadingPrediction ? (
+                <View style={{ padding: 16, alignItems: 'center' }}>
+                  <ActivityIndicator color={COLORS.primary} size="small" />
+                  <Text style={localStyles.aiLoadingText}>AI đang phân tích dữ liệu...</Text>
+                </View>
+              ) : aiPrediction ? (
+                <View>
+                  <Text style={localStyles.winRateLabel}>TỶ LỆ THẮNG DỰ ĐOÁN (AI WIN-RATE)</Text>
+                  <View style={localStyles.barContainer}>
+                    <View style={[localStyles.barTeam1, { width: `${aiPrediction.team1_win_rate}%` }]}>
+                      <Text style={localStyles.barText}>{team1Code} {aiPrediction.team1_win_rate}%</Text>
+                    </View>
+                    <View style={[localStyles.barTeam2, { width: `${aiPrediction.team2_win_rate}%` }]}>
+                      <Text style={localStyles.barText}>{team2Code} {aiPrediction.team2_win_rate}%</Text>
+                    </View>
+                  </View>
+
+                  {aiPrediction.predicted_score && (
+                    <Text style={localStyles.predictedScoreText}>🎯 Dự đoán tỷ số: {aiPrediction.predicted_score}</Text>
+                  )}
+
+                  {aiPrediction.key_factors && aiPrediction.key_factors.length > 0 && (
+                    <View style={localStyles.factorsBox}>
+                      <Text style={localStyles.factorsTitle}>📌 Yếu tố quyết định:</Text>
+                      {aiPrediction.key_factors.map((factor, idx) => (
+                        <Text key={idx} style={localStyles.factorItem}>• {factor}</Text>
+                      ))}
+                    </View>
+                  )}
+
+                  <Text style={localStyles.analysisTitle}>📝 Phân tích chuyên sâu:</Text>
+                  <Text style={localStyles.analysisBody}>{aiPrediction.analysis}</Text>
+
+                  {aiPrediction.betting_tip && (
+                    <View style={localStyles.tipBox}>
+                      <Ionicons name="bulb" size={16} color={COLORS.warning} />
+                      <Text style={localStyles.tipText}>💡 Gợi ý cược: {aiPrediction.betting_tip}</Text>
+                    </View>
+                  )}
+                </View>
+              ) : null}
+
+              {/* Finished Match AI Summary */}
+              {isFinished && (
+                <View style={{ marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: COLORS.border }}>
+                  <Text style={localStyles.analysisTitle}>🔥 Tóm tắt trận đấu (AI Recap):</Text>
+                  {loadingSummary ? (
+                    <ActivityIndicator color={COLORS.primary} style={{ marginVertical: 8 }} />
+                  ) : aiSummary ? (
+                    <Text style={localStyles.analysisBody}>{aiSummary}</Text>
+                  ) : null}
+                </View>
+              )}
+            </View>
+          )}
 
           {isLoading ? (
             <ActivityIndicator color={COLORS.primary} style={{ marginTop: 40 }} />
@@ -239,13 +354,13 @@ export default function DetailScreen() {
             />
           ) : (
             <>
-              {/* LIVE / FINISHED GAME BREAKDOWN (Companion Hub) */}
+              {/* LIVE / FINISHED GAME BREAKDOWN */}
               <GameBreakdownSection games={games} match={match} />
 
               {/* MARKET SECTION */}
               <MarketSection match={match} markets={markets} />
 
-              {/* HEAD TO HEAD (Companion Hub) */}
+              {/* HEAD TO HEAD */}
               <HeadToHeadSection h2h={h2h} match={match} />
 
               {/* USER BET HISTORY SECTION */}
@@ -253,31 +368,148 @@ export default function DetailScreen() {
             </>
           )}
 
-        </ScrollView>
-        {/* PLACE BET BUTTON (Pinned to bottom) */}
-        <View style={styles.bottomFixedBox}>
           <TouchableOpacity
-            style={[
-              styles.submitButton,
-              bettingDisabled && { opacity: 0.5 }
-            ]}
+            style={[styles.submitButton, bettingDisabled && { opacity: 0.5 }]}
             onPress={handlePlaceABetPress}
             disabled={bettingDisabled}
-            accessibilityRole="button"
-            accessibilityLabel="Place a bet"
           >
             <Text style={styles.submitButtonText}>
-              {isFinished
-                ? "MATCH FINISHED"
-                : allMarketsClosed
-                  ? "MARKET CLOSED"
-                  : hasStarted
-                    ? "LIVE NOW"
-                    : "LEAVE A PREDICTION"}
+              {isFinished ? "MATCH FINISHED" : hasStarted ? "MATCH IN PROGRESS" : allMarketsClosed ? "BETTING CLOSED" : "PLACE A BET"}
             </Text>
           </TouchableOpacity>
-        </View>
+
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
+
+const localStyles = StyleSheet.create({
+  aiToggleBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#0A1014",
+    borderWidth: 1,
+    borderColor: "#00F5E1",
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16
+  },
+  aiToggleText: {
+    color: "#00F5E1",
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 12,
+    marginRight: 6
+  },
+  aiCard: {
+    backgroundColor: "#121A20",
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#00F5E1",
+    marginBottom: 16
+  },
+  aiCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12
+  },
+  aiCardTitle: {
+    color: "#00F5E1",
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 13,
+    marginLeft: 6
+  },
+  aiLoadingText: {
+    color: "#8A98A6",
+    fontFamily: "Manrope",
+    fontSize: 12,
+    marginTop: 8
+  },
+  winRateLabel: {
+    color: "#8A98A6",
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 11,
+    marginBottom: 6
+  },
+  barContainer: {
+    height: 24,
+    flexDirection: "row",
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#050708",
+    marginBottom: 10
+  },
+  barTeam1: {
+    backgroundColor: "#00F5E1",
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  barTeam2: {
+    backgroundColor: "#4CC9F0",
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  barText: {
+    color: "#050708",
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 11
+  },
+  predictedScoreText: {
+    color: "#FACC15",
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 13,
+    marginBottom: 10
+  },
+  factorsBox: {
+    backgroundColor: "#0B1014",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10
+  },
+  factorsTitle: {
+    color: "#D8E0E8",
+    fontFamily: "ManropeBold",
+    fontSize: 12,
+    marginBottom: 4
+  },
+  factorItem: {
+    color: "#8A98A6",
+    fontFamily: "Manrope",
+    fontSize: 12,
+    marginLeft: 4,
+    lineHeight: 18
+  },
+  analysisTitle: {
+    color: "#D8E0E8",
+    fontFamily: "ManropeBold",
+    fontSize: 12,
+    marginTop: 6,
+    marginBottom: 4
+  },
+  analysisBody: {
+    color: "#D8E0E8",
+    fontFamily: "Manrope",
+    fontSize: 13,
+    lineHeight: 20
+  },
+  tipBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(250, 204, 21, 0.1)",
+    borderWidth: 1,
+    borderColor: "#FACC15",
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 12
+  },
+  tipText: {
+    color: "#FACC15",
+    fontFamily: "ManropeBold",
+    fontSize: 12,
+    marginLeft: 6,
+    flex: 1
+  }
+});
