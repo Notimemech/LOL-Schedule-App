@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { NavigationContainer } from "@react-navigation/native";
 import { useFonts } from "expo-font";
+
 import HomeScreen from "./src/screens/home/HomeScreen";
 import ScheduleNavigation from "./src/navigation/ScheduleNavigation";
 import ProfileScreen from "./src/screens/profile/ProfileScreen";
@@ -26,6 +27,7 @@ import StandingsScreen from "./src/screens/standings/StandingsScreen";
 import ExploreScreen from "./src/screens/explore/ExploreScreen";
 import FloatingTabBar from "./src/components/ui/FloatingTabBar";
 import ToastHost from "./src/components/common/ToastNotification";
+import AIChatScreen from "./src/screens/ai/AIChatScreen";
 import { ThemeProvider } from "./src/context/ThemeContext";
 import { NotificationProvider } from "./src/context/NotificationContext";
 import { useTheme } from "./src/hooks/useTheme";
@@ -41,9 +43,10 @@ function TabNavigator() {
     >
       <BottomTab.Screen name="Home" component={HomeScreen} />
       <BottomTab.Screen name="Explore" component={ExploreScreen} />
-      {/* Schedule sits in the center as a raised, glowing action button */}
+      {/* Schedule sits in the center as a raised action button */}
       <BottomTab.Screen name="ScheduleStack" component={ScheduleNavigation} />
       <BottomTab.Screen name="Notifications" component={NotificationsScreen} />
+      <BottomTab.Screen name="AIChat" component={AIChatScreen} />
       <BottomTab.Screen name="Profile" component={ProfileScreen} />
     </BottomTab.Navigator>
   );

@@ -11,6 +11,7 @@ const ICONS = {
   Home: ["home", "home-outline"],
   Explore: ["trophy", "trophy-outline"],
   Notifications: ["notifications", "notifications-outline"],
+  AIChat: ["sparkles", "sparkles-outline"],
   Profile: ["person-circle-outline", "person-outline"],
 };
 
@@ -83,6 +84,7 @@ const FloatingTabBar = ({ state, descriptors, navigation }) => {
   );
 };
 
+<<<<<<< HEAD
 const makeStyles = (COLORS) =>
   StyleSheet.create({
     wrapper: {
@@ -127,5 +129,36 @@ const makeStyles = (COLORS) =>
       borderColor: "#000",
     },
   });
+=======
+const makeStyles = (COLORS) => StyleSheet.create({
+  wrapper: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  pill: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "90%",
+    height: 70,
+    borderRadius: 32,
+    backgroundColor: COLORS.tabBackground,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    shadowColor: COLORS.overlayHeavy,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
+    paddingHorizontal: 8,
+  },
+  item: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+});
+>>>>>>> origin/pthao
 
 export default FloatingTabBar;

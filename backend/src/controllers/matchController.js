@@ -11,6 +11,16 @@ export const getAllMatches = async (req, res, next) => {
     }
 };
 
+export const getMatchById = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const match = await matchService.getMatchById(id);
+        sendSuccess(res, 200, 'Match detail retrieved successfully', match);
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const createMatch = async (req, res, next) => {
     try {
         const match = await matchService.createMatch(req.body);
@@ -60,5 +70,3 @@ export const getFollowedMatches = async (req, res, next) => {
         next(error);
     }
 };
-
-

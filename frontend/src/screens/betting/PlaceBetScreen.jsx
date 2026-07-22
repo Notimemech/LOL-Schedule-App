@@ -26,7 +26,7 @@ export default function PlaceBetScreen() {
   const navigation = useNavigation();
   const { colors: COLORS } = useTheme();
   const styles = useThemedStyles(makeBettingStyles);
-  const { match, markets } = route.params || {};
+  const { match, markets, aiPrediction } = route.params || {};
 
   const [selectedMarketId, setSelectedMarketId] = useState(null);
   const [selectedOutcomeId, setSelectedOutcomeId] = useState(null);
@@ -81,11 +81,12 @@ export default function PlaceBetScreen() {
   };
 
   const loadData = useCallback(async () => {
-    if (match?.matchId) {
+    if (match?.matchId || match?.id) {
       setIsLoadingHistory(true);
       try {
+        const mId = match.matchId || match.id;
         const [hist, balance] = await Promise.all([
-          getBetHistory(match.matchId),
+          getBetHistory(mId),
           getWalletBalance()
         ]);
         setHistory(hist);
@@ -140,7 +141,8 @@ export default function PlaceBetScreen() {
 
     setIsSubmitting(true);
     try {
-      const result = await placeBet(match.matchId, selectedMarketId, selectedOutcomeId, wagerAmount);
+      const mId = match.matchId || match.id;
+      const result = await placeBet(mId, selectedMarketId, selectedOutcomeId, wagerAmount);
       let successMsg = result.message;
       if (result.cashback > 0) {
         successMsg += `\nVIP Bonus: You received ${formatMoney(result.cashback)} VND cashback!`;
@@ -258,9 +260,36 @@ export default function PlaceBetScreen() {
       <ContentHeader title="PLACE BET" showBack={true} refreshTrigger={balanceRefreshKey} />
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView contentContainerStyle={styles.bodyContent} showsVerticalScrollIndicator={false}>
+
+          {/* AI INSIGHT BANNER IF AVAILABLE */}
+          {aiPrediction && (
+            <View style={{
+              backgroundColor: COLORS.cardElevated,
+              borderColor: COLORS.borderActive,
+              borderWidth: 1,
+              borderRadius: 10,
+              padding: 12,
+              marginBottom: 16
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                <Ionicons name="sparkles" size={16} color={COLORS.primary} />
+                <Text style={{ color: COLORS.primary, fontFamily: 'SpaceGroteskBold', fontSize: 12, marginLeft: 6 }}>
+                  AI ANALYST SUGGESTION
+                </Text>
+              </View>
+              <Text style={{ color: COLORS.textSecondary, fontFamily: 'Manrope', fontSize: 12 }}>
+                Dự đoán: Tỷ lệ thắng {match.team1?.code || 'Team 1'} {aiPrediction.team1_win_rate}% - {aiPrediction.team2_win_rate}% {match.team2?.code || 'Team 2'}.
+              </Text>
+              {aiPrediction.betting_tip && (
+                <Text style={{ color: COLORS.warning, fontFamily: 'ManropeBold', fontSize: 12, marginTop: 4 }}>
+                  💡 {aiPrediction.betting_tip}
+                </Text>
+              )}
+            </View>
+          )}
 
           <Text style={styles.sectionTitle}>SELECT MARKET</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>

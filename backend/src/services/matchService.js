@@ -29,6 +29,14 @@ export const getAllMatches = async (query = {}) => {
     return { items, total, limit, offset };
 };
 
+export const getMatchById = async (matchId) => {
+    const match = await matchRepository.getMatchById(matchId);
+    if (!match) {
+        throw new AppError('Match not found', 404);
+    }
+    return match;
+};
+
 export const updateMatch = async (matchId, updateData) => {
     const { state, team1_score, team2_score, winner_team_id } = updateData;
     const match = await matchRepository.updateMatchState(
@@ -43,5 +51,3 @@ export const updateMatch = async (matchId, updateData) => {
     }
     return match;
 };
-
-

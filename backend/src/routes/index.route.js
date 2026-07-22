@@ -9,10 +9,10 @@ import { matchRouter } from './match.route.js';
 import { betRouter } from './bet.route.js';
 import { gameRouter } from './game.route.js';
 import { promotionRouter } from './promotion.route.js';
-
 import { vipRouter } from './vip.route.js';
 import { notificationRouter } from './notification.route.js';
 import { helpRouter } from './help.route.js';
+import { aiRouter } from './ai.route.js';
 
 export const router = express.Router();
 
@@ -20,11 +20,11 @@ router.get('/', (req, res) => {
   res.status(200).json({
     success: true,
     message: 'API is running',
-    endpoints: ['/api/auth', '/api/users', '/api/teams', '/api/matches', '/api/wallet']
+    endpoints: ['/api/auth', '/api/users', '/api/teams', '/api/matches', '/api/wallet', '/api/ai']
   });
 });
 
-router.use('/users',userRouter);
+router.use('/users', userRouter);
 router.use('/tournaments', tournamentRouter);
 router.use('/leagues', leagueRouter);
 router.use('/teams', teamRouter);
@@ -37,3 +37,4 @@ router.use('/promotions', promotionRouter);
 router.use('/vip', vipRouter);
 router.use('/notifications', notificationRouter);
 router.use('/help', helpRouter);
+router.use('/ai', aiRouter);
