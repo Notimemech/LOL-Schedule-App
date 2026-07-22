@@ -1,224 +1,389 @@
-export const dark_default = {
-  // BACKGROUND
-  background: "#050708",
-  backgroundSecondary: "#0B1014",
-  backgroundTertiary: "#10171D",
+// Theme tokens for the whole app.
+// Rules (agents/UI_GUIDELINE.md): components must ONLY consume these tokens,
+// never hardcoded hex values. Semantic colors (success/danger/live/vip) are
+// intentionally separate from brand colors so switching the brand accent
+// never changes the meaning of "won bet" or "live match".
 
-  // SURFACE
-  surface: "#0E1418",
-  card: "#121A20",
-  cardElevated: "#172128",
-  modal: "#1A242D",
+// Because RN needs rgba strings for translucent fills, glows are derived
+// from their source color here instead of being hardcoded per theme.
+export const hexToRgba = (hex, alpha) => {
+  const clean = hex.replace("#", "");
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+};
 
-  // PRIMARY
-  primary: "#00F5E1",
-  primaryLight: "#37FFF0",
-  primaryDark: "#00C7B8",
-
-  // SECONDARY
-  secondary: "#4CC9F0",
-  secondaryDark: "#2B8DB1",
-
-  // HEADER & TAB
-  header: "#050708",
-  headerBorder: "#172128",
-  tabBackground: "#0A1014",
-  tabBorder: "#172128",
-  tabActive: "#00F5E1",
-  tabInactive: "#6E7A85",
-
-  // DRAWER
-  drawerBackground: "#0A1014",
-  drawerItem: "#D8E0E8",
-  drawerItemActive: "#00F5E1",
-  drawerItemBackground: "#121A20",
-
-  // BORDER
-  border: "#1C2B33",
-  borderActive: "#00F5E1",
-  divider: "#172128",
-
-  // TEXT
-  text: "#FFFFFF",
-  textSecondary: "#D8E0E8",
-  textMuted: "#8A98A6",
-  textDisabled: "#5B6670",
-
-  // INPUT
-  inputBackground: "#121A20",
-  inputBorder: "#1C2B33",
-  inputBorderFocus: "#00F5E1",
-  inputPlaceholder: "#6E7A85",
-
-  // BUTTON
-  buttonPrimary: "#00F5E1",
-  buttonPrimaryText: "#050708",
-  buttonSecondary: "#172128",
-  buttonSecondaryText: "#FFFFFF",
-  buttonDanger: "#FF4D67",
-  buttonDangerText: "#FFFFFF",
-
-  // STATUS
-  success: "#00F5E1",
-  warning: "#FACC15",
-  danger: "#FF4D67",
-  info: "#3B82F6",
+// Semantic colors shared by every dark theme. Kept out of createDarkTheme's
+// arguments so a brand-accent change can never repaint win/loss states.
+const DARK_SEMANTIC = {
+  success: "#3DF58C",
+  warning: "#FFB020",
+  danger: "#FF3B5C",
+  info: "#4D8DFF",
 
   // MATCH & BETTING
-  live: "#00F5E1",
-  upcoming: "#3B82F6",
-  finished: "#6B7280",
-  suspended: "#FACC15",
-  oddsUp: "#00F5E1",
-  oddsDown: "#FF4D67",
-  payout: "#00F5E1",
-  loss: "#FF4D67",
+  live: "#FF2E88",
+  upcoming: "#4D8DFF",
+  finished: "#5B6680",
+  suspended: "#FFB020",
+  oddsUp: "#3DF58C",
+  oddsDown: "#FF3B5C",
+  payout: "#3DF58C",
+  loss: "#FF3B5C",
 
   // BADGES
-  badgeLiveBg: "rgba(0,245,225,0.15)",
-  badgeLiveText: "#00F5E1",
-  badgeWarningBg: "rgba(250,204,21,0.15)",
-  badgeWarningText: "#FACC15",
-  badgeDangerBg: "rgba(255,77,103,0.15)",
-  badgeDangerText: "#FF4D67",
+  badgeLiveBg: hexToRgba("#FF2E88", 0.15),
+  badgeLiveText: "#FF2E88",
+  badgeSuccessBg: hexToRgba("#3DF58C", 0.12),
+  badgeSuccessText: "#3DF58C",
+  badgeWarningBg: hexToRgba("#FFB020", 0.15),
+  badgeWarningText: "#FFB020",
+  badgeDangerBg: hexToRgba("#FF3B5C", 0.15),
+  badgeDangerText: "#FF3B5C",
+};
+
+const LIGHT_SEMANTIC = {
+  success: "#0E9F5D",
+  warning: "#B87700",
+  danger: "#D92645",
+  info: "#2563EB",
+
+  live: "#D91E70",
+  upcoming: "#2563EB",
+  finished: "#6B7280",
+  suspended: "#B87700",
+  oddsUp: "#0E9F5D",
+  oddsDown: "#D92645",
+  payout: "#0E9F5D",
+  loss: "#D92645",
+
+  badgeLiveBg: hexToRgba("#D91E70", 0.12),
+  badgeLiveText: "#D91E70",
+  badgeSuccessBg: hexToRgba("#0E9F5D", 0.12),
+  badgeSuccessText: "#0E9F5D",
+  badgeWarningBg: hexToRgba("#B87700", 0.12),
+  badgeWarningText: "#B87700",
+  badgeDangerBg: hexToRgba("#D92645", 0.12),
+  badgeDangerText: "#D92645",
+};
+
+// VIP tier colors live here (not per-theme) so BetHistorySection and
+// ProfileScreen share one source instead of duplicating gradient arrays.
+const VIP_GRADIENTS = {
+  "VIP 5": ["#FFD700", "#DAA520"],
+  "VIP 4": ["#FF6B2C", "#F5AF19"],
+  "VIP 3": ["#B44DFF", "#8B5CF6"],
+  "VIP 2": ["#00C6FF", "#0072FF"],
+  DEFAULT: ["#11998E", "#38EF7D"],
+};
+
+export const getVipColors = (vipName) =>
+  VIP_GRADIENTS[vipName] || VIP_GRADIENTS.DEFAULT;
+
+// Chassis = everything that is NOT the brand accent.
+// Navy-tinted blacks instead of neutral blacks: the blue undertone is what
+// reads as "tech/cyberpunk" instead of "generic dark mode".
+const DARK_CHASSIS = {
+  // Constant colors for content sitting on gradients (VIP cards, CTA buttons)
+  // — identical in every theme by design.
+  staticWhite: "#FFFFFF",
+  staticBlack: "#0A0A12",
+
+  // BACKGROUND
+  background: "#05060E",
+  backgroundSecondary: "#090C18",
+  backgroundTertiary: "#0E1322",
+
+  // SURFACE
+  surface: "#0B0F1E",
+  card: "#121A30",
+  cardElevated: "#182240",
+  modal: "#1A2545",
+
+  // HEADER & TAB
+  header: "#05060E",
+  headerBorder: "#182240",
+  tabBackground: "#090C18",
+  tabBorder: "#182240",
+  tabInactive: "#6B7694",
+
+  // DRAWER
+  drawerBackground: "#090C18",
+  drawerItem: "#B8C4E0",
+  drawerItemBackground: "#121A30",
+
+  // BORDER
+  border: "#1E2A4A",
+  divider: "#161F38",
+
+  // TEXT — ice-white with a blue tint to match the chassis
+  text: "#EAF0FF",
+  textSecondary: "#B8C4E0",
+  textMuted: "#8A93B2",
+  textDisabled: "#525C78",
+
+  // INPUT
+  inputBackground: "#121A30",
+  inputBorder: "#1E2A4A",
+  inputPlaceholder: "#6B7694",
+
+  // BUTTON (non-brand)
+  buttonSecondary: "#182240",
+  buttonSecondaryText: "#EAF0FF",
+  buttonDanger: "#FF3B5C",
+  buttonDangerText: "#FFFFFF",
 
   // EFFECTS
-  overlay: "rgba(0,0,0,0.7)",
-  overlayHeavy: "rgba(0,0,0,0.8)",
-  glow: "rgba(0,245,225,0.25)",
-  glowSoft: "rgba(0,245,225,0.15)",
-  gradientStart: "#050708",
-  gradientMiddle: "#0B1014",
-  gradientEnd: "#172128",
+  overlay: "rgba(2,4,12,0.7)",
+  overlayHeavy: "rgba(2,4,12,0.85)",
+  gradientStart: "#05060E",
+  gradientMiddle: "#090C18",
+  gradientEnd: "#182240",
 
   // SKELETON
-  skeletonBase: "#121A20",
-  skeletonHighlight: "#1C2B33",
+  skeletonBase: "#121A30",
+  skeletonHighlight: "#1E2A4A",
 
-  // VIP
+  // VIP (legacy flat tokens still referenced by older styles)
   vipGold: "#D4AF37",
   vipGoldLight: "#F6D878",
   vipGoldDark: "#A67C00",
-  vipGoldBg: "rgba(212,175,55,0.15)",
+  vipGoldBg: hexToRgba("#D4AF37", 0.15),
   vipSilver: "#C0C0C0",
   vipSilverLight: "#E5E7EB",
   vipSilverDark: "#8A8F98",
-  vipSilverBg: "rgba(192,192,192,0.12)",
+  vipSilverBg: hexToRgba("#C0C0C0", 0.12),
 };
 
-export const light_default = {
-  ...dark_default,
-  background: "#F9FAFB",
+const LIGHT_CHASSIS = {
+  staticWhite: "#FFFFFF",
+  staticBlack: "#0A0A12",
+
+  background: "#F7F8FC",
   backgroundSecondary: "#FFFFFF",
-  backgroundTertiary: "#F3F4F6",
+  backgroundTertiary: "#EEF1F8",
+
   surface: "#FFFFFF",
   card: "#FFFFFF",
   cardElevated: "#FFFFFF",
   modal: "#FFFFFF",
+
   header: "#FFFFFF",
-  headerBorder: "#E5E7EB",
+  headerBorder: "#E2E6F0",
   tabBackground: "#FFFFFF",
-  tabBorder: "#E5E7EB",
-  tabInactive: "#9CA3AF",
+  tabBorder: "#E2E6F0",
+  tabInactive: "#9AA3B8",
+
   drawerBackground: "#FFFFFF",
   drawerItem: "#4B5563",
-  drawerItemBackground: "#F3F4F6",
-  border: "#E5E7EB",
-  divider: "#E5E7EB",
-  text: "#111827",
-  textSecondary: "#374151",
-  textMuted: "#6B7280",
-  textDisabled: "#9CA3AF",
-  inputBackground: "#F9FAFB",
-  inputBorder: "#D1D5DB",
-  inputPlaceholder: "#9CA3AF",
-  buttonPrimaryText: "#FFFFFF",
-  buttonSecondary: "#F3F4F6",
-  buttonSecondaryText: "#111827",
+  drawerItemBackground: "#EEF1F8",
+
+  border: "#E2E6F0",
+  divider: "#E2E6F0",
+
+  text: "#101528",
+  textSecondary: "#3A4258",
+  textMuted: "#6B7490",
+  textDisabled: "#9AA3B8",
+
+  inputBackground: "#F7F8FC",
+  inputBorder: "#D3D9E8",
+  inputPlaceholder: "#9AA3B8",
+
+  buttonSecondary: "#EEF1F8",
+  buttonSecondaryText: "#101528",
+  buttonDanger: "#D92645",
+  buttonDangerText: "#FFFFFF",
+
+  overlay: "rgba(16,21,40,0.5)",
+  overlayHeavy: "rgba(16,21,40,0.65)",
   gradientStart: "#FFFFFF",
-  gradientMiddle: "#F9FAFB",
-  gradientEnd: "#F3F4F6",
-  skeletonBase: "#E5E7EB",
-  skeletonHighlight: "#F3F4F6",
-  primary: "#00B4A6",
-  primaryLight: "#00F5E1",
-  primaryDark: "#008C82",
-  tabActive: "#00B4A6",
-  drawerItemActive: "#00B4A6",
-  borderActive: "#00B4A6",
-  inputBorderFocus: "#00B4A6",
-  buttonPrimary: "#00B4A6",
-  success: "#00B4A6",
-  live: "#00B4A6",
-  oddsUp: "#00B4A6",
-  payout: "#00B4A6",
-  badgeLiveBg: "rgba(0,180,166,0.15)",
-  badgeLiveText: "#00B4A6",
-  glow: "rgba(0,180,166,0.25)",
-  glowSoft: "rgba(0,180,166,0.15)",
+  gradientMiddle: "#F7F8FC",
+  gradientEnd: "#EEF1F8",
+
+  skeletonBase: "#E2E6F0",
+  skeletonHighlight: "#EEF1F8",
+
+  vipGold: "#B8860B",
+  vipGoldLight: "#D4AF37",
+  vipGoldDark: "#8B6508",
+  vipGoldBg: hexToRgba("#B8860B", 0.12),
+  vipSilver: "#8A8F98",
+  vipSilverLight: "#C0C0C0",
+  vipSilverDark: "#6B7280",
+  vipSilverBg: hexToRgba("#8A8F98", 0.12),
 };
 
-const createDarkTheme = (primary, primaryLight, primaryDark) => ({
-  ...dark_default,
-  primary, primaryLight, primaryDark,
+// Accent = { primary triplet, secondary (hot counterpoint), violet depth }.
+// Glows are computed from their own source color — never hardcoded — which
+// fixes the old bug where every theme glowed purple.
+const buildAccent = ({ primary, primaryLight, primaryDark, secondary, secondaryDark, accent, accentDark, onPrimary }) => ({
+  primary,
+  primaryLight,
+  primaryDark,
+  secondary,
+  secondaryDark,
+  accent,
+  accentDark,
+
   tabActive: primary,
   drawerItemActive: primary,
   borderActive: primary,
   inputBorderFocus: primary,
   buttonPrimary: primary,
-  success: primary,
-  live: primary,
-  oddsUp: primary,
-  payout: primary,
-  badgeLiveBg: `rgba(191,0,255,0.15)`, // We will replace these manually
-  badgeLiveText: primary,
-  glow: `rgba(191,0,255,0.25)`,
-  glowSoft: `rgba(191,0,255,0.15)`,
+  buttonPrimaryText: onPrimary,
+
+  glow: hexToRgba(primary, 0.25),
+  glowSoft: hexToRgba(primary, 0.1),
+  glowSecondary: hexToRgba(secondary, 0.18),
+  glowAccent: hexToRgba(accent, 0.18),
 });
 
-const createLightTheme = (primary, primaryLight, primaryDark) => ({
-  ...light_default,
-  primary, primaryLight, primaryDark,
-  tabActive: primary,
-  drawerItemActive: primary,
-  borderActive: primary,
-  inputBorderFocus: primary,
-  buttonPrimary: primary,
-  success: primary,
-  live: primary,
-  oddsUp: primary,
-  payout: primary,
-  badgeLiveBg: `rgba(191,0,255,0.15)`,
-  badgeLiveText: primary,
-  glow: `rgba(191,0,255,0.25)`,
-  glowSoft: `rgba(191,0,255,0.15)`,
+const createDarkTheme = (accentConfig, bannerGradients) => ({
+  ...DARK_CHASSIS,
+  ...DARK_SEMANTIC,
+  ...buildAccent(accentConfig),
+  bannerGradients,
 });
 
-// PURPLE THEME
-export const dark_purple = createDarkTheme("#BF00FF", "#D84DFF", "#8C00BC");
-dark_purple.badgeLiveBg = "rgba(191,0,255,0.15)";
-dark_purple.glow = "rgba(191,0,255,0.25)";
-dark_purple.glowSoft = "rgba(191,0,255,0.15)";
+const createLightTheme = (accentConfig, bannerGradients) => ({
+  ...LIGHT_CHASSIS,
+  ...LIGHT_SEMANTIC,
+  ...buildAccent(accentConfig),
+  bannerGradients,
+});
 
-export const light_purple = createLightTheme("#9B00FF", "#BF00FF", "#7100BC");
-light_purple.badgeLiveBg = "rgba(155,0,255,0.15)";
-light_purple.glow = "rgba(155,0,255,0.25)";
-light_purple.glowSoft = "rgba(155,0,255,0.15)";
+// ============ CYBERPUNK (default) ============
+// Cold cyan brand × hot magenta counterpoint × violet depth.
+export const dark_cyberpunk = createDarkTheme(
+  {
+    primary: "#00F0FF",
+    primaryLight: "#5CF6FF",
+    primaryDark: "#00B8CC",
+    secondary: "#FF2E88",
+    secondaryDark: "#C21D66",
+    accent: "#8B5CF6",
+    accentDark: "#6D3FD4",
+    onPrimary: "#05060E",
+  },
+  [
+    ["#0E1E45", "#131A38", "#05060E"],
+    ["#2A1150", "#1C1440", "#05060E"],
+    ["#04303F", "#0A2436", "#05060E"],
+    ["#3A0F33", "#231238", "#05060E"],
+  ]
+);
 
-// YELLOW THEME
-export const dark_yellow = createDarkTheme("#FFD300", "#FFE24D", "#CCAA00");
-dark_yellow.badgeLiveBg = "rgba(255,211,0,0.15)";
-dark_yellow.glow = "rgba(255,211,0,0.25)";
-dark_yellow.glowSoft = "rgba(255,211,0,0.15)";
-dark_yellow.buttonPrimaryText = "#050708"; // keep dark text for yellow button
+export const light_cyberpunk = createLightTheme(
+  {
+    primary: "#0099A8",
+    primaryLight: "#00C4D6",
+    primaryDark: "#00707C",
+    secondary: "#D91E70",
+    secondaryDark: "#A8154F",
+    accent: "#7C3AED",
+    accentDark: "#5B21B6",
+    onPrimary: "#FFFFFF",
+  },
+  [
+    ["#DCE9FF", "#EAF0FF", "#F7F8FC"],
+    ["#EBDFFF", "#F1EAFF", "#F7F8FC"],
+    ["#D8F6FB", "#E8FAFD", "#F7F8FC"],
+    ["#FBDCEC", "#FDECF4", "#F7F8FC"],
+  ]
+);
 
-export const light_yellow = createLightTheme("#D4AF00", "#FFD300", "#997A00");
-light_yellow.badgeLiveBg = "rgba(212,175,0,0.15)";
-light_yellow.glow = "rgba(212,175,0,0.25)";
-light_yellow.glowSoft = "rgba(212,175,0,0.15)";
-light_yellow.buttonPrimaryText = "#FFFFFF";
+// ============ LEGACY TEAL ============
+export const dark_default = createDarkTheme(
+  {
+    primary: "#00F5E1",
+    primaryLight: "#37FFF0",
+    primaryDark: "#00C7B8",
+    secondary: "#FF2E88",
+    secondaryDark: "#C21D66",
+    accent: "#8B5CF6",
+    accentDark: "#6D3FD4",
+    onPrimary: "#05060E",
+  },
+  dark_cyberpunk.bannerGradients
+);
+
+export const light_default = createLightTheme(
+  {
+    primary: "#00B4A6",
+    primaryLight: "#00F5E1",
+    primaryDark: "#008C82",
+    secondary: "#D91E70",
+    secondaryDark: "#A8154F",
+    accent: "#7C3AED",
+    accentDark: "#5B21B6",
+    onPrimary: "#FFFFFF",
+  },
+  light_cyberpunk.bannerGradients
+);
+
+// ============ PURPLE ============
+export const dark_purple = createDarkTheme(
+  {
+    primary: "#BF00FF",
+    primaryLight: "#D84DFF",
+    primaryDark: "#8C00BC",
+    secondary: "#00F0FF",
+    secondaryDark: "#00B8CC",
+    accent: "#FF2E88",
+    accentDark: "#C21D66",
+    onPrimary: "#FFFFFF",
+  },
+  dark_cyberpunk.bannerGradients
+);
+
+export const light_purple = createLightTheme(
+  {
+    primary: "#9B00FF",
+    primaryLight: "#BF00FF",
+    primaryDark: "#7100BC",
+    secondary: "#0099A8",
+    secondaryDark: "#00707C",
+    accent: "#D91E70",
+    accentDark: "#A8154F",
+    onPrimary: "#FFFFFF",
+  },
+  light_cyberpunk.bannerGradients
+);
+
+// ============ YELLOW ============
+export const dark_yellow = createDarkTheme(
+  {
+    primary: "#FFD300",
+    primaryLight: "#FFE24D",
+    primaryDark: "#CCAA00",
+    secondary: "#FF2E88",
+    secondaryDark: "#C21D66",
+    accent: "#8B5CF6",
+    accentDark: "#6D3FD4",
+    onPrimary: "#05060E",
+  },
+  dark_cyberpunk.bannerGradients
+);
+
+export const light_yellow = createLightTheme(
+  {
+    primary: "#D4AF00",
+    primaryLight: "#FFD300",
+    primaryDark: "#997A00",
+    secondary: "#D91E70",
+    secondaryDark: "#A8154F",
+    accent: "#7C3AED",
+    accentDark: "#5B21B6",
+    onPrimary: "#FFFFFF",
+  },
+  light_cyberpunk.bannerGradients
+);
 
 export const allThemes = {
+  dark_cyberpunk,
+  light_cyberpunk,
   dark_default,
   light_default,
   dark_purple,
@@ -226,3 +391,5 @@ export const allThemes = {
   dark_yellow,
   light_yellow,
 };
+
+export const DEFAULT_THEME_KEY = "dark_cyberpunk";

@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import COLORS from "../../styles/colors";
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
 import { formatMoney } from "../../utils/format";
 
 /**
@@ -14,36 +14,43 @@ const QuickAmountSelector = ({
   amounts,
   selectedAmount,
   onSelect,
-  activeColor = COLORS.primary,
+  activeColor,
   maxAmount = Infinity,
-}) => (
-  <View style={styles.container}>
-    {amounts.map((val) => {
-      const formatted = formatMoney(val);
-      const isActive = selectedAmount === formatted;
-      const isDisabled = val > maxAmount;
-      return (
-        <TouchableOpacity
-          key={val}
-          style={[
-            styles.btn, 
-            isActive && { borderColor: activeColor, backgroundColor: `${activeColor}22` },
-            isDisabled && { opacity: 0.3, borderColor: COLORS.border }
-          ]}
-          onPress={() => onSelect(val)}
-          disabled={isDisabled}
-          accessibilityLabel={`Select ${formatted} VNĐ`}
-        >
-          <Text style={[styles.text, isActive && { color: activeColor }]}>
-            {formatted}
-          </Text>
-        </TouchableOpacity>
-      );
-    })}
-  </View>
-);
+}) => {
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const active = activeColor || COLORS.primary;
 
-const styles = StyleSheet.create({
+  return (
+    <View style={styles.container}>
+      {amounts.map((val) => {
+        const formatted = formatMoney(val);
+        const isActive = selectedAmount === formatted;
+        const isDisabled = val > maxAmount;
+        return (
+          <TouchableOpacity
+            key={val}
+            style={[
+              styles.btn,
+              isActive && { borderColor: active, backgroundColor: `${active}22` },
+              isDisabled && { opacity: 0.3, borderColor: COLORS.border }
+            ]}
+            onPress={() => onSelect(val)}
+            disabled={isDisabled}
+            accessibilityLabel={`Select ${formatted} VND`}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.text, isActive && { color: active }]}>
+              {formatted}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+};
+
+const makeStyles = (COLORS) => StyleSheet.create({
   container: {
     flexDirection: "row",
     flexWrap: "wrap",

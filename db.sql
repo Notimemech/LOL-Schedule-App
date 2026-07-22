@@ -159,6 +159,45 @@ CREATE TABLE Teams (
 );
 
 -- =====================
+-- 5b. TEAM FOLLOWS (Companion Hub: user theo dõi đội)
+-- =====================
+CREATE TABLE TeamFollows (
+    user_id    bigint NOT NULL,
+    team_id    bigint NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now(),
+
+    PRIMARY KEY (user_id, team_id),
+
+    CONSTRAINT fk_follow_user
+        FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
+
+    CONSTRAINT fk_follow_team
+        FOREIGN KEY (team_id) REFERENCES Teams(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_team_follows_user ON TeamFollows(user_id);
+CREATE INDEX idx_team_follows_team ON TeamFollows(team_id);
+
+-- =====================
+-- 5c. PLAYERS (tuyển thủ của từng đội)
+-- =====================
+CREATE TABLE Players (
+    id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    team_id       bigint NOT NULL,
+    in_game_name  text   NOT NULL,
+    real_name     text,
+    role          text   NOT NULL,   -- LOL: TOP/JUNGLE/MID/ADC/SUPPORT; Dota: CARRY/MID/OFFLANE/SOFT SUPPORT/HARD SUPPORT
+    country       text,
+    created_at    timestamptz NOT NULL DEFAULT now(),
+
+    CONSTRAINT fk_player_team
+        FOREIGN KEY (team_id) REFERENCES Teams(id) ON DELETE CASCADE,
+    CONSTRAINT uq_player_team_name UNIQUE (team_id, in_game_name)
+);
+
+CREATE INDEX idx_players_team ON Players(team_id);
+
+-- =====================
 -- 6. MATCHES
 -- =====================
 CREATE TABLE Matches (
@@ -217,6 +256,8 @@ CREATE TABLE Games (
     team2_id        bigint      NOT NULL,
     team1_kill      int         NOT NULL DEFAULT 0 CHECK (team1_kill >= 0),
     team2_kill      int         NOT NULL DEFAULT 0 CHECK (team2_kill >= 0),
+    team1_gold      int         NOT NULL DEFAULT 0 CHECK (team1_gold >= 0), -- tổng vàng đội 1
+    team2_gold      int         NOT NULL DEFAULT 0 CHECK (team2_gold >= 0), -- tổng vàng đội 2
     first_blood_team_id bigint,                    -- đội lấy first blood
     winner_team_id      bigint,                    -- đội thắng ván
     state           states_enum NOT NULL DEFAULT 'upcoming',
@@ -254,6 +295,46 @@ CREATE TABLE Games (
 );
 
 CREATE INDEX idx_games_match ON Games(match_id);
+
+-- =====================
+-- 7b. GAME PLAYER STATS (chỉ số từng tuyển thủ trong 1 ván, gồm MVP)
+-- =====================
+CREATE TABLE GamePlayerStats (
+    id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    game_id     bigint NOT NULL,
+    player_id   bigint NOT NULL,
+    team_id     bigint NOT NULL,
+    champion    text,                               -- tướng/hero sử dụng
+    kills       int NOT NULL DEFAULT 0 CHECK (kills >= 0),
+    deaths      int NOT NULL DEFAULT 0 CHECK (deaths >= 0),
+    assists     int NOT NULL DEFAULT 0 CHECK (assists >= 0),
+    is_mvp      boolean NOT NULL DEFAULT false,
+
+    CONSTRAINT fk_gps_game
+        FOREIGN KEY (game_id) REFERENCES Games(id) ON DELETE CASCADE,
+    CONSTRAINT fk_gps_player
+        FOREIGN KEY (player_id) REFERENCES Players(id) ON DELETE CASCADE,
+    CONSTRAINT uq_gps_game_player UNIQUE (game_id, player_id)
+);
+
+CREATE INDEX idx_gps_game ON GamePlayerStats(game_id);
+
+-- =====================
+-- 7c. GAME EVENTS (tình huống key: first blood, ăn trụ, mục tiêu lớn...)
+-- =====================
+CREATE TABLE GameEvents (
+    id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    game_id     bigint NOT NULL,
+    event_type  text   NOT NULL,   -- FIRST_BLOOD / TOWER / DRAGON / HERALD / BARON / ELDER / ROSHAN / TORMENTOR / GAME_END
+    team_id     bigint,            -- đội thực hiện
+    game_minute int,
+    description text,
+
+    CONSTRAINT fk_ge_game
+        FOREIGN KEY (game_id) REFERENCES Games(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_ge_game ON GameEvents(game_id, game_minute);
 
 -- =====================
 -- 8. WALLETS
@@ -843,5 +924,3 @@ CREATE TABLE IF NOT EXISTS Notifications (
 );
 
 COMMIT;
-
-select * from wallets

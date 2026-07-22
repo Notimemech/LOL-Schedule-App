@@ -1,9 +1,11 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import COLORS from '../../styles/colors';
+import { useTheme, useThemedStyles } from '../../hooks/useTheme';
 import { formatMoney } from '../../utils/bettingUtils';
 
 const HistoryBlock = ({ bet, onCancel }) => {
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const isAccepted = bet.status === "Accepted";
   const isCancelled = bet.status === "Cancelled";
 
@@ -45,7 +47,7 @@ const HistoryBlock = ({ bet, onCancel }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS) => StyleSheet.create({
   card: {
     backgroundColor: COLORS.card,
     borderRadius: 8,

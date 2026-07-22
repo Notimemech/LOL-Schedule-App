@@ -1,7 +1,6 @@
 import { StyleSheet } from "react-native";
-import COLORS from "./colors";
 
-export const historyStyles = StyleSheet.create({
+export const makeHistoryStyles = (COLORS) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.backgroundSecondary,

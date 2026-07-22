@@ -1,8 +1,8 @@
 import React from "react";
 import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import COLORS from "../../styles/colors";
-import { detailStyles as styles } from "../../styles/matches.styles";
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
+import { makeDetailStyles } from "../../styles/matches.styles";
 import { formatMarketName } from "../../utils/format";
 import SectionHeader from "../../components/ui/SectionHeader";
 import StatusBadge from "../../components/ui/StatusBadge";
@@ -13,6 +13,8 @@ import StatusBadge from "../../components/ui/StatusBadge";
  */
 const MarketSection = ({ match, markets }) => {
   const navigation = useNavigation();
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeDetailStyles);
   const isMatchFinished = match.state === "finished";
 
   const getOutcomeLabel = (odd, market) => {
@@ -67,15 +69,12 @@ const MarketSection = ({ match, markets }) => {
           style={[
             styles.oddBox, 
             !isMainMarket && styles.oddBoxSecondary,
-            isSettled && isWinner && { borderColor: COLORS.success, backgroundColor: 'rgba(0, 245, 225, 0.05)' },
+            isSettled && isWinner && { borderColor: COLORS.success, backgroundColor: COLORS.badgeSuccessBg },
             isSettled && isLoser && { opacity: 0.5 }
           ]}
           onPress={() => {
             if (!isSettled && !isClosed) {
-              navigation.navigate("PlaceBetStack", { 
-                screen: "PlaceBet", 
-                params: { match, markets } 
-              });
+              navigation.navigate("PlaceBet", { match, markets });
             }
           }}
           disabled={isSettled || isClosed}

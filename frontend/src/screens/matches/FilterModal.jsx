@@ -1,8 +1,8 @@
 import React from "react";
 import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import COLORS from "../../styles/colors";
-import { scheduleStyles as styles } from "../../styles/matches.styles";
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
+import { makeScheduleStyles } from "../../styles/matches.styles";
 
 /**
  * Filter Modal used in ScheduleScreen.
@@ -17,6 +17,8 @@ const FilterModal = ({
   availableLeagues,
   availableTournaments,
 }) => {
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeScheduleStyles);
   const toggleFilter = (type, value) => {
     setTempFilters(prev => ({
       ...prev,

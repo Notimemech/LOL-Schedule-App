@@ -13,15 +13,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import FloatBox from "../../components/common/FloatBox";
-import COLORS from "../../styles/colors";
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
+import { getVipColors } from "../../styles/themes";
+import { makeProfileStyles } from "../../styles/profile.styles";
 import { Ionicons } from "@expo/vector-icons";
 import Icon from "react-native-vector-icons/FontAwesome6";
-import style from "../../styles/profile.styles";
 import { formatMoney } from "../../utils/format";
 import CustomAlert from "../../components/common/CustomAlert";
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
+  const { colors: COLORS } = useTheme();
+  const style = useThemedStyles(makeProfileStyles);
 
   // Định nghĩa các nút chức năng và màn hình tương ứng
   const mainActivities = [
@@ -210,18 +213,12 @@ const ProfileScreen = () => {
                 {vipStatus && vipStatus.vip_tier_id && (
                   <Animated.View style={{ transform: [{ scale: scaleAnim }], alignSelf: 'flex-start', marginTop: 5 }}>
                     <LinearGradient
-                      colors={
-                        vipStatus.vip_name === 'VIP 5' ? ['#FFD700', '#DAA520'] :
-                          vipStatus.vip_name === 'VIP 4' ? ['#f12711', '#f5af19'] :
-                            vipStatus.vip_name === 'VIP 3' ? ['#DA22FF', '#9733EE'] :
-                              vipStatus.vip_name === 'VIP 2' ? ['#00c6ff', '#0072ff'] :
-                                ['#11998e', '#38ef7d']
-                      }
+                      colors={getVipColors(vipStatus.vip_name)}
                       start={[0, 0]} end={[1, 1]}
-                      style={{ paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}
+                      style={style.vipPill}
                     >
-                      <Icon name="crown" size={14} color="#FFF" />
-                      <Text style={{ color: '#FFF', fontSize: 13, fontWeight: 'bold', marginLeft: 5 }}>
+                      <Icon name="crown" size={14} color={COLORS.buttonDangerText} />
+                      <Text style={style.vipPillText}>
                         {vipStatus.vip_name}
                       </Text>
                     </LinearGradient>
@@ -245,12 +242,12 @@ const ProfileScreen = () => {
           <TouchableOpacity onPress={() => navigation.navigate("VipScreen")} activeOpacity={0.8}>
             <Animated.View style={{ transform: [{ scale: scaleAnim }], marginHorizontal: 20, marginTop: 15 }}>
               <LinearGradient
-                colors={['#f12711', '#f5af19']}
+                colors={getVipColors('VIP 4')}
                 start={[0, 0]} end={[1, 1]}
-                style={{ padding: 15, borderRadius: 12, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', shadowColor: '#f5af19', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 5, elevation: 5 }}
+                style={style.vipUpsell}
               >
-                <Icon name="crown" size={20} color="#FFF" style={{ marginRight: 10 }} />
-                <Text style={{ color: '#FFF', fontSize: 18, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1 }}>Up to VIP</Text>
+                <Icon name="crown" size={20} color={COLORS.buttonDangerText} style={{ marginRight: 10 }} />
+                <Text style={style.vipUpsellText}>Up to VIP</Text>
               </LinearGradient>
             </Animated.View>
           </TouchableOpacity>
@@ -317,7 +314,7 @@ const ProfileScreen = () => {
           onPress={handleLogout}
           activeOpacity={0.8}
         >
-          <Icon name="right-from-bracket" size={20} color="#fff" style={{ marginRight: 10 }} />
+          <Icon name="right-from-bracket" size={20} color={COLORS.buttonDangerText} style={{ marginRight: 10 }} />
           <Text style={style.logoutText}>Logout</Text>
         </TouchableOpacity>
 

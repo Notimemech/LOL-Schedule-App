@@ -16,11 +16,11 @@ import { useNavigation } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from "react-native-vector-icons/FontAwesome6";
-import COLORS from "../../styles/colors";
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
 import api from "../../services/api";
 import ContentHeader from "../../components/common/ContentHeader";
 import TransactionItem from "../../components/wallet/TransactionItem";
-import { historyStyles as styles } from "../../styles/history.styles";
+import { makeHistoryStyles } from "../../styles/history.styles";
 import { formatMoney } from "../../utils/format";
 
 const TABS = [
@@ -31,6 +31,8 @@ const TABS = [
 ];
 
 const HistoryScreen = () => {
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeHistoryStyles);
   const navigation = useNavigation();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -2,11 +2,19 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 
+// Backend host resolution, in priority order:
+// 1. EXPO_PUBLIC_API_URL (set in frontend/.env) — explicit override, use when
+//    the backend runs on a different machine than Metro.
+// 2. Expo hostUri — the machine Metro runs on. NOTE: Expo computes this once
+//    at `expo start`; if the computer changes network, restart Expo or the
+//    app will call a stale IP and every request times out.
+// 3. localhost — emulator fallback.
 const host =
   Constants.expoConfig?.hostUri?.split(':')[0] ??
   'localhost';
 
-export const API_BASE_URL = `http://${host}:9999/api`;
+export const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_URL ?? `http://${host}:9999/api`;
 // Create an Axios instance with default configurations
 const api = axios.create({
   // Use your computer's local IP address if running on a physical device

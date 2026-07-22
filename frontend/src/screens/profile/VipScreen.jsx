@@ -5,10 +5,12 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from "expo-linear-gradient";
 import api from '../../services/api';
-import COLORS from '../../styles/colors';
+import { useTheme } from '../../hooks/useTheme';
+import { getVipColors } from '../../styles/themes';
 import CustomAlert from '../../components/common/CustomAlert';
 
 const VipScreen = ({ navigation }) => {
+  const { colors: COLORS } = useTheme();
   const [tiers, setTiers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState(null);
@@ -139,15 +141,8 @@ const VipScreen = ({ navigation }) => {
     );
   };
 
-  const getTierColors = (name) => {
-    switch (name) {
-      case 'VIP 5': return ['#FFD700', '#DAA520']; // Vàng gold
-      case 'VIP 4': return ['#f12711', '#f5af19'];
-      case 'VIP 3': return ['#DA22FF', '#9733EE'];
-      case 'VIP 2': return ['#00c6ff', '#0072ff'];
-      default: return ['#11998e', '#38ef7d'];
-    }
-  };
+  // Shared VIP palette — same source as profile & bet history badges.
+  const getTierColors = (name) => getVipColors(name);
 
   const styles = StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: COLORS.background },
@@ -189,8 +184,8 @@ const VipScreen = ({ navigation }) => {
                 <Text style={styles.statusText}>Expires on: {new Date(status.vip_expires_at).toLocaleDateString('en-US')}</Text>
                 
                 {status.is_vip_auto_renew ? (
-                  <TouchableOpacity style={{ marginTop: 10, padding: 10, backgroundColor: 'rgba(255,50,50,0.2)', borderRadius: 8, alignItems: 'center', borderWidth: 1, borderColor: '#ff5e62' }} onPress={handleCancelRenew}>
-                    <Text style={{ color: '#ff5e62', fontWeight: 'bold' }}>Cancel Auto-Renewal</Text>
+                  <TouchableOpacity style={{ marginTop: 10, padding: 10, backgroundColor: COLORS.badgeDangerBg, borderRadius: 8, alignItems: 'center', borderWidth: 1, borderColor: COLORS.danger }} onPress={handleCancelRenew}>
+                    <Text style={{ color: COLORS.danger, fontWeight: 'bold' }}>Cancel Auto-Renewal</Text>
                   </TouchableOpacity>
                 ) : (
                   <Text style={{ color: COLORS.textMuted, marginTop: 10, fontStyle: 'italic' }}>Auto-renewal is disabled.</Text>
@@ -218,39 +213,39 @@ const VipScreen = ({ navigation }) => {
                   start={[0, 0]} end={[1, 1]} 
                   style={{ padding: 2, borderRadius: 18 }}
                 >
-                  <View style={{ backgroundColor: '#111', padding: 20, borderRadius: 16 }}>
+                  <View style={{ backgroundColor: COLORS.staticBlack, padding: 20, borderRadius: 16 }}>
                     <View style={styles.tierHeader}>
                       <Text style={[styles.tierName, { color: getTierColors(tier.name)[0] }]}>{tier.name}</Text>
-                      <Text style={[styles.tierPrice, { color: '#FFF' }]}>{Number(tier.price_per_month).toLocaleString('en-US')} VND/m</Text>
+                      <Text style={[styles.tierPrice, { color: COLORS.staticWhite }]}>{Number(tier.price_per_month).toLocaleString('en-US')} VND/m</Text>
                     </View>
                     
                     <View style={styles.tierBenefit}>
-                      <Icon name="gift-outline" size={22} color="#FFF" />
-                      <Text style={[styles.benefitText, { color: '#FFF' }]}>Get {tier.deposit_bonus_percent}% bonus on next deposit</Text>
+                      <Icon name="gift-outline" size={22} color={COLORS.staticWhite} />
+                      <Text style={[styles.benefitText, { color: COLORS.staticWhite }]}>Get {tier.deposit_bonus_percent}% bonus on next deposit</Text>
                     </View>
                     
                     <View style={styles.tierBenefit}>
-                      <Icon name="cash-refund" size={22} color="#FFF" />
-                      <Text style={[styles.benefitText, { color: '#FFF' }]}>{tier.bet_cashback_percent}% cashback on bets > {Number(tier.min_bet_for_cashback).toLocaleString('en-US')} VND</Text>
+                      <Icon name="cash-refund" size={22} color={COLORS.staticWhite} />
+                      <Text style={[styles.benefitText, { color: COLORS.staticWhite }]}>{tier.bet_cashback_percent}% cashback on bets > {Number(tier.min_bet_for_cashback).toLocaleString('en-US')} VND</Text>
                     </View>
 
                     <View style={styles.tierBenefit}>
                       <Icon name="shield-star-outline" size={22} color={getTierColors(tier.name)[0]} />
-                      <Text style={[styles.benefitText, { color: '#FFF' }]}>Receive Exclusive Badge:</Text>
+                      <Text style={[styles.benefitText, { color: COLORS.staticWhite }]}>Receive Exclusive Badge:</Text>
                       <LinearGradient
                           colors={getTierColors(tier.name)}
                           start={[0, 0]} end={[1, 1]}
                           style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}
                       >
-                          <Icon name="crown" size={12} color="#FFF" />
-                          <Text style={{ color: '#FFF', fontSize: 11, fontWeight: 'bold', marginLeft: 3 }}>
+                          <Icon name="crown" size={12} color={COLORS.staticWhite} />
+                          <Text style={{ color: COLORS.staticWhite, fontSize: 11, fontWeight: 'bold', marginLeft: 3 }}>
                             {tier.name}
                           </Text>
                       </LinearGradient>
                     </View>
 
                     <TouchableOpacity style={[styles.buyBtn, { backgroundColor: getTierColors(tier.name)[0] }]} onPress={() => handleBuy(tier)}>
-                      <Text style={[styles.buyBtnText, { color: '#000' }]}>Up to VIP</Text>
+                      <Text style={[styles.buyBtnText, { color: COLORS.staticBlack }]}>Up to VIP</Text>
                     </TouchableOpacity>
                   </View>
                 </LinearGradient>

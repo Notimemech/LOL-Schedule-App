@@ -1,7 +1,6 @@
 import { StyleSheet } from "react-native";
-import COLORS from "./colors";
 
-export const contentHeaderStyles = StyleSheet.create({
+export const makeContentHeaderStyles = (COLORS) => StyleSheet.create({
   header: {
     backgroundColor: COLORS.backgroundSecondary,
     height: 70,
@@ -79,7 +78,7 @@ export const contentHeaderStyles = StyleSheet.create({
   },
 });
 
-export const homeHeaderStyles = StyleSheet.create({
+export const makeHomeHeaderStyles = (COLORS) => StyleSheet.create({
   header: {
     backgroundColor: COLORS.backgroundSecondary,
     height: 70, 
@@ -153,7 +152,7 @@ export const homeHeaderStyles = StyleSheet.create({
   },
 });
 
-export const floatBoxStyles = StyleSheet.create({
+export const makeFloatBoxStyles = (COLORS) => StyleSheet.create({
   box: {
     backgroundColor: COLORS.backgroundTertiary,
     width: "100%",

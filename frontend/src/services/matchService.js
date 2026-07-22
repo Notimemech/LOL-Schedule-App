@@ -10,6 +10,7 @@ export const getMatches = async () => {
         matchType: match.match_type_name,
         leagueName: match.league_name,
         tournamentName: match.tournament_name,
+        tournamentId: match.tournament_id,
         blockName: match.block_name, 
         startTime: match.scheduled_at,
         team1: {
@@ -32,6 +33,9 @@ export const getMatches = async () => {
         state: match.state,
         marketStatus: match.market_status,       // 'open' | 'closed' | 'settled' | null
         marketClosesAt: match.market_closes_at,  // ISO timestamp
+        // Real odds from backend (null when no market/odds exist yet).
+        team1Odd: match.team1_odd ? Number(match.team1_odd) : null,
+        team2Odd: match.team2_odd ? Number(match.team2_odd) : null,
       }));
     }
     return [];
@@ -49,4 +53,10 @@ export const getMatchGames = async (matchId) => {
     console.error('Failed to get match games:', error);
     throw error;
   }
+};
+
+// Full single-game detail: lineups + per-player stats, MVP, key events, gold.
+export const getGameDetail = async (gameId) => {
+  const response = await api.get(`/games/${gameId}/detail`);
+  return response.success && response.data ? response.data : null;
 };

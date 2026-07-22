@@ -11,12 +11,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import authStyles from '../../styles/auth.styles';
+import { makeAuthStyles } from '../../styles/auth.styles';
+import { useTheme, useThemedStyles } from '../../hooks/useTheme';
 import { registerUser, loginUser } from '../../services/authService';
 import CustomAlert from '../../components/common/CustomAlert';
 
 const SignInScreen = () => {
   const navigation = useNavigation();
+  const { colors: COLORS } = useTheme();
+  const authStyles = useThemedStyles(makeAuthStyles);
   const [form, setForm] = useState({
     username: '',
     email: '',
@@ -128,7 +131,7 @@ const SignInScreen = () => {
                 <TextInput
                   style={authStyles.input}
                   placeholder="Enter username"
-                  placeholderTextColor="#6E7A85"
+                  placeholderTextColor={COLORS.inputPlaceholder}
                   value={form.username}
                   onChangeText={(value) => handleChange('username', value)}
                 />
@@ -139,7 +142,7 @@ const SignInScreen = () => {
             <TextInput
               style={authStyles.input}
               placeholder="Enter email"
-              placeholderTextColor="#6E7A85"
+              placeholderTextColor={COLORS.inputPlaceholder}
               keyboardType="email-address"
               autoCapitalize="none"
               value={form.email}
@@ -152,7 +155,7 @@ const SignInScreen = () => {
                 <TextInput
                   style={authStyles.input}
                   placeholder="Enter phone"
-                  placeholderTextColor="#6E7A85"
+                  placeholderTextColor={COLORS.inputPlaceholder}
                   keyboardType="phone-pad"
                   value={form.phone}
                   onChangeText={(value) => handleChange('phone', value)}
@@ -164,7 +167,7 @@ const SignInScreen = () => {
             <TextInput
               style={authStyles.input}
               placeholder="Enter password"
-              placeholderTextColor="#6E7A85"
+              placeholderTextColor={COLORS.inputPlaceholder}
               secureTextEntry
               value={form.password}
               onChangeText={(value) => handleChange('password', value)}

@@ -14,7 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import COLORS from "../../styles/colors";
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
 import { getAllPromotions } from "../../services/promotionService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -24,6 +24,8 @@ const { width } = Dimensions.get("window");
 // Animated promo card with entrance animation
 // ─────────────────────────────────────────────────────────────
 function PromoCard({ item, index, onPress }) {
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const slideAnim = useRef(new Animated.Value(60)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.95)).current;
@@ -77,18 +79,15 @@ function PromoCard({ item, index, onPress }) {
     ]).start();
   }, []);
 
-  const CARD_GRADIENTS = [
-    ["#0f3460", "#16213e", "#1a1a2e"],
-    ["#1a0533", "#2d1b69", "#1a1a2e"],
-    ["#002d3d", "#004d6e", "#1a1a2e"],
-    ["#1a2e00", "#2d4d00", "#1a1a2e"],
-  ];
+  // Card art direction comes from theme tokens so promo cards restyle
+  // together with the rest of the app.
+  const CARD_GRADIENTS = COLORS.bannerGradients;
 
   const ACCENT_COLORS = [
-    ["#00d4aa", "#00a8ff"],
-    ["#a855f7", "#ec4899"],
-    ["#f97316", "#facc15"],
-    ["#22d3ee", "#6366f1"],
+    [COLORS.primary, COLORS.info],
+    [COLORS.accent, COLORS.secondary],
+    [COLORS.warning, COLORS.vipGoldLight],
+    [COLORS.primaryLight, COLORS.accent],
   ];
 
   const gradientColors = CARD_GRADIENTS[index % CARD_GRADIENTS.length];
@@ -125,7 +124,7 @@ function PromoCard({ item, index, onPress }) {
         {/* Top row: badge + status + countdown */}
         <View style={styles.cardTopRow}>
           <LinearGradient
-            colors={isUsed ? ["#374151", "#4b5563"] : accentColors}
+            colors={isUsed ? [COLORS.buttonSecondary, COLORS.cardElevated] : accentColors}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.badge}
@@ -138,14 +137,14 @@ function PromoCard({ item, index, onPress }) {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             {timeLeft && !isUsed && (
               <View style={styles.countdownChip}>
-                <Ionicons name="time-outline" size={14} color="#facc15" />
+                <Ionicons name="time-outline" size={14} color={COLORS.warning} />
                 <Text style={styles.countdownText}>{timeLeft}</Text>
               </View>
             )}
             
             {isUsed && (
               <View style={styles.usedChip}>
-                <Ionicons name="checkmark-circle" size={14} color="#6b7280" />
+                <Ionicons name="checkmark-circle" size={14} color={COLORS.textMuted} />
                 <Text style={styles.usedChipText}>Used</Text>
               </View>
             )}
@@ -190,7 +189,7 @@ function PromoCard({ item, index, onPress }) {
         {/* Max bonus info */}
         {maxBonus > 0 && !isUsed && (
           <View style={styles.maxBonusRow}>
-            <Ionicons name="information-circle-outline" size={14} color="#6b7280" />
+            <Ionicons name="information-circle-outline" size={14} color={COLORS.textMuted} />
             <Text style={styles.maxBonusText}>
               Max bonus: {Number(maxBonus).toLocaleString("vi-VN")}đ
             </Text>
@@ -211,13 +210,13 @@ function PromoCard({ item, index, onPress }) {
               end={{ x: 1, y: 0 }}
               style={styles.ctaBtnGradient}
             >
-              <Ionicons name="flash" size={18} color="#000" style={{ marginRight: 6 }} />
+              <Ionicons name="flash" size={18} color={COLORS.background} style={{ marginRight: 6 }} />
               <Text style={styles.ctaBtnText}>{item.button_text || "CLAIM NOW"}</Text>
             </LinearGradient>
           ) : (
             <View style={styles.ctaBtnGradient}>
-              <Ionicons name="checkmark-done" size={18} color="#6b7280" style={{ marginRight: 6 }} />
-              <Text style={[styles.ctaBtnText, { color: "#6b7280" }]}>ALREADY CLAIMED</Text>
+              <Ionicons name="checkmark-done" size={18} color={COLORS.textMuted} style={{ marginRight: 6 }} />
+              <Text style={[styles.ctaBtnText, { color: COLORS.textMuted }]}>ALREADY CLAIMED</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -230,6 +229,8 @@ function PromoCard({ item, index, onPress }) {
 // Main Screen
 // ─────────────────────────────────────────────────────────────
 export default function PromotionsScreen() {
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const navigation = useNavigation();
   const [promotions, setPromotions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -302,7 +303,7 @@ export default function PromotionsScreen() {
         ]}
       >
         <LinearGradient
-          colors={["#1e1b4b", "#0f172a"]}
+          colors={[COLORS.cardElevated, COLORS.backgroundSecondary]}
           style={styles.headerGradient}
         >
           <View style={styles.headerTop}>
@@ -318,11 +319,11 @@ export default function PromotionsScreen() {
           {/* Stats chips */}
           <View style={styles.statsChips}>
             <View style={styles.chip}>
-              <View style={[styles.chipDot, { backgroundColor: "#22d3ee" }]} />
+              <View style={[styles.chipDot, { backgroundColor: COLORS.primary }]} />
               <Text style={styles.chipText}>{activeCount} Active</Text>
             </View>
             <View style={styles.chip}>
-              <View style={[styles.chipDot, { backgroundColor: "#6b7280" }]} />
+              <View style={[styles.chipDot, { backgroundColor: COLORS.textMuted }]} />
               <Text style={styles.chipText}>{claimedCount} Claimed</Text>
             </View>
           </View>
@@ -350,7 +351,7 @@ export default function PromotionsScreen() {
         >
           {/* Banner note */}
           <View style={styles.bannerNote}>
-            <Ionicons name="time-outline" size={14} color="#facc15" />
+            <Ionicons name="time-outline" size={14} color={COLORS.warning} />
             <Text style={styles.bannerNoteText}>
               Limited-time offers — claim before they expire!
             </Text>
@@ -376,10 +377,10 @@ export default function PromotionsScreen() {
 // ─────────────────────────────────────────────────────────────
 // Styles
 // ─────────────────────────────────────────────────────────────
-const styles = StyleSheet.create({
+const makeStyles = (COLORS) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#0a0a14",
+    backgroundColor: COLORS.background,
   },
 
   // ── Header ──
@@ -407,7 +408,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   headerTitle: {
-    color: "#f1f5f9",
+    color: COLORS.text,
     fontFamily: "SpaceGroteskBold",
     fontSize: 28,
     letterSpacing: 1,
@@ -443,7 +444,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   chipText: {
-    color: "#94a3b8",
+    color: COLORS.textMuted,
     fontSize: 12,
     fontFamily: "SpaceGrotesk",
   },
@@ -456,7 +457,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   loaderText: {
-    color: "#475569",
+    color: COLORS.textDisabled,
     fontFamily: "SpaceGrotesk",
     fontSize: 14,
   },
@@ -471,13 +472,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   emptyTitle: {
-    color: "#e2e8f0",
+    color: COLORS.textSecondary,
     fontFamily: "SpaceGroteskBold",
     fontSize: 20,
     marginBottom: 8,
   },
   emptySubtitle: {
-    color: "#475569",
+    color: COLORS.textDisabled,
     fontFamily: "SpaceGrotesk",
     fontSize: 14,
     textAlign: "center",
@@ -502,7 +503,7 @@ const styles = StyleSheet.create({
     marginBottom: 18,
   },
   bannerNoteText: {
-    color: "#facc15",
+    color: COLORS.warning,
     fontSize: 12,
     fontFamily: "SpaceGrotesk",
     flex: 1,
@@ -512,7 +513,7 @@ const styles = StyleSheet.create({
   cardWrapper: {
     marginBottom: 18,
     borderRadius: 20,
-    shadowColor: "#000",
+    shadowColor: COLORS.overlayHeavy,
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.4,
     shadowRadius: 20,
@@ -550,7 +551,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   badgeText: {
-    color: "#000",
+    color: COLORS.buttonPrimaryText,
     fontSize: 10,
     fontFamily: "SpaceGroteskBold",
     letterSpacing: 1,
@@ -565,7 +566,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   usedChipText: {
-    color: "#6b7280",
+    color: COLORS.textMuted,
     fontSize: 11,
     fontFamily: "SpaceGrotesk",
   },
@@ -581,7 +582,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(250, 204, 21, 0.3)",
   },
   countdownText: {
-    color: "#facc15",
+    color: COLORS.warning,
     fontSize: 11,
     fontFamily: "SpaceGroteskBold",
     fontVariant: ["tabular-nums"],
@@ -599,21 +600,21 @@ const styles = StyleSheet.create({
     lineHeight: 48,
   },
   bonusLabel: {
-    color: "#94a3b8",
+    color: COLORS.textMuted,
     fontSize: 14,
     fontFamily: "SpaceGroteskBold",
     letterSpacing: 2,
   },
 
   cardTitle: {
-    color: "#f1f5f9",
+    color: COLORS.text,
     fontSize: 20,
     fontFamily: "SpaceGroteskBold",
     marginBottom: 6,
     lineHeight: 26,
   },
   cardSubtitle: {
-    color: "#94a3b8",
+    color: COLORS.textMuted,
     fontSize: 13,
     fontFamily: "Manrope",
     marginBottom: 16,
@@ -642,7 +643,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   maxBonusText: {
-    color: "#475569",
+    color: COLORS.textDisabled,
     fontSize: 11,
     fontFamily: "SpaceGrotesk",
   },
@@ -664,7 +665,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   ctaBtnText: {
-    color: "#000",
+    color: COLORS.buttonPrimaryText,
     fontSize: 14,
     fontFamily: "SpaceGroteskBold",
     letterSpacing: 0.5,

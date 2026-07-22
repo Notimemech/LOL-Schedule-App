@@ -1,7 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import COLORS from "../../styles/colors";
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
+import { getVipColors } from "../../styles/themes";
 import { formatMoney, formatMarketName, formatDate } from "../../utils/format";
 import SectionHeader from "../../components/ui/SectionHeader";
 
@@ -10,6 +11,8 @@ import SectionHeader from "../../components/ui/SectionHeader";
  * Extracted from DetailScreen.
  */
 const BetHistorySection = ({ bets, match, markets }) => {
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   if (!bets || bets.length === 0) return null;
 
   return (
@@ -45,17 +48,11 @@ const BetHistorySection = ({ bets, match, markets }) => {
                   <Text style={styles.wagerAmount}>{displayUsername}</Text>
                   {bet.vip_name && (
                     <LinearGradient
-                      colors={
-                        bet.vip_name === 'VIP 5' ? ['#FFD700', '#DAA520'] :
-                        bet.vip_name === 'VIP 4' ? ['#f12711', '#f5af19'] :
-                        bet.vip_name === 'VIP 3' ? ['#DA22FF', '#9733EE'] :
-                        bet.vip_name === 'VIP 2' ? ['#00c6ff', '#0072ff'] :
-                        ['#11998e', '#38ef7d']
-                      }
+                      colors={getVipColors(bet.vip_name)}
                       start={[0, 0]} end={[1, 1]}
-                      style={{ marginLeft: 6, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}
+                      style={styles.vipBadge}
                     >
-                      <Text style={{ color: '#FFF', fontSize: 10, fontWeight: 'bold' }}>{bet.vip_name}</Text>
+                      <Text style={styles.vipBadgeText}>{bet.vip_name}</Text>
                     </LinearGradient>
                   )}
                 </View>
@@ -76,7 +73,18 @@ const BetHistorySection = ({ bets, match, markets }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS) => StyleSheet.create({
+  vipBadge: {
+    marginLeft: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  vipBadgeText: {
+    color: COLORS.staticWhite,
+    fontSize: 10,
+    fontFamily: "SpaceGroteskBold",
+  },
   potentialWinBox: {
     marginBottom: 20,
     marginTop: 10,

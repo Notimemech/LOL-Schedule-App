@@ -1,19 +1,19 @@
-import { View, Text, TouchableOpacity, Alert } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import React, { useState, useCallback } from "react";
-import COLORS from "../../styles/colors";
-import { contentHeaderStyles as styles } from "../../styles/common.styles";
-import Icon from "react-native-vector-icons/FontAwesome";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
+import { makeContentHeaderStyles } from "../../styles/common.styles";
 import { getWalletBalance } from "../../services/bettingService";
 
 const formatVND = (amount) => {
-  return new Intl.NumberFormat('en-US').format(amount) + ' VND';
+  return new Intl.NumberFormat("en-US").format(amount) + " VND";
 };
 
 const ContentHeader = ({ title, showBack = false, refreshTrigger = 0 }) => {
   const navigation = useNavigation();
-  const canGoBack = navigation.canGoBack();
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeContentHeaderStyles);
   const [walletBalance, setWalletBalance] = useState(0);
 
   useFocusEffect(
@@ -35,22 +35,16 @@ const ContentHeader = ({ title, showBack = false, refreshTrigger = 0 }) => {
     }, [refreshTrigger])
   );
 
-  const handleDepositPress = () => {
-    Alert.alert(
-      "Nạp tiền",
-      "Bạn có muốn chuyển sang trang nạp tiền không?",
-      [
-        { text: "Hủy", style: "cancel" },
-        { text: "Đồng ý", onPress: () => navigation.navigate("Deposit") }
-      ]
-    );
-  };
-
   return (
     <View style={styles.header}>
       <View style={styles.leftPart}>
         {showBack && (
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
             <Ionicons name="chevron-back" size={24} color={COLORS.primary} />
           </TouchableOpacity>
         )}
@@ -61,15 +55,18 @@ const ContentHeader = ({ title, showBack = false, refreshTrigger = 0 }) => {
       <View style={styles.rightPart}>
         <View style={styles.wallet}>
           <Text style={styles.walletInfo}>{formatVND(walletBalance)}</Text>
-          <TouchableOpacity style={styles.walletAdd} onPress={handleDepositPress}>
-            <Icon name={"plus"} style={{ fontSize: 14, color: COLORS.primary }} />
+          <TouchableOpacity
+            style={styles.walletAdd}
+            onPress={() => navigation.navigate("WalletScreen")}
+            accessibilityLabel="Deposit funds"
+            accessibilityRole="button"
+          >
+            <Ionicons name="add" size={16} color={COLORS.primary} />
           </TouchableOpacity>
         </View>
       </View>
     </View>
   );
 };
-
-
 
 export default ContentHeader;

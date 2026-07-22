@@ -1,9 +1,8 @@
 import { StyleSheet, Dimensions } from "react-native";
-import COLORS from "./colors";
 
 const { width } = Dimensions.get("window");
 
-export const bettingStyles = StyleSheet.create({
+export const makeBettingStyles = (COLORS) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,

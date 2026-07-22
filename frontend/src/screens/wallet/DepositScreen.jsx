@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import api from '../../services/api';
+import { useTheme, useThemedStyles } from '../../hooks/useTheme';
 import CustomAlert from '../../components/common/CustomAlert';
 
 const DepositScreen = ({ navigation }) => {
+    const { colors: COLORS } = useTheme();
+    const styles = useThemedStyles(makeStyles);
     const [amount, setAmount] = useState('');
     const [paymentUrl, setPaymentUrl] = useState(null);
     const [loading, setLoading] = useState(false);
@@ -105,18 +108,22 @@ const DepositScreen = ({ navigation }) => {
             <TextInput
                 style={styles.input}
                 placeholder="Enter amount (VND)"
+                placeholderTextColor={COLORS.inputPlaceholder}
                 keyboardType="numeric"
                 value={amount}
                 onChangeText={setAmount}
+                accessibilityLabel="Deposit amount"
             />
-            
-            <TouchableOpacity 
-                style={styles.button} 
+
+            <TouchableOpacity
+                style={styles.button}
                 onPress={handleDeposit}
                 disabled={loading}
+                accessibilityRole="button"
+                accessibilityLabel="Pay with VNPay"
             >
                 {loading ? (
-                    <ActivityIndicator color="#fff" />
+                    <ActivityIndicator color={COLORS.buttonPrimaryText} />
                 ) : (
                     <Text style={styles.buttonText}>Pay with VNPay</Text>
                 )}
@@ -133,37 +140,40 @@ const DepositScreen = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS) => StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
         justifyContent: 'center',
-        backgroundColor: '#1a1a2e', // Màu tối hợp với LOL App
+        backgroundColor: COLORS.background,
     },
     title: {
         fontSize: 24,
-        color: '#fff',
-        fontWeight: 'bold',
+        color: COLORS.text,
+        fontFamily: 'SpaceGroteskBold',
         marginBottom: 20,
         textAlign: 'center',
     },
     input: {
-        backgroundColor: '#fff',
+        backgroundColor: COLORS.inputBackground,
+        color: COLORS.text,
+        borderWidth: 1,
+        borderColor: COLORS.inputBorder,
         padding: 15,
         borderRadius: 8,
         fontSize: 16,
         marginBottom: 20,
     },
     button: {
-        backgroundColor: '#00a8ff',
+        backgroundColor: COLORS.buttonPrimary,
         padding: 15,
         borderRadius: 8,
         alignItems: 'center',
     },
     buttonText: {
-        color: '#fff',
+        color: COLORS.buttonPrimaryText,
         fontSize: 16,
-        fontWeight: 'bold',
+        fontFamily: 'ManropeBold',
     }
 });
 

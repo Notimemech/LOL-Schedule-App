@@ -1,31 +1,35 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
-  ScrollView,
-  StyleSheet,
   Text,
   View,
-  Image,
-  Pressable,
   TouchableOpacity,
   TextInput,
   Modal,
   TouchableWithoutFeedback,
+  FlatList,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ContentHeader from "../../components/common/ContentHeader";
-import { scheduleStyles as styles } from "../../styles/matches.styles";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { getMatches } from "../../services/matchService";
-import COLORS from "../../styles/colors";
 import { Ionicons } from "@expo/vector-icons";
-
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
+import { makeScheduleStyles } from "../../styles/matches.styles";
+import { getMatches } from "../../services/matchService";
 import MatchListItem from "../../components/matches/MatchListItem";
+import { MatchCardSkeleton } from "../../components/ui/Skeleton";
+import EmptyState from "../../components/ui/EmptyState";
 
 export default function ScheduleScreen() {
   const route = useRoute();
   const navigation = useNavigation();
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeScheduleStyles);
 
   const [games, setGames] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL STATUS");
@@ -53,14 +57,23 @@ export default function ScheduleScreen() {
   }, []);
 
   const fetchSchedule = async () => {
+    setLoadError(false);
     try {
       const data = await getMatches();
       setGames(data);
     } catch (error) {
-      console.log(error);
+      console.log("Failed to load schedule:", error);
+      setLoadError(true);
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
     }
   };
 
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchSchedule();
+  }, []);
 
   const getUniqueMatchDates = () => {
     const dates = new Set();
@@ -79,25 +92,21 @@ export default function ScheduleScreen() {
   const dateOptions = getUniqueMatchDates();
 
   const filteredGames = games.filter(game => {
-    // 1. Game Type Filter
     if (activeFilter !== "ALL") {
       if (!game.matchType || game.matchType.toUpperCase() !== activeFilter) return false;
     }
 
-    // 2. Status Filter
     if (statusFilter !== "ALL STATUS") {
       const stateQuery = statusFilter.toLowerCase();
       if (stateQuery === "upcoming" && game.state !== "upcoming") return false;
       if (stateQuery === "finished" && game.state !== "finished") return false;
     }
 
-    // 3. Date Filter
     if (dateFilter !== "ALL DATES") {
       const gameDateFormatted = new Date(game.startTime).toLocaleDateString("en-US", { month: "short", day: "numeric" });
       if (gameDateFormatted !== dateFilter) return false;
     }
 
-    // 4. Search Query Filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim();
       const matchesSearch =
@@ -113,21 +122,52 @@ export default function ScheduleScreen() {
     return true;
   });
 
+  const renderListEmpty = () => {
+    if (isLoading) {
+      return (
+        <View>
+          <MatchCardSkeleton />
+          <MatchCardSkeleton />
+          <MatchCardSkeleton />
+        </View>
+      );
+    }
+    if (loadError) {
+      return (
+        <EmptyState
+          icon="cloud-offline-outline"
+          message="Could not load the schedule"
+          hint="Check your connection and try again."
+          actionLabel="Retry"
+          onAction={fetchSchedule}
+        />
+      );
+    }
+    return (
+      <EmptyState
+        icon="filter-outline"
+        message="No matches found matching these criteria"
+        hint="Try changing or resetting the filters."
+      />
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ContentHeader title="SCHEDULE" />
-      
+
       {/* Search & Filters Row */}
       <View style={styles.searchContainer}>
         <View style={styles.searchRow}>
           <TextInput
             style={styles.searchBar}
             placeholder="SEARCH MATCH OR TEAM..."
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={COLORS.inputPlaceholder}
             value={searchQuery}
             onChangeText={setSearchQuery}
+            accessibilityLabel="Search match or team"
           />
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.filtersButton}
             onPress={() => {
               setTempActiveFilter(activeFilter);
@@ -135,6 +175,8 @@ export default function ScheduleScreen() {
               setTempDateFilter(dateFilter);
               setModalVisible(true);
             }}
+            accessibilityRole="button"
+            accessibilityLabel="Open filters"
           >
             <Ionicons name="options-outline" size={16} color={COLORS.primary} />
             <Text style={styles.filtersButtonText}>FILTERS</Text>
@@ -149,7 +191,7 @@ export default function ScheduleScreen() {
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setModalVisible(false)}
@@ -158,7 +200,11 @@ export default function ScheduleScreen() {
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>FILTERS</Text>
-                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <TouchableOpacity
+                  onPress={() => setModalVisible(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close filters"
+                >
                   <Text style={styles.modalCloseText}>CLOSE</Text>
                 </TouchableOpacity>
               </View>
@@ -219,7 +265,7 @@ export default function ScheduleScreen() {
 
               {/* Action Buttons */}
               <View style={styles.modalActions}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.resetButton}
                   onPress={() => {
                     setTempActiveFilter("ALL");
@@ -229,7 +275,7 @@ export default function ScheduleScreen() {
                 >
                   <Text style={styles.resetButtonText}>RESET</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.applyButton}
                   onPress={() => {
                     setActiveFilter(tempActiveFilter);
@@ -247,24 +293,23 @@ export default function ScheduleScreen() {
         </TouchableOpacity>
       </Modal>
 
-      <ScrollView
+      <FlatList
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
+        data={isLoading || loadError ? [] : filteredGames}
+        keyExtractor={(game) => String(game.matchId)}
+        renderItem={({ item }) => <MatchListItem game={item} />}
+        ListEmptyComponent={renderListEmpty}
         showsVerticalScrollIndicator={false}
-      >
-        {filteredGames.length > 0 ? (
-          filteredGames.map((game) => (
-            <MatchListItem key={game.matchId} game={game} />
-          ))
-        ) : (
-          <View style={{ paddingVertical: 50, alignItems: "center" }}>
-            <Text style={{ color: COLORS.textMuted, fontSize: 16, fontFamily: "SpaceGrotesk" }}>
-              No matches found matching these criteria.
-            </Text>
-          </View>
-        )}
-      </ScrollView>
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.primary}
+            colors={[COLORS.primary]}
+          />
+        }
+      />
     </SafeAreaView>
   );
 }
-

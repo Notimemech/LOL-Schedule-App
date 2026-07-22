@@ -2,7 +2,13 @@ import { pool } from "../config/db.config.js";
 import bcrypt from "bcrypt";
 
 export const getAllTournament = async () => {
-  const query = "SELECT * FROM tournaments";
+  // Include league name so list screens don't need a second request.
+  const query = `
+    SELECT t.*, l.name AS league_name
+    FROM tournaments t
+    LEFT JOIN leagues l ON t.league_id = l.id
+    ORDER BY t.id DESC
+  `;
   const rs = await pool.query(query);
   return rs.rows;
 };

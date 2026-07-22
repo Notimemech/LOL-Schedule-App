@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import COLORS from "../../styles/colors";
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
 import { formatMoneyWithSign, formatShortDateTime } from "../../utils/format";
 
 /**
@@ -9,6 +9,8 @@ import { formatMoneyWithSign, formatShortDateTime } from "../../utils/format";
  * @param {object} tx - Transaction object (type, amount, created_at, status)
  */
 const TransactionItem = ({ tx }) => {
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const isDeposit = tx.type === "DEPOSIT";
   const isWithdraw = tx.type === "WITHDRAW";
   const isBetPlace = tx.type === "BET_PLACE";
@@ -33,7 +35,7 @@ const TransactionItem = ({ tx }) => {
   };
 
   const getBgColor = () => {
-    if (isPositive) return COLORS.badgeLiveBg;
+    if (isPositive) return COLORS.badgeSuccessBg;
     if (isWithdraw || isBetPlace) return COLORS.badgeDangerBg;
     return COLORS.glowSoft;
   };
@@ -84,7 +86,7 @@ const TransactionItem = ({ tx }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS) => StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
@@ -133,7 +135,7 @@ const styles = StyleSheet.create({
   doneBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(0,245,225,0.1)",
+    backgroundColor: COLORS.badgeSuccessBg,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,

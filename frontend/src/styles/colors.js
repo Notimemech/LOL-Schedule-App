@@ -1,16 +1,16 @@
-import { allThemes } from "./themes";
+import { allThemes, DEFAULT_THEME_KEY } from "./themes";
 
-// Provide a way to synchronously set the theme during app initialization.
-let currentThemeKey = "dark_default";
+// Legacy bridge: some code still imports a static COLORS object.
+// ThemeContext keeps this object in sync (via setThemeSync) so stragglers
+// render the right colors after the provider re-renders the tree.
+// New code should use useTheme()/useThemedStyles() instead.
+let currentThemeKey = DEFAULT_THEME_KEY;
 
-// Create a copy of the default theme to act as the mutable COLORS object.
 const COLORS = { ...allThemes[currentThemeKey] };
 
 export const setThemeSync = (key) => {
   if (allThemes[key]) {
     currentThemeKey = key;
-    // Mutate the COLORS object so that any subsequent stylesheet creations
-    // use the newly assigned theme values.
     Object.assign(COLORS, allThemes[key]);
   }
 };

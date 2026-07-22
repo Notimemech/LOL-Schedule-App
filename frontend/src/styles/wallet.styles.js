@@ -1,7 +1,6 @@
 import { StyleSheet } from "react-native";
-import COLORS from "./colors";
 
-export const walletStyles = StyleSheet.create({
+export const makeWalletStyles = (COLORS) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.backgroundSecondary,

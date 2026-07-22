@@ -1,17 +1,14 @@
-import { View, Text, StyleSheet, ImageBackground, TouchableOpacity } from "react-native";
+import { View, Text, ImageBackground, TouchableOpacity } from "react-native";
 import React from "react";
 import { LinearGradient } from "expo-linear-gradient";
-import COLORS from "../../styles/colors";
-import { homeBannerStyles as style } from "../../styles/home.styles";
-
-const CARD_GRADIENTS = [
-  ["#0f3460", "#16213e", "#1a1a2e"],
-  ["#1a0533", "#2d1b69", "#1a1a2e"],
-  ["#002d3d", "#004d6e", "#1a1a2e"],
-  ["#1a2e00", "#2d4d00", "#1a1a2e"],
-];
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
+import { makeHomeBannerStyles } from "../../styles/home.styles";
 
 const HomeBanner = ({ bannerInfo, buttonInfo, image, onPress, isPromo, promoIndex = 0 }) => {
+  const { colors: COLORS } = useTheme();
+  const style = useThemedStyles(makeHomeBannerStyles);
+  const gradients = COLORS.bannerGradients;
+
   const content = (
     <View style={style.bannerInfo}>
       <Text style={style.text}>{bannerInfo.toUpperCase()}</Text>
@@ -19,6 +16,8 @@ const HomeBanner = ({ bannerInfo, buttonInfo, image, onPress, isPromo, promoInde
         style={style.button}
         onPress={onPress}
         activeOpacity={0.6}
+        accessibilityRole="button"
+        accessibilityLabel={buttonInfo}
       >
         <Text style={style.buttonInfo}>{buttonInfo.toUpperCase()}</Text>
       </TouchableOpacity>
@@ -29,7 +28,7 @@ const HomeBanner = ({ bannerInfo, buttonInfo, image, onPress, isPromo, promoInde
     <View style={style.banner}>
       {isPromo ? (
         <LinearGradient
-          colors={CARD_GRADIENTS[promoIndex % CARD_GRADIENTS.length]}
+          colors={gradients[promoIndex % gradients.length]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[style.bannerImage, { borderRadius: 6 }]}
@@ -49,7 +48,5 @@ const HomeBanner = ({ bannerInfo, buttonInfo, image, onPress, isPromo, promoInde
     </View>
   );
 };
-
-
 
 export default HomeBanner;

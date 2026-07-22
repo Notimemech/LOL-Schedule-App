@@ -6,21 +6,22 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import React, { useState } from "react";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import COLORS from "../../styles/colors";
-import { homeHeaderStyles as styles } from "../../styles/common.styles";
-import Icon from "react-native-vector-icons/FontAwesome";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
+import { makeHomeHeaderStyles } from "../../styles/common.styles";
 import { getWalletBalance } from "../../services/bettingService";
 
 const formatVND = (amount) => {
-  return new Intl.NumberFormat('en-US').format(amount) + ' VND';
+  return new Intl.NumberFormat("en-US").format(amount) + " VND";
 };
 
 const HomeHeader = ({ searchQuery, onSearch }) => {
   const navigation = useNavigation();
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeHomeHeaderStyles);
   const [walletBalance, setWalletBalance] = useState(0);
 
   useFocusEffect(
@@ -34,7 +35,7 @@ const HomeHeader = ({ searchQuery, onSearch }) => {
             setWalletBalance(Number(balance) || 0);
           }
         } catch (error) {
-          console.error("Lỗi khi lấy số dư ví:", error);
+          console.error("Failed to fetch wallet balance:", error);
         }
       };
 
@@ -45,17 +46,6 @@ const HomeHeader = ({ searchQuery, onSearch }) => {
       };
     }, [])
   );
-
-  const handleDepositPress = () => {
-    Alert.alert(
-      "Nạp tiền",
-      "Bạn có muốn chuyển sang trang nạp tiền không?",
-      [
-        { text: "Hủy", style: "cancel" },
-        { text: "Đồng ý", onPress: () => navigation.navigate("Deposit") }
-      ]
-    );
-  };
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -69,9 +59,10 @@ const HomeHeader = ({ searchQuery, onSearch }) => {
           <TextInput
             style={styles.searchBox}
             placeholder="SEARCH TEAM / LEAGUE..."
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={COLORS.inputPlaceholder}
             value={searchQuery}
             onChangeText={onSearch}
+            accessibilityLabel="Search team or league"
           />
         </View>
 
@@ -81,9 +72,11 @@ const HomeHeader = ({ searchQuery, onSearch }) => {
 
             <TouchableOpacity
               style={styles.walletAdd}
-              onPress={handleDepositPress}
+              onPress={() => navigation.navigate("WalletScreen")}
+              accessibilityLabel="Deposit funds"
+              accessibilityRole="button"
             >
-              <Icon name={"plus"} style={{ fontSize: 14, color: COLORS.primary }} />
+              <Ionicons name="add" size={16} color={COLORS.primary} />
             </TouchableOpacity>
           </View>
         </View>

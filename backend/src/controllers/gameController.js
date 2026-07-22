@@ -20,6 +20,16 @@ export const getGameById = async (req, res, next) => {
     }
 };
 
+export const getGameDetail = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const detail = await gameService.getGameDetail(id);
+        sendSuccess(res, 200, 'Game detail retrieved successfully', detail);
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const getGamesByMatchId = async (req, res, next) => {
     try {
         const { matchId } = req.params;

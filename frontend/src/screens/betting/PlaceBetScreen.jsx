@@ -13,10 +13,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import ContentHeader from "../../components/common/ContentHeader";
-import COLORS from "../../styles/colors";
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
 import { formatMoney, calculatePayout, parseWagerInput } from "../../utils/bettingUtils";
 import { placeBet, getBetHistory, getWalletBalance, MIN_STAKE_VND, MAX_STAKE_VND, cancelBet } from "../../services/bettingService";
-import { bettingStyles as styles } from "../../styles/betting.styles";
+import { makeBettingStyles } from "../../styles/betting.styles";
 
 import HistoryBlock from "../../components/betting/HistoryBlock";
 import CustomAlert from "../../components/common/CustomAlert";
@@ -24,6 +24,8 @@ import CustomAlert from "../../components/common/CustomAlert";
 export default function PlaceBetScreen() {
   const route = useRoute();
   const navigation = useNavigation();
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeBettingStyles);
   const { match, markets } = route.params || {};
 
   const [selectedMarketId, setSelectedMarketId] = useState(null);
@@ -99,9 +101,9 @@ export default function PlaceBetScreen() {
 
   const getErrorMessage = () => {
     if (!wagerInput) return null;
-    if (wagerAmount > walletBalance) return "Không đủ số dư.";
-    if (wagerAmount > MAX_STAKE_VND) return "Số tiền cược tối đa là 10.000.000 VND";
-    if (wagerAmount > 0 && wagerAmount < MIN_STAKE_VND) return "Số tiền cược tối thiểu là 10.000 VND";
+    if (wagerAmount > walletBalance) return "Insufficient balance.";
+    if (wagerAmount > MAX_STAKE_VND) return `Maximum stake is ${formatMoney(MAX_STAKE_VND)} VND.`;
+    if (wagerAmount > 0 && wagerAmount < MIN_STAKE_VND) return `Minimum stake is ${formatMoney(MIN_STAKE_VND)} VND.`;
     return null;
   };
 

@@ -1,7 +1,6 @@
 import { StyleSheet } from "react-native";
-import COLORS from "./colors";
 
-export const scheduleStyles = StyleSheet.create({
+export const makeScheduleStyles = (COLORS) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.backgroundSecondary,
@@ -11,7 +10,7 @@ export const scheduleStyles = StyleSheet.create({
   },
   bodyContent: {
     padding: 16,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
   filterContainer: {
     flexDirection: "row",
@@ -297,7 +296,7 @@ export const scheduleStyles = StyleSheet.create({
   },
 });
 
-export const detailStyles = StyleSheet.create({
+export const makeDetailStyles = (COLORS) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.backgroundSecondary,
@@ -346,7 +345,34 @@ export const detailStyles = StyleSheet.create({
     fontFamily: "SpaceGroteskBold",
     fontSize: 14,
     letterSpacing: 2,
+  },
+  leagueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
     marginBottom: 20,
+  },
+  teamHint: {
+    color: COLORS.textMuted,
+    fontFamily: "SpaceGrotesk",
+    fontSize: 9,
+    letterSpacing: 1,
+    marginTop: 4,
+  },
+  standingsLink: {
+    marginTop: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.backgroundTertiary,
+  },
+  standingsLinkText: {
+    color: COLORS.textSecondary,
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 11,
+    letterSpacing: 1,
   },
   teamsRow: {
     flexDirection: "row",
@@ -374,13 +400,13 @@ export const detailStyles = StyleSheet.create({
     backgroundColor: COLORS.backgroundTertiary,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: COLORS.danger,
-    shadowColor: COLORS.danger,
+    borderColor: COLORS.secondary,
+    shadowColor: COLORS.secondary,
     shadowOpacity: 0.4,
     shadowRadius: 8,
   },
   vsText: {
-    color: COLORS.danger,
+    color: COLORS.secondary,
     fontFamily: "SpaceGroteskBold",
     fontSize: 16,
   },

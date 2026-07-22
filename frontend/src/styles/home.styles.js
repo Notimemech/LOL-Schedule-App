@@ -1,7 +1,6 @@
 import { StyleSheet } from "react-native";
-import COLORS from "./colors";
 
-export const homeStyles = StyleSheet.create({
+export const makeHomeStyles = (COLORS) => StyleSheet.create({
   container: {
     backgroundColor: COLORS.background,
     flex: 1,
@@ -41,6 +40,38 @@ export const homeStyles = StyleSheet.create({
     shadowColor: COLORS.primary,
     shadowOpacity: 0.8,
     shadowRadius: 5,
+  },
+  followedRow: {
+    paddingHorizontal: 20,
+    gap: 8,
+    marginBottom: 4,
+  },
+  followedChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: COLORS.surface,
+    borderColor: COLORS.border,
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  followedLogo: {
+    width: 20,
+    height: 20,
+  },
+  followedCode: {
+    color: COLORS.textSecondary,
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 13,
+  },
+  promoTitleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 8,
+    gap: 10,
   },
   chooseSportTitle: {
     color: COLORS.textMuted,
@@ -378,7 +409,7 @@ export const homeStyles = StyleSheet.create({
   },
 });
 
-export const homeBannerStyles = StyleSheet.create({
+export const makeHomeBannerStyles = (COLORS) => StyleSheet.create({
   banner: {
     width: "100%",
     borderColor: COLORS.primary,

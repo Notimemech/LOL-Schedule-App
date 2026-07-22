@@ -2,17 +2,26 @@ import React from "react";
 import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import COLORS from "../../styles/colors";
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
 import { formatDate } from "../../utils/format";
+import LiveBadge from "../ui/LiveBadge";
 
 /**
  * Reusable match card used in HomeScreen (featured / popular / search results).
+ * Odds are real values provided by the backend — never computed client-side
+ * (agents/BETTING_RULES.md). When no market exists yet the odds row collapses
+ * into a single "view match" action.
  * @param {object} game - The match object
  */
 const MatchCard = ({ game }) => {
   const navigation = useNavigation();
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const isFinished = game.state === "finished";
   const isLive = game.state === "happening";
+  const hasOdds = game.team1Odd != null && game.team2Odd != null;
+
+  const goToDetail = () => navigation.navigate("Detail", { match: game });
 
   return (
     <View style={styles.card}>
@@ -21,21 +30,18 @@ const MatchCard = ({ game }) => {
           {game.leagueName?.toUpperCase()}
         </Text>
         {isLive ? (
-          <View style={styles.liveIndicator}>
-            <Text style={styles.liveText}>Live now</Text>
-            <Ionicons name="radio-button-on" size={14} color={COLORS.danger} />
-          </View>
+          <LiveBadge />
         ) : (
           <Text style={styles.time}>{formatDate(game.startTime)}</Text>
         )}
       </View>
-      
+
       <View style={styles.teamsRow}>
         <View style={styles.team}>
           <Image source={{ uri: game.team1.logoUrl }} style={styles.logo} resizeMode="contain" />
           <Text style={styles.code}>{game.team1.code}</Text>
         </View>
-        
+
         {isFinished ? (
           <Text style={[styles.vs, { color: COLORS.success }]}>
             {game.team1Score} - {game.team2Score}
@@ -49,56 +55,70 @@ const MatchCard = ({ game }) => {
           <Image source={{ uri: game.team2.logoUrl }} style={styles.logo} resizeMode="contain" />
         </View>
       </View>
-      
-      {/* Compact Odds Buttons Row / Result Button */}
-      {!isFinished ? (
+
+      {/* Real odds row (backend values) / result button */}
+      {isFinished ? (
+        <TouchableOpacity
+          style={styles.resultButton}
+          onPress={goToDetail}
+          accessibilityRole="button"
+          accessibilityLabel="View match results"
+        >
+          <Text style={styles.resultText}>VIEW RESULTS</Text>
+        </TouchableOpacity>
+      ) : hasOdds ? (
         <View style={styles.oddsRow}>
-          <TouchableOpacity 
-            style={styles.oddBox} 
-            onPress={() => navigation.navigate("Detail", { match: game })}
+          <TouchableOpacity
+            style={styles.oddBox}
+            onPress={goToDetail}
+            accessibilityRole="button"
+            accessibilityLabel={`Odds for ${game.team1.code}`}
           >
             <Text style={styles.oddLabel}>{game.team1.code}</Text>
-            <Text style={styles.oddValue}>x{(1.35 + (game.matchId % 3) * 0.25).toFixed(2)}</Text>
+            <Text style={styles.oddValue}>x{game.team1Odd.toFixed(2)}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.oddBox} 
-            onPress={() => navigation.navigate("Detail", { match: game })}
+          <TouchableOpacity
+            style={styles.oddBox}
+            onPress={goToDetail}
+            accessibilityRole="button"
+            accessibilityLabel={`Odds for ${game.team2.code}`}
           >
             <Text style={styles.oddLabel}>{game.team2.code}</Text>
-            <Text style={styles.oddValue}>x{(2.10 - (game.matchId % 3) * 0.15).toFixed(2)}</Text>
+            <Text style={styles.oddValue}>x{game.team2Odd.toFixed(2)}</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.detailBtn} 
-            onPress={() => navigation.navigate("Detail", { match: game })}
+          <TouchableOpacity
+            style={styles.detailBtn}
+            onPress={goToDetail}
+            accessibilityRole="button"
+            accessibilityLabel="Open match details"
           >
             <Ionicons name="chevron-forward-outline" size={16} color={COLORS.primary} />
           </TouchableOpacity>
         </View>
       ) : (
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.resultButton}
-          onPress={() => navigation.navigate("Detail", { match: game })}
+          onPress={goToDetail}
+          accessibilityRole="button"
+          accessibilityLabel="Open match details"
         >
-          <Text style={styles.resultText}>VIEW RESULTS</Text>
+          <Text style={styles.resultText}>VIEW MATCH</Text>
         </TouchableOpacity>
       )}
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS) => StyleSheet.create({
   card: {
     backgroundColor: COLORS.card,
-    borderRadius: 16,
+    borderRadius: 8,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
     borderColor: COLORS.border,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 3,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.primary,
   },
   header: {
     flexDirection: "row",
@@ -120,16 +140,6 @@ const styles = StyleSheet.create({
   time: {
     color: COLORS.textMuted,
     fontFamily: "SpaceGrotesk",
-    fontSize: 12,
-  },
-  liveIndicator: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  liveText: {
-    color: COLORS.danger,
-    fontFamily: "SpaceGroteskBold",
     fontSize: 12,
   },
   teamsRow: {
@@ -169,7 +179,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 8,
+    borderRadius: 6,
     paddingVertical: 10,
     paddingHorizontal: 8,
     alignItems: "center",
@@ -182,14 +192,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   oddValue: {
-    color: COLORS.text,
+    color: COLORS.primary,
     fontFamily: "SpaceGroteskBold",
     fontSize: 14,
   },
   detailBtn: {
     width: 44,
     backgroundColor: COLORS.glowSoft,
-    borderRadius: 8,
+    borderRadius: 6,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
@@ -197,7 +207,7 @@ const styles = StyleSheet.create({
   },
   resultButton: {
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 6,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,

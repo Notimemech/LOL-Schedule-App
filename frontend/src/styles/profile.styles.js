@@ -1,7 +1,6 @@
 import { StyleSheet } from "react-native";
-import COLORS from "./colors";
 
-const profileStyles = StyleSheet.create({
+export const makeProfileStyles = (COLORS) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -113,7 +112,7 @@ const profileStyles = StyleSheet.create({
     fontSize: 13,
   },
   logoutButton: {
-    backgroundColor: "#ff4757",
+    backgroundColor: COLORS.buttonDanger,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -122,16 +121,43 @@ const profileStyles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 40,
     elevation: 3,
-    shadowColor: "#ff4757",
+    shadowColor: COLORS.buttonDanger,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
   },
   logoutText: {
-    color: "#ffffff",
+    color: COLORS.buttonDangerText,
     fontSize: 16,
     fontFamily: "ManropeBold",
   },
+  vipPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  vipPillText: {
+    color: COLORS.buttonDangerText,
+    fontSize: 13,
+    fontFamily: "ManropeBold",
+    marginLeft: 5,
+  },
+  vipUpsell: {
+    padding: 15,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    elevation: 5,
+  },
+  vipUpsellText: {
+    color: COLORS.buttonDangerText,
+    fontSize: 18,
+    fontFamily: "ManropeBold",
+    textTransform: "uppercase",
+    letterSpacing: 1,
+  },
 });
 
-export default profileStyles;

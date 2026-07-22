@@ -1,10 +1,10 @@
 import React from "react";
 import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { Ionicons } from "@expo/vector-icons";
-import COLORS from "../../styles/colors";
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
 import { formatDate } from "../../utils/format";
 import StatusBadge from "../ui/StatusBadge";
+import LiveBadge from "../ui/LiveBadge";
 
 /**
  * Reusable match banner item used in ScheduleScreen.
@@ -12,6 +12,8 @@ import StatusBadge from "../ui/StatusBadge";
  */
 const MatchListItem = ({ game }) => {
   const navigation = useNavigation();
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   // Determine market status if available from backend, otherwise fallback to match state logic
   let marketStatus = game.marketStatus; // Should be 'open', 'closed', or 'settled'
@@ -27,7 +29,7 @@ const MatchListItem = ({ game }) => {
         return { label: 'CLOSED', color: COLORS.warning, bg: COLORS.badgeWarningBg, border: COLORS.warning };
       case 'open':
       default:
-        return { label: 'OPEN', color: COLORS.success, bg: COLORS.badgeLiveBg, border: COLORS.success };
+        return { label: 'OPEN', color: COLORS.success, bg: COLORS.badgeSuccessBg, border: COLORS.success };
     }
   };
 
@@ -49,8 +51,8 @@ const MatchListItem = ({ game }) => {
       </View>
 
       {game.state === "happening" ? (
-        <View style={styles.timeBadge}>
-          <Text style={styles.timeText}>LIVE NOW</Text>
+        <View style={{ alignSelf: "flex-start", marginBottom: 16 }}>
+          <LiveBadge label="LIVE NOW" />
         </View>
       ) : (
         <View style={[styles.timeBadge, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
@@ -95,7 +97,7 @@ const MatchListItem = ({ game }) => {
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS) => StyleSheet.create({
   matchContainer: {
     backgroundColor: COLORS.surface,
     borderColor: COLORS.border,
@@ -176,13 +178,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.backgroundTertiary,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: COLORS.danger,
-    shadowColor: COLORS.danger,
+    borderColor: COLORS.secondary,
+    shadowColor: COLORS.secondary,
     shadowOpacity: 0.3,
     shadowRadius: 5,
   },
   vsText: {
-    color: COLORS.danger,
+    color: COLORS.secondary,
     fontFamily: "SpaceGroteskBold",
     fontSize: 14,
   },

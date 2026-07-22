@@ -15,6 +15,14 @@ import { notificationRouter } from './notification.route.js';
 
 export const router = express.Router();
 
+router.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'API is running',
+    endpoints: ['/api/auth', '/api/users', '/api/teams', '/api/matches', '/api/wallet']
+  });
+});
+
 router.use('/users',userRouter);
 router.use('/tournaments', tournamentRouter);
 router.use('/leagues', leagueRouter);

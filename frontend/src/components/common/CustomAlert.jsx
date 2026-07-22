@@ -1,8 +1,9 @@
 import React from 'react';
 import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import COLORS from '../../styles/colors';
+import { useThemedStyles } from '../../hooks/useTheme';
 
 const CustomAlert = ({ visible, title, message, onConfirm, onCancel, confirmText = 'OK', cancelText = 'CANCEL', isError = false }) => {
+  const styles = useThemedStyles(makeStyles);
   return (
     <Modal
       transparent={true}
@@ -14,14 +15,14 @@ const CustomAlert = ({ visible, title, message, onConfirm, onCancel, confirmText
         <View style={styles.alertBox}>
           <Text style={[styles.title, isError && styles.errorTitle]}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
-          
+
           <View style={styles.buttonRow}>
             {onCancel && (
-              <TouchableOpacity style={styles.cancelButton} onPress={onCancel}>
+              <TouchableOpacity style={styles.cancelButton} onPress={onCancel} accessibilityRole="button">
                 <Text style={styles.cancelButtonText}>{cancelText}</Text>
               </TouchableOpacity>
             )}
-            <TouchableOpacity style={styles.confirmButton} onPress={onConfirm}>
+            <TouchableOpacity style={styles.confirmButton} onPress={onConfirm} accessibilityRole="button">
               <Text style={styles.confirmButtonText}>{confirmText}</Text>
             </TouchableOpacity>
           </View>
@@ -31,10 +32,10 @@ const CustomAlert = ({ visible, title, message, onConfirm, onCancel, confirmText
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (COLORS) => StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: COLORS.overlay,
     justifyContent: 'center',
     alignItems: 'center'
   },

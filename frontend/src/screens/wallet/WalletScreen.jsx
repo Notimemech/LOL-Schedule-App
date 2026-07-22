@@ -17,19 +17,21 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from "react-native-vector-icons/FontAwesome6";
 import { Ionicons } from "@expo/vector-icons";
-import COLORS from "../../styles/colors";
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
 import api from "../../services/api";
 import ContentHeader from "../../components/common/ContentHeader";
 import { formatMoney } from "../../utils/format";
 import QuickAmountSelector from "../../components/ui/QuickAmountSelector";
 import TransactionItem from "../../components/wallet/TransactionItem";
 import CustomAlert from "../../components/common/CustomAlert";
-import { walletStyles as styles } from "../../styles/wallet.styles";
+import { makeWalletStyles } from "../../styles/wallet.styles";
 import SectionHeader from "../../components/ui/SectionHeader";
 
 const QUICK_AMOUNTS = [50000, 100000, 200000, 500000, 1000000, 2000000];
 
 const WalletScreen = () => {
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeWalletStyles);
   const navigation = useNavigation();
   const route = useRoute();
   const promotion = route.params?.promotion || null;

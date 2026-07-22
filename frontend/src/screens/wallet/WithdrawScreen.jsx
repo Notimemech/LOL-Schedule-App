@@ -16,18 +16,20 @@ import { useNavigation } from "@react-navigation/native";
 import Icon from "react-native-vector-icons/FontAwesome6";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import COLORS from "../../styles/colors";
+import { useTheme, useThemedStyles } from "../../hooks/useTheme";
 import api from "../../services/api";
 import ContentHeader from "../../components/common/ContentHeader";
 import { formatMoney } from "../../utils/format";
 import QuickAmountSelector from "../../components/ui/QuickAmountSelector";
 import SectionHeader from "../../components/ui/SectionHeader";
 import CustomAlert from "../../components/common/CustomAlert";
-import { walletStyles as styles } from "../../styles/wallet.styles";
+import { makeWalletStyles } from "../../styles/wallet.styles";
 
 const QUICK_WITHDRAW = [50000, 100000, 200000, 500000, 1000000];
 
 const WithdrawScreen = () => {
+  const { colors: COLORS } = useTheme();
+  const styles = useThemedStyles(makeWalletStyles);
   const navigation = useNavigation();
   const [amount, setAmount] = useState("");
   const [loading, setLoading] = useState(false);
@@ -249,10 +251,10 @@ const WithdrawScreen = () => {
             disabled={loading || parseInt(amount.replace(/\D/g, "") || 0, 10) > currentBalance}
           >
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={COLORS.staticWhite} />
             ) : (
               <>
-                <Icon name="building-columns" size={18} color="#fff" />
+                <Icon name="building-columns" size={18} color={COLORS.staticWhite} />
                 <Text style={styles.payButtonText}>WITHDRAW VIA VNPAY</Text>
               </>
             )}
