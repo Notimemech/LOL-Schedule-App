@@ -246,6 +246,26 @@ CREATE INDEX idx_matches_team1        ON Matches(team1_id);
 CREATE INDEX idx_matches_team2        ON Matches(team2_id);
 
 -- =====================
+-- 6b. MATCH FOLLOWS (Companion Hub: user theo dõi trận đấu)
+-- =====================
+CREATE TABLE MatchFollows (
+    user_id    bigint NOT NULL,
+    match_id   bigint NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now(),
+
+    PRIMARY KEY (user_id, match_id),
+
+    CONSTRAINT fk_match_follow_user
+        FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE,
+
+    CONSTRAINT fk_match_follow_match
+        FOREIGN KEY (match_id) REFERENCES Matches(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_match_follows_user  ON MatchFollows(user_id);
+CREATE INDEX idx_match_follows_match ON MatchFollows(match_id);
+
+-- =====================
 -- 7. GAMES (các ván trong 1 match Bo3/Bo5)
 -- =====================
 CREATE TABLE Games (
@@ -518,6 +538,25 @@ CREATE INDEX idx_bets_user       ON Bets(user_id);
 CREATE INDEX idx_bets_market     ON Bets(market_id);
 CREATE INDEX idx_bets_status     ON Bets(status);
 CREATE INDEX idx_bets_placed_at  ON Bets(placed_at);
+
+-- =====================
+-- 13. SUPPORT TICKETS (Help Center: yêu cầu hỗ trợ từ user)
+-- =====================
+CREATE TABLE SupportTickets (
+    id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id     bigint      NOT NULL,
+    category    text        NOT NULL,   -- deposit | withdraw | bet | account | other
+    subject     text        NOT NULL,
+    message     text        NOT NULL,
+    status      text        NOT NULL DEFAULT 'open',  -- open | in_progress | resolved | closed
+    created_at  timestamptz NOT NULL DEFAULT now(),
+
+    CONSTRAINT fk_ticket_user
+        FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_support_tickets_user   ON SupportTickets(user_id);
+CREATE INDEX idx_support_tickets_status ON SupportTickets(status);
 
 -- =====================
 -- TRIGGER: tự động cập nhật updated_at

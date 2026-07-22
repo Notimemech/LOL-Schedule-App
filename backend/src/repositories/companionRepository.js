@@ -210,3 +210,35 @@ export const isFollowingTeam = async (userId, teamId) => {
     const result = await pool.query(query, [userId, teamId]);
     return result.rowCount > 0;
 };
+
+// ===== Match follows =====
+
+export const followMatch = async (userId, matchId) => {
+    const query = `
+        INSERT INTO matchfollows (user_id, match_id)
+        VALUES ($1, $2)
+        ON CONFLICT (user_id, match_id) DO NOTHING
+        RETURNING *;
+    `;
+    const { rows } = await pool.query(query, [userId, matchId]);
+    return rows[0] || null;
+};
+
+export const unfollowMatch = async (userId, matchId) => {
+    const query = `DELETE FROM matchfollows WHERE user_id = $1 AND match_id = $2`;
+    const result = await pool.query(query, [userId, matchId]);
+    return result.rowCount > 0;
+};
+
+// Only ids are returned — clients already load the full match list from
+// /matches, so joining here would duplicate that big odds query.
+export const getFollowedMatchIds = async (userId) => {
+    const query = `
+        SELECT match_id, created_at AS followed_at
+        FROM matchfollows
+        WHERE user_id = $1
+        ORDER BY created_at DESC;
+    `;
+    const { rows } = await pool.query(query, [userId]);
+    return rows;
+};

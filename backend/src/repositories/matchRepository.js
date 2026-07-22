@@ -12,10 +12,53 @@ export const createMatch = async (matchData) => {
     return rows[0];
 };
 
-export const getMatches = async () => {
+// Shared WHERE builder for the list and count queries so pagination totals
+// always match the filtered rows.
+const buildMatchFilters = ({ state, matchType, search, dateFrom, dateTo } = {}) => {
+    const conditions = [];
+    const values = [];
+    if (state) {
+        values.push(state);
+        conditions.push(`m.state = $${values.length}`);
+    }
+    if (matchType) {
+        values.push(matchType);
+        conditions.push(`LOWER(mt.match_type) = LOWER($${values.length})`);
+    }
+    // Date filter arrives as a [from, to) timestamp range computed on the
+    // client, so "one day" respects the user's local timezone.
+    if (dateFrom) {
+        values.push(dateFrom);
+        conditions.push(`m.scheduled_at >= $${values.length}`);
+    }
+    if (dateTo) {
+        values.push(dateTo);
+        conditions.push(`m.scheduled_at < $${values.length}`);
+    }
+    if (search) {
+        values.push(`%${search}%`);
+        const i = values.length;
+        conditions.push(`(
+            t1.name ILIKE $${i} OR t1.code ILIKE $${i} OR
+            t2.name ILIKE $${i} OR t2.code ILIKE $${i} OR
+            tr.name ILIKE $${i} OR l.name ILIKE $${i}
+        )`);
+    }
+    return { where: conditions.length ? `WHERE ${conditions.join(' AND ')}` : '', values };
+};
+
+export const getMatches = async (filters = {}) => {
     // Join to get team names, tournament name, market status and real winner odds.
     // Odds come from the odds table (option_key = team slug) so list screens
     // never have to fabricate values client-side.
+    const { where, values } = buildMatchFilters(filters);
+    let paging = '';
+    if (filters.limit != null) {
+        values.push(filters.limit);
+        paging += ` LIMIT $${values.length}`;
+        values.push(filters.offset || 0);
+        paging += ` OFFSET $${values.length}`;
+    }
     const query = `
         SELECT m.*,
                mt.match_type as match_type_name,
@@ -46,10 +89,27 @@ export const getMatches = async () => {
             WHERE bm2.match_id = m.id AND bm2.market_type = 'winner_team'
             ORDER BY bm2.id ASC LIMIT 1
         ) bm ON true
-        ORDER BY m.scheduled_at DESC;
+        ${where}
+        ORDER BY m.scheduled_at DESC${paging};
     `;
-    const { rows } = await pool.query(query);
+    const { rows } = await pool.query(query, values);
     return rows;
+};
+
+export const countMatches = async (filters = {}) => {
+    const { where, values } = buildMatchFilters(filters);
+    const query = `
+        SELECT COUNT(*)::int AS total
+        FROM matches m
+        JOIN matchtypes mt ON m.match_type_id = mt.id
+        JOIN teams t1 ON m.team1_id = t1.id
+        JOIN teams t2 ON m.team2_id = t2.id
+        JOIN tournaments tr ON m.tournament_id = tr.id
+        JOIN leagues l ON tr.league_id = l.id
+        ${where};
+    `;
+    const { rows } = await pool.query(query, values);
+    return rows[0].total;
 };
 
 export const updateMatchState = async (matchId, state, team1_score, team2_score, winner_team_id) => {

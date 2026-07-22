@@ -5,6 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import { useTheme, useThemedStyles } from "../../hooks/useTheme";
 import { formatDate } from "../../utils/format";
 import LiveBadge from "../ui/LiveBadge";
+import StatusBadge from "../ui/StatusBadge";
 
 /**
  * Reusable match card used in HomeScreen (featured / popular / search results).
@@ -12,8 +13,10 @@ import LiveBadge from "../ui/LiveBadge";
  * (agents/BETTING_RULES.md). When no market exists yet the odds row collapses
  * into a single "view match" action.
  * @param {object} game - The match object
+ * @param {boolean} isFollowedMatch - User follows this match (star badge)
+ * @param {number[]} followedTeamIds - Teams the user follows (bell next to code)
  */
-const MatchCard = ({ game }) => {
+const MatchCard = ({ game, isFollowedMatch = false, followedTeamIds = [] }) => {
   const navigation = useNavigation();
   const { colors: COLORS } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -23,12 +26,27 @@ const MatchCard = ({ game }) => {
 
   const goToDetail = () => navigation.navigate("Detail", { match: game });
 
+  const isTeamFollowed = (team) => followedTeamIds.includes(Number(team?.id));
+
+  const renderFollowedTeamIcon = (team) =>
+    isTeamFollowed(team) ? (
+      <Ionicons name="notifications" size={12} color={COLORS.primary} />
+    ) : null;
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.league} numberOfLines={1} ellipsizeMode="tail">
           {game.leagueName?.toUpperCase()}
         </Text>
+        {isFollowedMatch && (
+          <StatusBadge
+            label="★ FOLLOWED"
+            color={COLORS.primary}
+            bg={COLORS.glowSoft}
+            borderColor={COLORS.primary}
+          />
+        )}
         {isLive ? (
           <LiveBadge />
         ) : (
@@ -40,6 +58,7 @@ const MatchCard = ({ game }) => {
         <View style={styles.team}>
           <Image source={{ uri: game.team1.logoUrl }} style={styles.logo} resizeMode="contain" />
           <Text style={styles.code}>{game.team1.code}</Text>
+          {renderFollowedTeamIcon(game.team1)}
         </View>
 
         {isFinished ? (
@@ -51,6 +70,7 @@ const MatchCard = ({ game }) => {
         )}
 
         <View style={[styles.team, { justifyContent: "flex-end" }]}>
+          {renderFollowedTeamIcon(game.team2)}
           <Text style={styles.code}>{game.team2.code}</Text>
           <Image source={{ uri: game.team2.logoUrl }} style={styles.logo} resizeMode="contain" />
         </View>

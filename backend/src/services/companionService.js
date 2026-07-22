@@ -109,3 +109,21 @@ export const unfollowTeam = async (userId, teamId) => {
 export const getFollowedTeams = async (userId) => {
     return await companionRepository.getFollowedTeams(userId);
 };
+
+export const followMatch = async (userId, matchId) => {
+    if (!userId) {
+        throw new AppError('userId is required', 400);
+    }
+    return await companionRepository.followMatch(userId, matchId);
+};
+
+export const unfollowMatch = async (userId, matchId) => {
+    if (!userId) {
+        throw new AppError('userId is required', 400);
+    }
+    return await companionRepository.unfollowMatch(userId, matchId);
+};
+
+export const getFollowedMatchIds = async (userId) => {
+    return await companionRepository.getFollowedMatchIds(userId);
+};

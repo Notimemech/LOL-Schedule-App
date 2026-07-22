@@ -12,6 +12,7 @@ import { promotionRouter } from './promotion.route.js';
 
 import { vipRouter } from './vip.route.js';
 import { notificationRouter } from './notification.route.js';
+import { helpRouter } from './help.route.js';
 
 export const router = express.Router();
 
@@ -35,3 +36,4 @@ router.use('/games', gameRouter);
 router.use('/promotions', promotionRouter);
 router.use('/vip', vipRouter);
 router.use('/notifications', notificationRouter);
+router.use('/help', helpRouter);

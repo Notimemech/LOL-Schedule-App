@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme, useThemedStyles } from "../../hooks/useTheme";
 import { formatDate } from "../../utils/format";
@@ -9,11 +10,15 @@ import LiveBadge from "../ui/LiveBadge";
 /**
  * Reusable match banner item used in ScheduleScreen.
  * Displays match info and market status (OPEN, CLOSED, SETTLED).
+ * @param {boolean} isFollowedMatch - User follows this match (star badge)
+ * @param {number[]} followedTeamIds - Teams the user follows (bell next to code)
  */
-const MatchListItem = ({ game }) => {
+const MatchListItem = ({ game, isFollowedMatch = false, followedTeamIds = [] }) => {
   const navigation = useNavigation();
   const { colors: COLORS } = useTheme();
   const styles = useThemedStyles(makeStyles);
+
+  const isTeamFollowed = (team) => followedTeamIds.includes(Number(team?.id));
 
   // Determine market status if available from backend, otherwise fallback to match state logic
   let marketStatus = game.marketStatus; // Should be 'open', 'closed', or 'settled'
@@ -42,12 +47,22 @@ const MatchListItem = ({ game }) => {
           <Text style={styles.leagueText}>{game.leagueName?.toUpperCase()}</Text>
           <Text style={styles.tournamentText}>{game.tournamentName}</Text>
         </View>
-        <StatusBadge 
-          label={badgeProps.label} 
-          color={badgeProps.color} 
-          bg={badgeProps.bg} 
-          borderColor={badgeProps.border} 
-        />
+        <View style={styles.badgeCol}>
+          <StatusBadge
+            label={badgeProps.label}
+            color={badgeProps.color}
+            bg={badgeProps.bg}
+            borderColor={badgeProps.border}
+          />
+          {isFollowedMatch && (
+            <StatusBadge
+              label="★ FOLLOWED"
+              color={COLORS.primary}
+              bg={COLORS.glowSoft}
+              borderColor={COLORS.primary}
+            />
+          )}
+        </View>
       </View>
 
       {game.state === "happening" ? (
@@ -63,7 +78,12 @@ const MatchListItem = ({ game }) => {
       <View style={styles.gameCard}>
         <View style={styles.teamCard}>
           <Image source={{ uri: game.team1.logoUrl }} style={styles.teamLogo} resizeMode="contain" />
-          <Text style={styles.teamCode}>{game.team1.code}</Text>
+          <View style={styles.teamCodeRow}>
+            {isTeamFollowed(game.team1) && (
+              <Ionicons name="notifications" size={13} color={COLORS.primary} />
+            )}
+            <Text style={styles.teamCode}>{game.team1.code}</Text>
+          </View>
         </View>
 
         {game.state === "finished" ? (
@@ -80,7 +100,12 @@ const MatchListItem = ({ game }) => {
 
         <View style={styles.teamCard}>
           <Image source={{ uri: game.team2.logoUrl }} style={styles.teamLogo} resizeMode="contain" />
-          <Text style={styles.teamCode}>{game.team2.code}</Text>
+          <View style={styles.teamCodeRow}>
+            {isTeamFollowed(game.team2) && (
+              <Ionicons name="notifications" size={13} color={COLORS.primary} />
+            )}
+            <Text style={styles.teamCode}>{game.team2.code}</Text>
+          </View>
         </View>
       </View>
 
@@ -90,7 +115,7 @@ const MatchListItem = ({ game }) => {
         activeOpacity={0.7}
       >
         <Text style={styles.detailButtonText}>
-          {game.state === "finished" ? "VIEW RESULTS" : "VIEW ODDS"}
+          {game.state === "finished" ? "VIEW RESULTS" : "VIEW DETAILS"}
         </Text>
       </TouchableOpacity>
     </View>
@@ -162,6 +187,15 @@ const makeStyles = (COLORS) => StyleSheet.create({
     alignItems: "center",
     gap: 8,
     flex: 1,
+  },
+  teamCodeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  badgeCol: {
+    alignItems: "flex-end",
+    gap: 4,
   },
   teamLogo: {
     width: 60,

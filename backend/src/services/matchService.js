@@ -5,8 +5,28 @@ export const createMatch = async (matchData) => {
     return await matchRepository.createMatch(matchData);
 };
 
-export const getAllMatches = async () => {
-    return await matchRepository.getMatches();
+// Backward compatible: without `limit` the full array is returned (Home,
+// Profile). With `limit` the response is paginated as { items, total, ... }.
+export const getAllMatches = async (query = {}) => {
+    const filters = {
+        state: query.state,
+        matchType: query.matchType,
+        search: query.search,
+        dateFrom: query.dateFrom,
+        dateTo: query.dateTo,
+    };
+
+    if (query.limit === undefined) {
+        return await matchRepository.getMatches(filters);
+    }
+
+    const limit = Math.min(Math.max(parseInt(query.limit, 10) || 10, 1), 50);
+    const offset = Math.max(parseInt(query.offset, 10) || 0, 0);
+    const [items, total] = await Promise.all([
+        matchRepository.getMatches({ ...filters, limit, offset }),
+        matchRepository.countMatches(filters),
+    ]);
+    return { items, total, limit, offset };
 };
 
 export const updateMatch = async (matchId, updateData) => {

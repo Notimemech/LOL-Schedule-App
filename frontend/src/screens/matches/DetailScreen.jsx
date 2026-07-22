@@ -11,12 +11,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 import ContentHeader from "../../components/common/ContentHeader";
 import { useTheme, useThemedStyles } from "../../hooks/useTheme";
 import { makeDetailStyles } from "../../styles/matches.styles";
 import { getMatchMarketsAndOdds, getAllBetsForMatch, autoCloseMarkets } from "../../services/bettingService";
-import { getMatchGames } from "../../services/matchService";
+import { getMatchGames, followMatch, unfollowMatch, getFollowedMatchIds } from "../../services/matchService";
 import { getHeadToHead } from "../../services/teamService";
+import { getStoredUserId } from "../../utils/user";
 import MarketSection from "./MarketSection";
 import BetHistorySection from "./BetHistorySection";
 import GameBreakdownSection from "./GameBreakdownSection";
@@ -37,6 +39,9 @@ export default function DetailScreen() {
   const [userBets, setUserBets] = useState([]);
   const [games, setGames] = useState([]);
   const [h2h, setH2h] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -63,14 +68,48 @@ export default function DetailScreen() {
     // so betting UI never breaks because of side content.
     getAllBetsForMatch(match.matchId)
       .then(setUserBets)
-      .catch(() => {});
+      .catch(() => { });
     getMatchGames(match.matchId)
       .then(setGames)
-      .catch(() => {});
+      .catch(() => { });
     if (match?.team1?.id && match?.team2?.id) {
       getHeadToHead(match.team1.id, match.team2.id)
         .then(setH2h)
-        .catch(() => {});
+        .catch(() => { });
+    }
+    loadFollowState();
+  };
+
+  const loadFollowState = async () => {
+    // Follow state is companion content — fails silently like the rest.
+    try {
+      const uid = await getStoredUserId();
+      setUserId(uid);
+      if (!uid) return;
+      const followedIds = await getFollowedMatchIds(uid);
+      setIsFollowing(followedIds.includes(Number(match.matchId)));
+    } catch (error) {
+      // keep default (not following)
+    }
+  };
+
+  const toggleFollow = async () => {
+    if (!userId || followBusy) return;
+    setFollowBusy(true);
+    // Optimistic UI, reverted on failure (same pattern as TeamScreen).
+    const next = !isFollowing;
+    setIsFollowing(next);
+    try {
+      if (next) {
+        await followMatch(match.matchId, userId);
+      } else {
+        await unfollowMatch(match.matchId, userId);
+      }
+    } catch (error) {
+      setIsFollowing(!next);
+      console.log("Failed to toggle match follow:", error);
+    } finally {
+      setFollowBusy(false);
     }
   };
 
@@ -126,6 +165,24 @@ export default function DetailScreen() {
             <View style={styles.leagueRow}>
               <Text style={styles.leagueText}>{match.leagueName?.toUpperCase()}</Text>
               {isLive && <LiveBadge />}
+              {userId ? (
+                <TouchableOpacity
+                  style={[styles.followMatchBtn, isFollowing && styles.followMatchBtnActive]}
+                  onPress={toggleFollow}
+                  disabled={followBusy}
+                  accessibilityRole="button"
+                  accessibilityLabel={isFollowing ? "Unfollow match" : "Follow match"}
+                >
+                  <Ionicons
+                    name={isFollowing ? "star" : "star-outline"}
+                    size={14}
+                    color={isFollowing ? COLORS.buttonPrimaryText : COLORS.primary}
+                  />
+                  <Text style={[styles.followMatchBtnText, isFollowing && styles.followMatchBtnTextActive]}>
+                    {isFollowing ? "FOLLOWING" : "FOLLOW"}
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
             <View style={styles.teamsRow}>
               <TouchableOpacity
@@ -216,7 +273,7 @@ export default function DetailScreen() {
                   ? "MARKET CLOSED"
                   : hasStarted
                     ? "LIVE NOW"
-                    : "PLACE A BET"}
+                    : "LEAVE A PREDICTION"}
             </Text>
           </TouchableOpacity>
         </View>

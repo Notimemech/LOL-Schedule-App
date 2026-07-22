@@ -18,6 +18,7 @@ import SettingScreen from "./src/screens/profile/SettingScreen";
 import ThemeSettingScreen from "./src/screens/profile/ThemeSettingScreen";
 import SignInScreen from "./src/screens/auth/SignInScreen";
 import VipScreen from "./src/screens/profile/VipScreen";
+import HelpCenterScreen from "./src/screens/help/HelpCenterScreen";
 import TeamScreen from "./src/screens/team/TeamScreen";
 import StandingsScreen from "./src/screens/standings/StandingsScreen";
 import ExploreScreen from "./src/screens/explore/ExploreScreen";
@@ -69,6 +70,7 @@ function AppNavigator({ initialRouteName }) {
           <RootStack.Screen name="SettingScreen" component={SettingScreen} />
           <RootStack.Screen name="ThemeSettingScreen" component={ThemeSettingScreen} />
           <RootStack.Screen name="VipScreen" component={VipScreen} />
+          <RootStack.Screen name="HelpCenter" component={HelpCenterScreen} />
         </RootStack.Navigator>
       </NavigationContainer>
     </>

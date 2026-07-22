@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import {
   Text,
   View,
@@ -8,6 +8,7 @@ import {
   TouchableWithoutFeedback,
   FlatList,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ContentHeader from "../../components/common/ContentHeader";
@@ -15,10 +16,20 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme, useThemedStyles } from "../../hooks/useTheme";
 import { makeScheduleStyles } from "../../styles/matches.styles";
-import { getMatches } from "../../services/matchService";
+import { getMatchesPage, getFollowedMatchIds } from "../../services/matchService";
+import { getFollowedTeams } from "../../services/teamService";
+import { getStoredUserId } from "../../utils/user";
+import { isMatchFollowed } from "../../utils/matchPriority";
 import MatchListItem from "../../components/matches/MatchListItem";
 import { MatchCardSkeleton } from "../../components/ui/Skeleton";
 import EmptyState from "../../components/ui/EmptyState";
+
+// Server-side pagination: each scroll to the end fetches the next PAGE_SIZE
+// matches from the API (filters included), so the client never holds more
+// than what the user has scrolled through.
+const PAGE_SIZE = 10;
+// Wait for the user to stop typing before hitting the API.
+const SEARCH_DEBOUNCE_MS = 400;
 
 export default function ScheduleScreen() {
   const route = useRoute();
@@ -27,13 +38,18 @@ export default function ScheduleScreen() {
   const styles = useThemedStyles(makeScheduleStyles);
 
   const [games, setGames] = useState([]);
+  const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL STATUS");
   const [dateFilter, setDateFilter] = useState("ALL DATES");
+  const [followedMatchIds, setFollowedMatchIds] = useState([]);
+  const [followedTeamIds, setFollowedTeamIds] = useState([]);
 
   // Modal filters states
   const [modalVisible, setModalVisible] = useState(false);
@@ -52,75 +68,134 @@ export default function ScheduleScreen() {
     }
   }, [route.params?.gameFilter, route.params?.statusFilter]);
 
+  // Debounce the search box so each keystroke doesn't hit the API.
   useEffect(() => {
-    fetchSchedule();
-  }, []);
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  const fetchSchedule = async () => {
-    setLoadError(false);
+  const FILTERS = ["ALL", "LOL", "DOTA 2"];
+  const STATUS_FILTERS = ["ALL STATUS", "UPCOMING", "FINISHED"];
+
+  // Date chips come from the pages loaded so far; each carries a [from, to)
+  // ISO range so the server-side day filter respects the local timezone.
+  const dateOptions = (() => {
+    const seen = new Map();
+    games.forEach(game => {
+      if (!game.startTime) return;
+      const d = new Date(game.startTime);
+      const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      if (!seen.has(label)) {
+        const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        seen.set(label, {
+          label,
+          from: start.toISOString(),
+          to: new Date(start.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+        });
+      }
+    });
+    return [{ label: "ALL DATES", from: null, to: null }, ...seen.values()];
+  })();
+
+  const buildQueryFilters = () => {
+    const filters = {};
+    if (activeFilter !== "ALL") filters.matchType = activeFilter;
+    if (statusFilter === "UPCOMING") filters.state = "upcoming";
+    if (statusFilter === "FINISHED") filters.state = "finished";
+    if (dateFilter !== "ALL DATES") {
+      const option = dateOptions.find((opt) => opt.label === dateFilter);
+      if (option?.from) {
+        filters.dateFrom = option.from;
+        filters.dateTo = option.to;
+      }
+    }
+    if (debouncedSearch.trim()) filters.search = debouncedSearch.trim();
+    return filters;
+  };
+
+  const fetchPage = async ({ reset = false } = {}) => {
+    if (reset) setLoadError(false);
     try {
-      const data = await getMatches();
-      setGames(data);
+      const offset = reset ? 0 : games.length;
+      const { items, total: totalCount } = await getMatchesPage({
+        limit: PAGE_SIZE,
+        offset,
+        ...buildQueryFilters(),
+      });
+      setTotal(totalCount);
+      setGames((prev) => {
+        if (reset) return items;
+        // Dedupe in case rows shifted between page requests.
+        const seen = new Set(prev.map((g) => g.matchId));
+        return [...prev, ...items.filter((g) => !seen.has(g.matchId))];
+      });
+      if (reset) fetchFollowData();
     } catch (error) {
       console.log("Failed to load schedule:", error);
-      setLoadError(true);
+      if (reset) setLoadError(true);
     } finally {
       setIsLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
+    }
+  };
+
+  // First page — refetched whenever any filter or the search text changes.
+  useEffect(() => {
+    setIsLoading(true);
+    setGames([]);
+    userScrolledRef.current = false;
+    fetchPage({ reset: true });
+  }, [activeFilter, statusFilter, dateFilter, debouncedSearch]);
+
+  const fetchFollowData = async () => {
+    // Follow indicators are companion content; failures never break the list.
+    try {
+      const userId = await getStoredUserId();
+      if (!userId) return;
+      const [matchIds, teams] = await Promise.all([
+        getFollowedMatchIds(userId),
+        getFollowedTeams(userId),
+      ]);
+      setFollowedMatchIds(matchIds);
+      setFollowedTeamIds(teams.map((team) => Number(team.id)));
+    } catch (error) {
+      // keep empty follow lists
     }
   };
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchSchedule();
-  }, []);
+    fetchPage({ reset: true });
+  }, [activeFilter, statusFilter, dateFilter, debouncedSearch]);
 
-  const getUniqueMatchDates = () => {
-    const dates = new Set();
-    games.forEach(game => {
-      if (game.startTime) {
-        const date = new Date(game.startTime);
-        const formatted = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-        dates.add(formatted);
-      }
-    });
-    return ["ALL DATES", ...Array.from(dates)];
+  const hasMore = games.length < total;
+
+  // FlatList can fire onEndReached during initial layout (before any user
+  // interaction) — only honor it after a real scroll happened.
+  const userScrolledRef = useRef(false);
+
+  const handleScroll = (event) => {
+    if (event.nativeEvent.contentOffset.y > 0) {
+      userScrolledRef.current = true;
+    }
   };
 
-  const FILTERS = ["ALL", "LOL", "DOTA 2"];
-  const STATUS_FILTERS = ["ALL STATUS", "UPCOMING", "FINISHED"];
-  const dateOptions = getUniqueMatchDates();
+  const loadMore = () => {
+    if (!userScrolledRef.current) return;
+    if (loadingMore || isLoading || loadError || refreshing || !hasMore) return;
+    setLoadingMore(true);
+    fetchPage();
+  };
 
-  const filteredGames = games.filter(game => {
-    if (activeFilter !== "ALL") {
-      if (!game.matchType || game.matchType.toUpperCase() !== activeFilter) return false;
-    }
-
-    if (statusFilter !== "ALL STATUS") {
-      const stateQuery = statusFilter.toLowerCase();
-      if (stateQuery === "upcoming" && game.state !== "upcoming") return false;
-      if (stateQuery === "finished" && game.state !== "finished") return false;
-    }
-
-    if (dateFilter !== "ALL DATES") {
-      const gameDateFormatted = new Date(game.startTime).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      if (gameDateFormatted !== dateFilter) return false;
-    }
-
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      const matchesSearch =
-        game.team1.name?.toLowerCase().includes(query) ||
-        game.team1.code?.toLowerCase().includes(query) ||
-        game.team2.name?.toLowerCase().includes(query) ||
-        game.team2.code?.toLowerCase().includes(query) ||
-        game.leagueName?.toLowerCase().includes(query) ||
-        game.tournamentName?.toLowerCase().includes(query);
-      if (!matchesSearch) return false;
-    }
-
-    return true;
-  });
+  const renderListFooter = () => {
+    if (!loadingMore) return null;
+    return (
+      <View style={{ paddingVertical: 16 }}>
+        <ActivityIndicator color={COLORS.primary} />
+      </View>
+    );
+  };
 
   const renderListEmpty = () => {
     if (isLoading) {
@@ -139,7 +214,7 @@ export default function ScheduleScreen() {
           message="Could not load the schedule"
           hint="Check your connection and try again."
           actionLabel="Retry"
-          onAction={fetchSchedule}
+          onAction={() => fetchPage({ reset: true })}
         />
       );
     }
@@ -249,14 +324,14 @@ export default function ScheduleScreen() {
               <View style={styles.filterSection}>
                 <Text style={styles.filterSectionTitle}>MATCH DATE</Text>
                 <View style={styles.filterChipsRow}>
-                  {dateOptions.map(date => (
+                  {dateOptions.map(({ label }) => (
                     <TouchableOpacity
-                      key={date}
-                      style={[styles.filterChip, tempDateFilter === date && styles.filterChipActive]}
-                      onPress={() => setTempDateFilter(date)}
+                      key={label}
+                      style={[styles.filterChip, tempDateFilter === label && styles.filterChipActive]}
+                      onPress={() => setTempDateFilter(label)}
                     >
-                      <Text style={[styles.filterChipText, tempDateFilter === date && styles.filterChipTextActive]}>
-                        {date.toUpperCase()}
+                      <Text style={[styles.filterChipText, tempDateFilter === label && styles.filterChipTextActive]}>
+                        {label.toUpperCase()}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -296,10 +371,21 @@ export default function ScheduleScreen() {
       <FlatList
         style={styles.body}
         contentContainerStyle={styles.bodyContent}
-        data={isLoading || loadError ? [] : filteredGames}
+        data={isLoading || loadError ? [] : games}
         keyExtractor={(game) => String(game.matchId)}
-        renderItem={({ item }) => <MatchListItem game={item} />}
+        renderItem={({ item }) => (
+          <MatchListItem
+            game={item}
+            isFollowedMatch={isMatchFollowed(item, followedMatchIds)}
+            followedTeamIds={followedTeamIds}
+          />
+        )}
         ListEmptyComponent={renderListEmpty}
+        ListFooterComponent={renderListFooter}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

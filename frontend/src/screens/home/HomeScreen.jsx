@@ -20,14 +20,21 @@ import { MatchCardSkeleton } from "../../components/ui/Skeleton";
 import EmptyState from "../../components/ui/EmptyState";
 import { useTheme, useThemedStyles } from "../../hooks/useTheme";
 import { makeHomeStyles } from "../../styles/home.styles";
-import { getMatches } from "../../services/matchService";
+import { getMatches, getFollowedMatchIds } from "../../services/matchService";
 import { getActivePromotion, getAllPromotions } from "../../services/promotionService";
 import { getFollowedTeams } from "../../services/teamService";
 import { getStoredUserId } from "../../utils/user";
+import {
+  isMatchFollowed,
+  sortUpcomingByFollowPriority,
+  sortFinishedByRecency,
+} from "../../utils/matchPriority";
 
 const { width } = Dimensions.get("window");
 
 const HIDE_PROMO_KEY = "hidePromoPopup";
+// Home is a preview — each tab shows a handful of matches; "View All" opens Schedule.
+const HOME_PREVIEW_COUNT = 3;
 
 export default function HomeScreen() {
   const navigation = useNavigation();
@@ -40,6 +47,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [followedTeams, setFollowedTeams] = useState([]);
+  const [followedMatchIds, setFollowedMatchIds] = useState([]);
 
   const [matchTab, setMatchTab] = useState("UPCOMING");
   const [activeSlide, setActiveSlide] = useState(0);
@@ -134,6 +142,17 @@ export default function HomeScreen() {
     }
   };
 
+  const fetchFollowedMatches = async (userId) => {
+    if (!userId) return;
+    try {
+      const ids = await getFollowedMatchIds(userId);
+      setFollowedMatchIds(ids);
+    } catch (error) {
+      // Follow list is optional companion content; ignore failures.
+      setFollowedMatchIds([]);
+    }
+  };
+
   const fetchMatches = async (isRefresh = false) => {
     if (!isRefresh) setIsLoading(allGames.length === 0);
     setLoadError(false);
@@ -144,6 +163,7 @@ export default function HomeScreen() {
       const userId = await getStoredUserId();
       fetchPromotions(userId);
       fetchFollowedTeams(userId);
+      fetchFollowedMatches(userId);
     } catch (error) {
       console.log("Failed to load matches:", error);
       setLoadError(true);
@@ -175,6 +195,8 @@ export default function HomeScreen() {
     setActiveSlide(Math.round(index));
   };
 
+  const followedTeamIds = followedTeams.map((team) => Number(team.id));
+
   const getFilteredMatches = () => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase().trim();
@@ -188,10 +210,28 @@ export default function HomeScreen() {
       );
     }
     const tabQuery = matchTab.toLowerCase();
-    if (tabQuery === "live") return allGames.filter(g => g.state === "happening");
-    if (tabQuery === "upcoming") return allGames.filter(g => g.state === "upcoming");
-    if (tabQuery === "finished") return allGames.filter(g => g.state === "finished");
+    if (tabQuery === "live") {
+      return allGames.filter(g => g.state === "happening").slice(0, HOME_PREVIEW_COUNT);
+    }
+    if (tabQuery === "upcoming") {
+      const upcoming = allGames.filter(g => g.state === "upcoming");
+      return sortUpcomingByFollowPriority(upcoming, followedMatchIds, followedTeamIds)
+        .slice(0, HOME_PREVIEW_COUNT);
+    }
+    if (tabQuery === "finished") {
+      return sortFinishedByRecency(allGames.filter(g => g.state === "finished"))
+        .slice(0, HOME_PREVIEW_COUNT);
+    }
     return [];
+  };
+
+  const openScheduleForTab = () => {
+    // Schedule has no LIVE status filter — fall back to all statuses there.
+    const statusFilter = matchTab === "LIVE" ? "ALL STATUS" : matchTab;
+    navigation.navigate("ScheduleStack", {
+      screen: "Schedule",
+      params: { statusFilter },
+    });
   };
 
   const renderCarouselItem = ({ item }) => (
@@ -225,6 +265,9 @@ export default function HomeScreen() {
             scrollEventThrottle={16}
             snapToAlignment="center"
             decelerationRate="fast"
+            // Autoplay can target an index the list hasn't measured yet
+            // (backgrounded tab / slow layout) — skip that tick instead of crashing.
+            onScrollToIndexFailed={() => {}}
           />
         </View>
         <View style={style.carouselDotContainer}>
@@ -303,6 +346,26 @@ export default function HomeScreen() {
           ))}
         </View>
       </>
+    );
+  };
+
+  const renderListFooter = () => {
+    // Search shows the full result list; the preview CTA only makes sense per tab.
+    if (searchQuery || isLoading || loadError) return <View style={{ height: 110 }} />;
+    return (
+      <View>
+        <TouchableOpacity
+          style={style.viewAllButton}
+          onPress={openScheduleForTab}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="View all matches in schedule"
+        >
+          <Text style={style.viewAllText}>VIEW ALL</Text>
+          <Ionicons name="arrow-forward-outline" size={14} color={COLORS.primary} />
+        </TouchableOpacity>
+        <View style={{ height: 110 }} />
+      </View>
     );
   };
 
@@ -432,12 +495,16 @@ export default function HomeScreen() {
         keyExtractor={(game) => String(game.matchId)}
         renderItem={({ item }) => (
           <View style={{ paddingHorizontal: 20 }}>
-            <MatchCard game={item} />
+            <MatchCard
+              game={item}
+              isFollowedMatch={isMatchFollowed(item, followedMatchIds)}
+              followedTeamIds={followedTeamIds}
+            />
           </View>
         )}
         ListHeaderComponent={renderListHeader}
         ListEmptyComponent={renderListEmpty}
-        ListFooterComponent={<View style={{ height: 110 }} />}
+        ListFooterComponent={renderListFooter}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

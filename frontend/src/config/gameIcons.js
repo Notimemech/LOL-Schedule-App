@@ -15,11 +15,11 @@
 // Dota 2: CARRY/MID/OFFLANE/SOFT SUPPORT/HARD SUPPORT.
 export const ROLE_ICONS = {
   // League of Legends
-  TOP: { icon: "shield-outline" },
-  JUNGLE: { icon: "leaf-outline" },
-  MID: { icon: "flash-outline" },
-  ADC: { icon: "locate-outline" },
-  SUPPORT: { icon: "heart-outline" },
+  TOP: { uri: "https://wiki.leagueoflegends.com/en-us/images/Top_icon.png?58442" },
+  JUNGLE: { uri: "https://wiki.leagueoflegends.com/en-us/images/Jungle_icon.png?9225d" },
+  MID: { uri: "https://wiki.leagueoflegends.com/en-us/images/Middle_icon.png?fa3f0" },
+  ADC: { uri: "https://wiki.leagueoflegends.com/en-us/images/Bottom_icon.png?6d4b2" },
+  SUPPORT: { uri: "https://wiki.leagueoflegends.com/en-us/images/Support_icon.png?af1ff" },
   // Dota 2
   CARRY: { icon: "flame-outline" },
   OFFLANE: { icon: "shield-half-outline" },

@@ -352,6 +352,30 @@ export const makeDetailStyles = (COLORS) => StyleSheet.create({
     gap: 10,
     marginBottom: 20,
   },
+  followMatchBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginLeft: "auto",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.glowSoft,
+  },
+  followMatchBtnActive: {
+    backgroundColor: COLORS.primary,
+  },
+  followMatchBtnText: {
+    color: COLORS.primary,
+    fontFamily: "SpaceGroteskBold",
+    fontSize: 11,
+    letterSpacing: 1,
+  },
+  followMatchBtnTextActive: {
+    color: COLORS.buttonPrimaryText,
+  },
   teamHint: {
     color: COLORS.textMuted,
     fontFamily: "SpaceGrotesk",
